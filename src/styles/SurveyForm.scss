@@ -1,0 +1,339 @@
+// =============================================
+// SURVEY FORM - BEM
+// =============================================
+
+@import './variables';
+
+.survey-form {
+  min-height: 100vh;
+  background: $color-background;
+  padding: $spacing-2xl 0;
+  display: flex;
+  justify-content: center;
+
+  @media (max-width: 640px) {
+    padding: $spacing-lg 0;
+  }
+}
+
+.survey-form__container {
+  background: $color-white;
+  border-radius: $border-radius-2xl;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  width: 100%;
+  margin: 0 $spacing-lg;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+
+  @media (max-width: 640px) {
+    margin: 0 $spacing-md;
+    border-radius: $border-radius-xl;
+  }
+}
+
+// Video Section
+.survey-form__video-section {
+  width: calc(100% - #{$spacing-xl * 2});
+  aspect-ratio: 16 / 9;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  margin: $spacing-xl $spacing-xl 0;
+  border-radius: $border-radius-xl;
+
+  @media (max-width: 640px) {
+    aspect-ratio: 16 / 9;
+    width: calc(100% - #{$spacing-lg * 2});
+    margin: $spacing-lg $spacing-lg 0;
+    border-radius: $border-radius-lg;
+  }
+}
+
+.survey-form__video {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+// Header Section
+.survey-form__header {
+  padding: $spacing-2xl $spacing-2xl $spacing-lg;
+
+  @media (max-width: 640px) {
+    padding: $spacing-xl $spacing-lg $spacing-md;
+  }
+}
+
+.survey-form__title {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $color-dark-text;
+  margin: 0 0 $spacing-xs;
+  font-family: 'Montserrat', sans-serif;
+
+  @media (max-width: 640px) {
+    font-size: $font-size-xl;
+  }
+}
+
+.survey-form__subtitle {
+  font-size: $font-size-sm;
+  color: $color-light-text;
+  margin: 0;
+  font-weight: $font-weight-regular;
+
+  @media (max-width: 640px) {
+    font-size: $font-size-xs;
+  }
+}
+
+// Form Container
+.survey-form__form {
+  padding: 0 $spacing-2xl $spacing-2xl;
+
+  @media (max-width: 640px) {
+    padding: 0 $spacing-lg $spacing-lg;
+  }
+}
+
+// Row Layout for Two-Column Fields
+.survey-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-lg;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
+}
+
+.survey-form__col {
+  margin-bottom: 0;
+}
+
+// Submit Button
+.survey-form__button {
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  background: $color-primary;
+  color: $color-dark-text;
+  border: none;
+  border-radius: $border-radius-full;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  cursor: pointer;
+  transition: all $transition-base;
+  font-family: 'Montserrat', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &:hover:not(:disabled) {
+    background: #f5d93a;
+    box-shadow: 0 8px 24px rgba(255, 237, 78, 0.3);
+    transform: translateY(-2px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  // Modifier: .survey-form__button--stop-recording
+  &--stop-recording {
+    background: $color-danger;
+    color: $color-white;
+    margin-bottom: $spacing-md;
+
+    &:hover:not(:disabled) {
+      background: darken($color-danger, 10%);
+      box-shadow: 0 8px 24px rgba(220, 53, 69, 0.3);
+    }
+  }
+
+  @media (max-width: 640px) {
+    padding: $spacing-md $spacing-md;
+    font-size: $font-size-sm;
+  }
+}
+
+// =============================================
+// FORM GROUP - BEM (Reused from Login)
+// =============================================
+
+.form-group {
+  margin-bottom: $spacing-lg;
+
+  @media (max-width: 640px) {
+    margin-bottom: $spacing-md;
+  }
+}
+
+.form-group__label {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-dark-text;
+  margin-bottom: $spacing-xs;
+  font-family: 'Montserrat', sans-serif;
+  text-transform: capitalize;
+  text-align: left;
+}
+
+.form-group__required {
+  color: $color-danger;
+  margin-left: 2px;
+}
+
+.form-group__input,
+.form-group__select {
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-full;
+  font-size: $font-size-base;
+  font-family: 'Montserrat', sans-serif;
+  transition: all $transition-base;
+  background: $color-white;
+  color: $color-dark-text;
+
+  &::placeholder {
+    color: #999;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba(255, 237, 78, 0.1);
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &--error {
+    border-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.05);
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+      border-color: #e74c3c;
+    }
+  }
+}
+
+.form-group__select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right $spacing-md center;
+  background-size: 20px;
+  padding-right: $spacing-3xl;
+}
+
+.form-group__error-text {
+  display: block;
+  font-size: $font-size-xs;
+  color: #e74c3c;
+  margin-top: $spacing-xs;
+  font-weight: $font-weight-medium;
+  animation: slideDown 0.3s ease-out;
+}
+
+// =============================================
+// ERROR MESSAGE - BEM
+// =============================================
+
+.error-message {
+  background-color: rgba(231, 76, 60, 0.1);
+  border-left: 4px solid #e74c3c;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $border-radius-md;
+  color: #c0392b;
+  font-size: $font-size-sm;
+  margin-bottom: $spacing-lg;
+  font-weight: $font-weight-medium;
+  animation: slideDown 0.3s ease-out;
+}
+
+// =============================================
+// ANIMATIONS
+// =============================================
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// =============================================
+// COLOR SCHEME & ACCESSIBILITY
+// =============================================
+
+@media (prefers-color-scheme: light) {
+  .survey-form {
+    background: linear-gradient(135deg, $color-secondary 0%, $color-tertiary 100%);
+  }
+
+  .survey-form__container {
+    background: $color-white;
+  }
+
+  .form-group__input,
+  .form-group__select {
+    background-color: $color-white;
+    color: $color-dark-text;
+    border-color: $color-border;
+
+    &::placeholder {
+      color: #bbb;
+    }
+  }
+
+  .form-group__label {
+    color: $color-dark-text;
+  }
+
+  .survey-form__title {
+    color: $color-dark-text;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .survey-form__container,
+  .form-group__input,
+  .form-group__select,
+  .survey-form__button,
+  .error-message {
+    animation: none;
+    transition: none;
+  }
+}

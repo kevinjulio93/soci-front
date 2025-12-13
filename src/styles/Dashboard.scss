@@ -1,0 +1,795 @@
+// Importar variables
+@use './variables' as *;
+
+// =============================================
+// DASHBOARD - BEM NAMING CONVENTION
+// =============================================
+
+// Block: .dashboard
+.dashboard {
+  min-height: 100vh;
+  background-color: $color-white;
+  display: flex;
+  flex-direction: column;
+
+  // Element: .dashboard__header
+  &__header {
+    background: $color-secondary;
+    color: $color-white;
+    padding: $spacing-xl;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  // Element: .dashboard__header-content
+  &__header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: $spacing-lg;
+      text-align: center;
+    }
+  }
+
+  // Element: .dashboard__header-left
+  &__header-left {
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: $spacing-sm;
+    }
+  }
+
+  // Element: .dashboard__title
+  &__title {
+    color: $color-white;
+    margin-bottom: 0;
+    font-size: $font-size-3xl;
+
+    @media (max-width: 768px) {
+      font-size: $font-size-2xl;
+    }
+  }
+
+  // Element: .dashboard__user-info
+  &__user-info {
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+
+    @media (max-width: 768px) {
+      gap: $spacing-md;
+    }
+
+    span {
+      font-size: $font-size-base;
+    }
+  }
+
+  // Element: .dashboard__logout-btn
+  &__logout-btn {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: $color-white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: $spacing-sm $spacing-lg;
+    border-radius: $border-radius-md;
+    cursor: pointer;
+    font-weight: $font-weight-medium;
+    transition: all $transition-base;
+    font-family: $font-family-primary;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  // Element: .dashboard__main
+  &__main {
+    flex: 1;
+    padding: $spacing-2xl;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+
+    @media (max-width: 768px) {
+      padding: $spacing-xl;
+    }
+  }
+
+  // Element: .dashboard__header-section
+  &__header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $spacing-2xl;
+    gap: $spacing-xl;
+    width: 100%;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  // Element: .dashboard__header-text
+  &__header-text {
+    flex: 1;
+    text-align: left;
+  }
+
+  // Element: .dashboard__header-actions
+  &__header-actions {
+    display: flex;
+    gap: $spacing-md;
+    align-items: center;
+
+    @media (max-width: 768px) {
+      width: 100%;
+      flex-direction: column;
+    }
+  }
+
+  // Element: .dashboard__section-title
+  &__section-title {
+    color: $color-dark-text;
+    margin-bottom: $spacing-sm;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+
+    @media (max-width: 768px) {
+      font-size: $font-size-xl;
+    }
+  }
+
+  // Element: .dashboard__section-desc
+  &__section-desc {
+    color: $color-light-text;
+    font-size: $font-size-base;
+    margin: 0;
+  }
+
+  // Element: .dashboard__content
+  &__content {
+    h2 {
+      color: $color-dark-text;
+      margin-bottom: $spacing-md;
+      font-size: $font-size-2xl;
+
+      @media (max-width: 768px) {
+        font-size: $font-size-xl;
+      }
+    }
+
+    > p {
+      color: $color-light-text;
+      margin-bottom: $spacing-2xl;
+      font-size: $font-size-base;
+    }
+  }
+}
+
+
+
+// =============================================
+// BUTTON COMPONENTS - BEM
+// =============================================
+
+// Block: .btn
+.btn {
+  border: none;
+  cursor: pointer;
+  font-family: $font-family-primary;
+  transition: all $transition-base;
+  border-radius: $border-radius-md;
+  font-weight: $font-weight-medium;
+
+  // Modifier: .btn--primary
+  &--primary {
+    background-color: $color-primary;
+    color: $color-dark-text;
+    padding: $spacing-sm $spacing-lg;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    white-space: nowrap;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 237, 78, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  // Modifier: .btn--secondary
+  &--secondary {
+    background-color: $color-white;
+    color: $color-dark-text;
+    border: 1px solid $color-border;
+    padding: $spacing-xs $spacing-lg;
+    font-size: $font-size-sm;
+
+    &:hover {
+      background-color: $color-background;
+      border-color: $color-light-text;
+    }
+  }
+}
+
+// Element: .btn__icon
+.btn__icon {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+}
+
+// =============================================
+// FEATURE CARDS - BEM
+// =============================================
+
+// Block: .feature-card
+.feature-card {
+  background: $color-white;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  transition: all $transition-base;
+  box-shadow: $shadow-sm;
+
+  &:hover {
+    box-shadow: $shadow-lg;
+    transform: translateY(-4px);
+  }
+
+  // Element: .feature-card__title
+  &__title {
+    color: $color-dark-text;
+    margin-bottom: $spacing-md;
+    font-size: $font-size-lg;
+  }
+
+  // Element: .feature-card__description
+  &__description {
+    color: $color-light-text;
+    margin-bottom: $spacing-lg;
+    font-size: $font-size-sm;
+    line-height: $line-height-normal;
+  }
+
+  // Element: .feature-card__button
+  &__button {
+    background: $color-primary;
+    color: $color-dark-text;
+    border: none;
+    padding: $spacing-sm $spacing-lg;
+    border-radius: $border-radius-md;
+    cursor: pointer;
+    font-weight: $font-weight-medium;
+    transition: all $transition-base;
+    font-family: $font-family-primary;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 237, 78, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Modifier: .feature-card--admin
+  &--admin {
+    border-left: 4px solid $color-primary;
+
+    .feature-card__button {
+      background: linear-gradient(135deg, #667eea 0%, #5568d3 100%);
+    }
+  }
+}
+
+// Block: .features-grid
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: $spacing-xl;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: $spacing-lg;
+  }
+}
+
+// =============================================
+// SURVEY TABLE - BEM
+// =============================================
+
+// Block: .survey-table
+.survey-table {
+  background: $color-white;
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-md;
+  margin-bottom: $spacing-2xl;
+
+  @media (max-width: 768px) {
+    overflow-x: auto;
+  }
+
+  // Element: .survey-table__header
+  &__header {
+    padding: $spacing-lg;
+    border-bottom: 1px solid $color-border;
+  }
+
+  // Element: .survey-table__search-row
+  &__search-row {
+    display: flex;
+    gap: $spacing-lg;
+    align-items: center;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: $spacing-md;
+    }
+  }
+
+  // Element: .survey-table__search-box
+  &__search-box {
+    flex: 1;
+    min-width: 250px;
+  }
+
+  // Element: .survey-table__search-input
+  &__search-input {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid $color-border;
+    border-radius: $border-radius-md;
+    font-family: $font-family-primary;
+    font-size: $font-size-sm;
+    color: $color-dark-text;
+    background-color: $color-background;
+    transition: all $transition-base;
+
+    &:focus {
+      outline: none;
+      border-color: $color-secondary;
+      background-color: $color-white;
+    }
+
+    &::placeholder {
+      color: $color-light-text;
+    }
+  }
+
+  // Element: .survey-table__table
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  // Element: .survey-table__thead
+  &__thead {
+    background: $color-background;
+  }
+
+  // Element: .survey-table__th
+  &__th {
+    color: $color-dark-text;
+    padding: $spacing-lg;
+    text-align: left;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-xs;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid $color-border;
+
+    @media (max-width: 768px) {
+      padding: $spacing-md;
+      font-size: 0.7rem;
+    }
+  }
+
+  // Element: .survey-table__tbody
+  &__tbody {
+    // Styles applied to rows
+  }
+
+  // Element: .survey-table__row
+  &__row {
+    border-bottom: 1px solid $color-border;
+    transition: background-color $transition-base;
+
+    &:hover {
+      background-color: rgba($color-primary, 0.05);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  // Element: .survey-table__td
+  &__td {
+    padding: $spacing-lg;
+    color: $color-dark-text;
+    font-size: $font-size-sm;
+
+    @media (max-width: 768px) {
+      padding: $spacing-md;
+      font-size: 0.75rem;
+    }
+
+    // Modifier: .survey-table__td--respondent
+    &--respondent {
+      padding: $spacing-md $spacing-lg;
+    }
+
+    // Modifier: .survey-table__td--date
+    &--date {
+      color: $color-light-text;
+      font-size: $font-size-sm;
+    }
+  }
+
+  // Element: .survey-table__footer
+  &__footer {
+    padding: $spacing-lg;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid $color-border;
+    background-color: $color-background;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: $spacing-md;
+      text-align: center;
+    }
+  }
+
+  // Element: .survey-table__records-info
+  &__records-info {
+    font-size: $font-size-sm;
+    color: $color-light-text;
+  }
+}
+
+// =============================================
+// RESPONDENT - BEM
+// =============================================
+
+// Block: .respondent
+.respondent {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+
+  // Element: .respondent__avatar
+  &__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
+    color: #333;
+    flex-shrink: 0;
+  }
+
+  // Element: .respondent__details
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+
+  // Element: .respondent__name
+  &__name {
+    font-weight: $font-weight-semibold;
+    color: $color-dark-text;
+  }
+}
+
+// =============================================
+// AREA BADGE - BEM
+// =============================================
+
+// Block: .area-badge
+.area-badge {
+  display: inline-block;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-sm;
+  font-weight: $font-weight-medium;
+  font-size: $font-size-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  // Modifier: .area-badge--centro
+  &--centro {
+    background-color: rgba($color-secondary, 0.2);
+    color: $color-secondary;
+  }
+
+  // Modifier: .area-badge--norte
+  &--norte {
+    background-color: rgba(#6f9fb2, 0.2);
+    color: #4a7c8f;
+  }
+
+  // Modifier: .area-badge--sur
+  &--sur {
+    background-color: rgba(#c97a7a, 0.2);
+    color: #a05a5a;
+  }
+
+  // Modifier: .area-badge--este
+  &--este {
+    background-color: rgba(#9b9fb8, 0.2);
+    color: #7a7e97;
+  }
+
+  // Modifier: .area-badge--oeste
+  &--oeste {
+    background-color: rgba(#a4b5a0, 0.2);
+    color: #7a8c76;
+  }
+
+  // Modifier: .area-badge--default
+  &--default {
+    background-color: rgba($color-primary, 0.2);
+    color: #b8860b;
+  }
+}
+
+// =============================================
+// ACTION BUTTON - BEM
+// =============================================
+
+// Block: .action-btn
+.action-btn {
+  background: $color-primary;
+  color: $color-dark-text;
+  border: none;
+  padding: $spacing-xs $spacing-md;
+  border-radius: $border-radius-sm;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+  font-family: $font-family-primary;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 237, 78, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// =============================================
+// PAGINATION - BEM
+// =============================================
+
+// Block: .pagination
+.pagination {
+  display: flex;
+  gap: $spacing-xs;
+  align-items: center;
+
+  // Element: .pagination__btn
+  &__btn {
+    background-color: $color-white;
+    border: 1px solid $color-border;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    transition: all $transition-base;
+    color: $color-dark-text;
+    min-width: 32px;
+
+    &:hover:not(:disabled) {
+      background-color: $color-background;
+      border-color: $color-secondary;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    // Modifier: .pagination__btn--active
+    &--active {
+      background-color: $color-primary;
+      border-color: $color-primary;
+      color: $color-dark-text;
+      font-weight: $font-weight-bold;
+    }
+  }
+
+  // Element: .pagination__separator
+  &__separator {
+    color: $color-light-text;
+  }
+}
+
+// =============================================
+// RECORDING INDICATOR - BEM
+// =============================================
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background-color: rgba(220, 53, 69, 0.1);
+  padding: $spacing-xs $spacing-md;
+  border-radius: $border-radius-full;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+
+  // Element: .recording-indicator__dot
+  &__dot {
+    width: 10px;
+    height: 10px;
+    background-color: $color-danger;
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  // Element: .recording-indicator__text
+  &__text {
+    font-size: $font-size-sm;
+    color: $color-danger;
+    font-weight: $font-weight-semibold;
+    font-family: $font-family-primary;
+  }
+
+  // Modifier: .recording-indicator--header
+  &--header {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+
+    .recording-indicator__dot {
+      background-color: $color-white;
+    }
+
+    .recording-indicator__text {
+      color: $color-white;
+    }
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+// =============================================
+// AUDIO PLAYER CONTAINER - BEM
+// =============================================
+
+.audio-player-container {
+  background-color: $color-white;
+  padding: $spacing-lg;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-xl;
+  border: 2px solid $color-primary;
+
+  // Element: .audio-player-container__title
+  &__title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-dark-text;
+    margin-bottom: $spacing-md;
+    font-family: $font-family-primary;
+  }
+
+  // Element: .audio-player-container__player
+  &__player {
+    width: 100%;
+    margin-bottom: $spacing-sm;
+    outline: none;
+    
+    &:focus {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
+    }
+  }
+
+  // Element: .audio-player-container__info
+  &__info {
+    font-size: $font-size-sm;
+    color: $color-light-text;
+    margin: 0;
+    font-family: $font-family-primary;
+  }
+
+  // Element: .audio-player-container__footer
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: $spacing-md;
+    gap: $spacing-md;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .btn {
+        width: 100%;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: $spacing-md;
+  }
+}
+
+// =============================================
+// RECORDING CONTROLS - BEM
+// =============================================
+
+.recording-controls {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+  padding: $spacing-md;
+  background-color: rgba(255, 193, 7, 0.1);
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+
+  .btn {
+    min-width: 200px;
+    font-weight: $font-weight-semibold;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}

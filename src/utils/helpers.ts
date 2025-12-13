@@ -1,0 +1,54 @@
+/**
+ * Utils - Funciones utilitarias reutilizables
+ * Funciones puras sin dependencias del estado del componente
+ */
+
+import { AVATAR_COLORS } from '../constants/formOptions'
+
+/**
+ * Obtiene un color de avatar basado en el hash del nombre
+ * @param name - Nombre del usuario
+ * @returns Color hexadecimal del avatar
+ */
+export function getAvatarColor(name: string): string {
+  const hash = name.charCodeAt(0) + name.charCodeAt(1)
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length]
+}
+
+/**
+ * Obtiene las iniciales de un nombre (máximo 2 caracteres)
+ * @param name - Nombre completo del usuario
+ * @returns Iniciales en mayúsculas
+ */
+export function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+/**
+ * Genera un hash simple a partir de un string
+ * @param str - String a hashear
+ * @returns Número hash
+ */
+export function simpleHash(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return Math.abs(hash)
+}
+
+/**
+ * Selecciona un elemento de un array basado en el hash de un string
+ * @param str - String para generar el hash
+ * @param array - Array del cual seleccionar
+ * @returns Elemento seleccionado del array
+ */
+export function selectFromArrayByHash<T>(str: string, array: T[]): T {
+  const hash = simpleHash(str)
+  return array[hash % array.length]
+}

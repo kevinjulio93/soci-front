@@ -1,0 +1,11 @@
+// Importar variables primero
+@use './styles/variables' as *;
+
+// Importar estilos globales
+@use './styles/globals' as *;
+
+#root {
+  margin: 0 auto;
+  text-align: center;
+}
+
