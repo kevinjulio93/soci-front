@@ -240,7 +240,6 @@ export default function SurveyParticipant() {
               videoUrl={EXTERNAL_URLS.VIDEO_TUTORIAL}
               onSubmit={handleSubmit}
               isLoading={isSubmitting}
-              isRecording={isRecording}
               initialData={initialData}
             />
           )}

@@ -183,7 +183,21 @@ export class Respondent {
   }
 
   // Método estático para crear desde datos de formulario
-  static fromFormData(data: any): Respondent {
+  static fromFormData(data: {
+    fullName: string
+    idType: IdType
+    identification: string
+    email: string
+    phone: string
+    address: string
+    gender: Gender
+    ageRange: AgeRange
+    region: string
+    department: string
+    city: string
+    stratum: Stratum
+    neighborhood: string
+  }): Respondent {
     return new Respondent(
       data.fullName,
       data.idType,

@@ -4,7 +4,6 @@
  * Utiliza React Hook Form para validaciones y manejo de estado
  */
 
-import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import {
   ID_TYPE_OPTIONS,
@@ -35,7 +34,6 @@ interface SurveyFormProps {
   onSubmit: (data: SurveyFormData) => Promise<void>
   isLoading?: boolean
   error?: string | null
-  isRecording?: boolean
   initialData?: SurveyFormData | null
 }
 
@@ -44,13 +42,11 @@ export function SurveyForm({
   onSubmit,
   isLoading = false,
   error,
-  isRecording = false,
   initialData,
 }: SurveyFormProps) {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<SurveyFormData>({
     mode: 'onBlur',
