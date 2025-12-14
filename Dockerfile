@@ -16,17 +16,23 @@ COPY . .
 # Build de producción
 RUN npm run build
 
-# Etapa 2: Producción con Nginx
-FROM nginx:alpine
+# Etapa 2: Producción con PM2
+FROM node:20-alpine
 
-# Copiar archivos build al directorio de nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Instalar PM2 y serve globalmente
+RUN npm install -g pm2 serve
 
-# Copiar configuración personalizada de nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Establecer directorio de trabajo
+WORKDIR /app
 
-# Exponer puerto 80
-EXPOSE 80
+# Copiar archivos build desde la etapa anterior
+COPY --from=builder /app/dist ./dist
 
-# Comando por defecto
-CMD ["nginx", "-g", "daemon off;"]
+# Copiar configuración de PM2
+COPY ecosystem.config.js ./
+
+# Exponer puerto 5000
+EXPOSE 5000
+
+# Comando por defecto - iniciar con PM2
+CMD ["pm2-runtime", "start", "ecosystem.config.js"]
