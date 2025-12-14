@@ -6,7 +6,7 @@
 
 import type { LoginCredentials, LoginResponse } from '../types'
 
-const API_BASE_URL = 'https://82f60cf02a72.ngrok-free.app/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://82f60cf02a72.ngrok-free.app/api/v1'
 
 interface ApiError {
   message: string
