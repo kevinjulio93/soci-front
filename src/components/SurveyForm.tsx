@@ -36,7 +36,6 @@ interface SurveyFormProps {
   isLoading?: boolean
   error?: string | null
   isRecording?: boolean
-  onStopRecording?: () => void
   initialData?: SurveyFormData | null
 }
 
@@ -46,7 +45,6 @@ export function SurveyForm({
   isLoading = false,
   error,
   isRecording = false,
-  onStopRecording,
   initialData,
 }: SurveyFormProps) {
   const {
@@ -378,17 +376,6 @@ export function SurveyForm({
               )}
             </div>
           </div>
-
-          {/* Stop Recording Button */}
-          {isRecording && onStopRecording && (
-            <button
-              type="button"
-              className="survey-form__button survey-form__button--stop-recording"
-              onClick={onStopRecording}
-            >
-              ⏹ Detener Grabación
-            </button>
-          )}
 
           {/* Submit Button */}
           <button

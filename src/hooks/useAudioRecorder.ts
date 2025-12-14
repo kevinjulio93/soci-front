@@ -29,7 +29,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const timerRef = useRef<number | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
   const startRecording = useCallback(async () => {
@@ -105,7 +105,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           }
           
           // Llamar al handler original si existía
-          if (originalOnStop && typeof originalOnStop === 'function') {
+          if (originalOnStop && typeof originalOnStop === 'function' && mediaRecorderRef.current) {
             originalOnStop.call(mediaRecorderRef.current, new Event('stop'))
           }
           

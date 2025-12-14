@@ -7,33 +7,45 @@
 import { useState } from 'react'
 import type { Survey } from '../types'
 import { Pagination } from './Pagination'
-import { getAvatarColor, getInitials, selectFromArrayByHash } from '../utils'
+import { getAvatarColor, getInitials } from '../utils'
 import '../styles/Dashboard.scss'
 
 interface SurveyTableProps {
   surveys: Survey[]
   onViewDetails?: (surveyId: string) => void
+  currentPage?: number
+  totalPages?: number
+  totalItems?: number
   itemsPerPage?: number
+  onPageChange?: (page: number) => void
 }
 
 export function SurveyTable({ 
   surveys, 
   onViewDetails,
-  itemsPerPage = 10 
+  currentPage: externalCurrentPage,
+  totalPages: externalTotalPages,
+  totalItems: externalTotalItems,
+  itemsPerPage = 10,
+  onPageChange: externalOnPageChange
 }: SurveyTableProps) {
-  const [currentPage, setCurrentPage] = useState(1)
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1)
 
-  // Calcular paginación
-  const totalPages = Math.ceil(surveys.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const currentSurveys = surveys.slice(startIndex, endIndex)
+  // Usar paginación externa (del backend) si está disponible, sino usar paginación local
+  const isExternalPagination = externalCurrentPage !== undefined && externalTotalPages !== undefined
+  const currentPage = isExternalPagination ? externalCurrentPage : internalCurrentPage
+  const totalPages = isExternalPagination ? externalTotalPages! : Math.ceil(surveys.length / itemsPerPage)
+  const totalItems = isExternalPagination ? (externalTotalItems ?? surveys.length) : surveys.length
 
-  const areas = ['centro', 'norte', 'sur', 'este', 'oeste']
-  const getAreaLabel = (name: string): string => selectFromArrayByHash(name, areas)
+  // Solo calcular slice si es paginación local
+  const currentSurveys = isExternalPagination ? surveys : surveys.slice((internalCurrentPage - 1) * itemsPerPage, internalCurrentPage * itemsPerPage)
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+    if (isExternalPagination && externalOnPageChange) {
+      externalOnPageChange(page)
+    } else {
+      setInternalCurrentPage(page)
+    }
   }
 
   return (
@@ -50,12 +62,17 @@ export function SurveyTable({
         </div>
       </div>
 
-      <table className="survey-table__table">
+      <div className="survey-table__wrapper">
+        <table className="survey-table__table">
         <thead className="survey-table__thead">
           <tr>
-            <th className="survey-table__th">NOMBRE DEL ENCUESTADO</th>
+            <th className="survey-table__th">ENCUESTADO</th>
+            <th className="survey-table__th">IDENTIFICACIÓN</th>
+            <th className="survey-table__th">CONTACTO</th>
+            <th className="survey-table__th">GÉNERO</th>
+            <th className="survey-table__th">EDAD</th>
+            <th className="survey-table__th">UBICACIÓN</th>
             <th className="survey-table__th">FECHA</th>
-            <th className="survey-table__th">BARRIO</th>
             <th className="survey-table__th">ACCIONES</th>
           </tr>
         </thead>
@@ -75,16 +92,39 @@ export function SurveyTable({
                   </div>
                 </div>
               </td>
-              <td className="survey-table__td survey-table__td--date">{survey.date}</td>
               <td className="survey-table__td">
-                <span className={`area-badge area-badge--${getAreaLabel(survey.title)}`}>
-                  {getAreaLabel(survey.title)}
-                </span>
+                <div className="id-info">
+                  <span className="id-type">{survey.idType || 'N/A'}</span>
+                  <span className="id-number">{survey.identification || 'N/A'}</span>
+                </div>
               </td>
               <td className="survey-table__td">
+                <div className="contact-info">
+                  {survey.phone && <span className="contact-phone">📱 {survey.phone}</span>}
+                  {survey.email && <span className="contact-email">✉️ {survey.email}</span>}
+                  {!survey.phone && !survey.email && <span>N/A</span>}
+                </div>
+              </td>
+              <td className="survey-table__td">
+                <span className="gender-badge">{survey.gender || 'N/A'}</span>
+              </td>
+              <td className="survey-table__td">
+                <span className="age-badge">{survey.ageRange || 'N/A'}</span>
+              </td>
+              <td className="survey-table__td">
+                <div className="location-info">
+                  {survey.city && <span className="location-city">📍 {survey.city}</span>}
+                  {survey.neighborhood && <span className="location-neighborhood">{survey.neighborhood}</span>}
+                  {survey.stratum && <span className="location-stratum">Estrato {survey.stratum}</span>}
+                  {!survey.city && !survey.neighborhood && <span>N/A</span>}
+                </div>
+              </td>
+              <td className="survey-table__td survey-table__td--date">{survey.date}</td>
+              <td className="survey-table__td">
                 <button
-                  className="action-btn"
+                  className="action-btn action-btn--edit"
                   onClick={() => onViewDetails?.(survey.id)}
+                  title="Editar encuestado"
                 >
                   Editar
                 </button>
@@ -93,14 +133,14 @@ export function SurveyTable({
           ))}
         </tbody>
       </table>
+      </div>
 
       <div className="survey-table__footer">
-        <span className="survey-table__records-info">
-          Mostrando {startIndex + 1}-{Math.min(endIndex, surveys.length)} de {surveys.length} registros
-        </span>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
           onPageChange={handlePageChange}
         />
       </div>

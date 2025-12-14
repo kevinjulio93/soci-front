@@ -1,15 +1,14 @@
 /**
- * Service Worker - Manejo de offline y caché
- * Estrategia: Cache First para assets, Network First para API calls
+ * Service Worker - Manejo de offline y caché para Vite
+ * Estrategia optimizada para desarrollo
  */
 
-const CACHE_NAME = 'soci-app-v1'
-const RUNTIME_CACHE = 'soci-app-runtime-v1'
+const CACHE_NAME = 'soci-app-v2'
+const RUNTIME_CACHE = 'soci-app-runtime-v2'
 
-// Archivos críticos para offline
+// Solo cachear el HTML en instalación
 const urlsToCache = [
   '/',
-  '/index.html',
 ]
 
 // Instalar service worker y cachear archivos críticos
@@ -62,7 +61,7 @@ self.addEventListener('fetch', (event) => {
       return
     }
 
-    // Ignorar chrome extensions, HMR de Vite, y otros orígenes externos
+    // Ignorar chrome extensions y otros orígenes (excepto API ngrok)
     if (!url.origin.includes(self.location.origin) && !url.origin.includes('ngrok')) {
       return
     }
@@ -131,90 +130,78 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Para navegación (HTML) - Cache First en offline, Network First en online
+  // Para navegación (HTML) - Siempre intentar network primero, luego caché
   if (request.mode === 'navigate') {
     event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        const fetchPromise = fetch(request)
-          .then((response) => {
-            // Cachear la nueva respuesta
-            if (response && response.status === 200) {
-              const responseClone = response.clone()
-              caches.open(RUNTIME_CACHE).then((cache) => {
-                cache.put(request, responseClone)
-                // También cachear como index.html para rutas SPA
-                cache.put('/index.html', response.clone())
-              })
-            }
-            return response
-          })
-          .catch(() => {
-            // Si falla el fetch, usar caché
-            console.log('[SW] Navegación offline, sirviendo desde caché')
+      fetch(request)
+        .then((response) => {
+          // Cachear cada página HTML que se visite
+          if (response && response.status === 200) {
+            const responseClone = response.clone()
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put('/', responseClone)
+            })
+          }
+          return response
+        })
+        .catch(() => {
+          // Offline: servir última versión cacheada
+          console.log('[SW] Offline - Sirviendo última versión desde caché')
+          return caches.match('/').then((cachedResponse) => {
             if (cachedResponse) {
               return cachedResponse
             }
-            // Fallback a index.html cacheado
-            return caches.match('/index.html').then((indexResponse) => {
-              if (indexResponse) {
-                return indexResponse
+            // Si no hay nada en caché, crear una respuesta básica
+            return new Response(
+              '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Offline</title></head><body><h1>Sin conexión</h1><p>Recarga cuando tengas internet</p></body></html>',
+              {
+                status: 200,
+                headers: { 'Content-Type': 'text/html' }
               }
-              return caches.match('/')
-            })
+            )
           })
-
-        // Si tenemos caché y estamos offline, usarlo inmediatamente
-        // Si no, esperar el fetch
-        return navigator.onLine ? fetchPromise : (cachedResponse || fetchPromise)
-      })
+        })
     )
     return
   }
 
-  // Para archivos estáticos (JS, CSS, imágenes) - Network First con fallback a caché
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        // Cachear respuestas exitosas
-        if (response && response.status === 200 && response.type !== 'error') {
-          const isAsset = /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)$/i.test(request.url)
-          
-          if (isAsset) {
-            const responseClone = response.clone()
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseClone).catch(() => {
-                // Ignorar errores al cachear
-              })
-            })
-          }
+  // Para otros recursos - Solo cachear en producción (archivos con hash)
+  const hasHash = /\.[a-f0-9]{8}\.(js|css)$/i.test(request.url)
+  
+  if (hasHash) {
+    // Archivos con hash: Cache First (nunca cambian)
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse
         }
         
-        return response
-      })
-      .catch(() => {
-        // Si el fetch falla (offline), intentar usar caché
-        return caches.match(request).then((cachedResponse) => {
-          if (cachedResponse) {
-            console.log('[SW] Offline - Usando caché:', request.url)
-            return cachedResponse
-          }
-          
-          // Si no hay caché y es una imagen, retornar respuesta vacía en lugar de error
-          if (/\.(png|jpg|jpeg|gif|svg|ico)$/i.test(request.url)) {
-            return new Response('', {
-              status: 200,
-              statusText: 'OK',
-              headers: new Headers({
-                'Content-Type': 'image/svg+xml',
-              })
+        return fetch(request).then((response) => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone()
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, responseClone)
             })
           }
-          
-          // Para otros recursos, retornar 404
-          return new Response('Not found', { status: 404 })
+          return response
         })
       })
-  )
+    )
+  } else {
+    // Otros archivos: Network Only (no cachear en desarrollo)
+    event.respondWith(
+      fetch(request).catch(() => {
+        // Si falla y es una imagen, retornar placeholder
+        if (/\.(png|jpg|jpeg|gif|svg|ico)$/i.test(request.url)) {
+          return new Response('', {
+            status: 200,
+            headers: { 'Content-Type': 'image/svg+xml' }
+          })
+        }
+        return new Response('Offline', { status: 503 })
+      })
+    )
+  }
 })
 
 // Manejo de mensajes del cliente

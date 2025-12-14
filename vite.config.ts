@@ -3,22 +3,19 @@ import react from '@vitejs/plugin-react-swc'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+  ],
   server: {
     middlewareMode: false,
   },
+  publicDir: 'public',
+  // Configuración para desarrollo offline
   build: {
     rollupOptions: {
-      input: {
-        main: './index.html',
-        sw: './public/service-worker.ts',
-      },
       output: {
-        entryFileNames: (chunkInfo) => {
-          if (chunkInfo.name === 'sw') {
-            return 'service-worker.js'
-          }
-          return '[name].js'
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
         },
       },
     },

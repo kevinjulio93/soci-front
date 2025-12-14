@@ -6,6 +6,8 @@
 interface PaginationProps {
   currentPage: number
   totalPages: number
+  totalItems: number
+  itemsPerPage: number
   onPageChange: (page: number) => void
   maxVisiblePages?: number
 }
@@ -13,9 +15,15 @@ interface PaginationProps {
 export function Pagination({
   currentPage,
   totalPages,
+  totalItems,
+  itemsPerPage,
   onPageChange,
   maxVisiblePages = 5,
 }: PaginationProps) {
+  // Calcular el rango de registros mostrados
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems)
+
   const getPageNumbers = (): (number | string)[] => {
     const pages: (number | string)[] = []
     
@@ -79,39 +87,45 @@ export function Pagination({
 
   return (
     <div className="pagination">
-      <button
-        className="pagination__btn"
-        onClick={handlePrevious}
-        disabled={currentPage === 1}
-      >
-        ←
-      </button>
+      <div className="pagination__info">
+        Mostrando {startItem} - {endItem} de {totalItems} registros
+      </div>
       
-      {getPageNumbers().map((page, index) => (
-        page === '...' ? (
-          <span key={`separator-${index}`} className="pagination__separator">
-            ...
-          </span>
-        ) : (
-          <button
-            key={page}
-            className={`pagination__btn ${
-              page === currentPage ? 'pagination__btn--active' : ''
-            }`}
-            onClick={() => handlePageClick(page)}
-          >
-            {page}
-          </button>
-        )
-      ))}
-      
-      <button
-        className="pagination__btn"
-        onClick={handleNext}
-        disabled={currentPage === totalPages}
-      >
-        →
-      </button>
+      <div className="pagination__controls">
+        <button
+          className="pagination__btn"
+          onClick={handlePrevious}
+          disabled={currentPage === 1}
+        >
+          ←
+        </button>
+        
+        {getPageNumbers().map((page, index) => (
+          page === '...' ? (
+            <span key={`separator-${index}`} className="pagination__separator">
+              ...
+            </span>
+          ) : (
+            <button
+              key={page}
+              className={`pagination__btn ${
+                page === currentPage ? 'pagination__btn--active' : ''
+              }`}
+              onClick={() => handlePageClick(page)}
+            >
+              {page}
+            </button>
+          )
+        ))}
+        
+        <button
+          className="pagination__btn"
+          onClick={handleNext}
+          disabled={currentPage === totalPages}
+        >
+          →
+        </button>
+      </div>
     </div>
   )
 }

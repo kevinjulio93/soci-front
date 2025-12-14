@@ -115,7 +115,7 @@ class ApiService {
     })
   }
 
-  async getRespondents(): Promise<{
+  async getRespondents(page: number = 1, perPage: number = 10): Promise<{
     currentPage: number
     itemsPerPage: number
     totalItems: number
@@ -140,7 +140,7 @@ class ApiService {
       updatedAt: string
     }>
   }> {
-    return this.request('/respondents', {
+    return this.request(`/respondents?page=${page}&perPage=${perPage}`, {
       method: 'GET',
     })
   }

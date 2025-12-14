@@ -50,6 +50,15 @@ export interface Survey {
   status: 'pending' | 'in_progress' | 'completed'
   participants: number
   date: string
+  idType?: string
+  identification?: string
+  email?: string
+  phone?: string
+  gender?: string
+  ageRange?: string
+  city?: string
+  neighborhood?: string
+  stratum?: number
 }
 
 export interface ApiError {

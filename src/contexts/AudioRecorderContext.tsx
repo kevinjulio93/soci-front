@@ -1,9 +1,11 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * AudioRecorderContext - Contexto global para manejo de grabación de audio
  * Proporciona estado y funciones de grabación accesibles desde cualquier componente
  */
 
-import { createContext, useContext, ReactNode } from 'react'
+import { createContext, useContext } from 'react'
+import type { ReactNode } from 'react'
 import { useAudioRecorder } from '../hooks'
 
 interface AudioRecorderContextType {
@@ -14,7 +16,7 @@ interface AudioRecorderContextType {
   audioUrl: string | null
   error: string | null
   startRecording: () => Promise<void>
-  stopRecording: () => void
+  stopRecording: () => Promise<Blob | null>
   pauseRecording: () => void
   resumeRecording: () => void
   clearRecording: () => void

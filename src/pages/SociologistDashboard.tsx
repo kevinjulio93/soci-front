@@ -9,21 +9,36 @@ import { useState, useEffect } from 'react'
 import { DashboardHeader, SurveyTable, PageHeader } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api.service'
+import { useSyncStatus } from '../hooks'
 import type { Survey } from '../types'
 import '../styles/Dashboard.scss'
 
 export default function SociologistDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { isOnline, pendingCount, isSyncing, manualSync } = useSyncStatus()
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   useEffect(() => {
+    let isMounted = true
+
     const fetchRespondents = async () => {
       try {
         setIsLoading(true)
-        const response = await apiService.getRespondents()
+        const response = await apiService.getRespondents(currentPage, itemsPerPage)
         
+        if (!isMounted) return
+
+        // Actualizar información de paginación desde el backend
+        setTotalPages(response.totalPages)
+        setTotalItems(response.totalItems)
+        setItemsPerPage(response.itemsPerPage)
+
         // Transformar datos de respondents a formato de surveys
         const surveysData: Survey[] = response.data.map(respondent => ({
           id: respondent._id,
@@ -35,27 +50,55 @@ export default function SociologistDashboard() {
             month: 'short',
             year: 'numeric'
           }),
+          idType: respondent.idType,
+          identification: respondent.identification,
+          email: respondent.email,
+          phone: respondent.phone,
+          gender: respondent.gender,
+          ageRange: respondent.ageRange,
+          city: respondent.city,
+          neighborhood: respondent.neighborhood,
+          stratum: respondent.stratum,
         }))
         
         setSurveys(surveysData)
-      } catch (err) {
+      } catch {
+        if (!isMounted) return
         // Error al cargar encuestados
         setSurveys([])
       } finally {
-        setIsLoading(false)
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
 
     fetchRespondents()
-  }, [])
+
+    return () => {
+      isMounted = false
+    }
+  }, [currentPage, itemsPerPage])
+
+  // Recargar datos después de sincronizar
+  useEffect(() => {
+    if (!isSyncing && pendingCount === 0 && isOnline) {
+      // Recargar datos cuando se completa la sincronización
+      setCurrentPage(1)
+    }
+  }, [isSyncing, pendingCount, isOnline])
 
   const handleLogout = async () => {
     try {
       // await logout()
       navigate('/login')
-    } catch (err) {
+    } catch {
       // Error al cerrar sesión
     }
+  }
+
+  const handleManualSync = async () => {
+    await manualSync()
   }
 
   const handleViewSurveyDetails = (respondentId: string) => {
@@ -92,9 +135,27 @@ export default function SociologistDashboard() {
           title="Lista de Encuestas"
           description="Gestione los registros y comience nuevas sesiones de recolección de datos."
         >
-          <button className="btn btn--primary" onClick={handleNewSurvey}>
-            <span className="btn__icon">+</span> Nueva Encuesta
-          </button>
+          <div className="dashboard__header-actions-group">
+            {!isOnline && (
+              <div className="offline-indicator">
+                <span className="offline-indicator__icon">📴</span>
+                <span className="offline-indicator__text">Sin conexión</span>
+              </div>
+            )}
+            {pendingCount > 0 && (
+              <button 
+                className="btn btn--sync"
+                onClick={handleManualSync}
+                disabled={isSyncing || !isOnline}
+              >
+                <span className="btn__icon">{isSyncing ? '🔄' : '🔁'}</span>
+                {isSyncing ? 'Sincronizando...' : `Sincronizar (${pendingCount})`}
+              </button>
+            )}
+            <button className="btn btn--primary" onClick={handleNewSurvey}>
+              <span className="btn__icon">+</span> Nueva Encuesta
+            </button>
+          </div>
         </PageHeader>
 
         <section className="dashboard__content">
@@ -103,7 +164,15 @@ export default function SociologistDashboard() {
               Cargando encuestados...
             </div>
           ) : (
-            <SurveyTable surveys={surveys} onViewDetails={handleViewSurveyDetails} />
+            <SurveyTable 
+              surveys={surveys} 
+              onViewDetails={handleViewSurveyDetails}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+            />
           )}
         </section>
       </main>
