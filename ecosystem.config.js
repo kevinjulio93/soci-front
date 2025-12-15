@@ -2,8 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'soci-front',
-      script: 'serve',
-      args: '-s dist -l 5000',
+      script: 'npx',
+      args: ['serve', '-s', 'dist', '-p', '5000'],
       instances: 1,
       exec_mode: 'fork',
       env: {

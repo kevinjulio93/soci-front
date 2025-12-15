@@ -23,10 +23,12 @@ build
 coverage
 *.local
 
-# Variables de entorno
+# Variables de entorno (bloquear archivos locales, permitir development y production)
 .env
 .env.local
 .env.*.local
+!.env.production
+!.env.development
 
 # Git
 .git

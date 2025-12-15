@@ -143,13 +143,13 @@ export default function SurveyParticipant() {
 
       // Si está offline, guardar localmente
       if (!isOnline) {
-        console.log('📴 Sin conexión - Guardando encuesta localmente...')
+        console.log('Sin conexión - Guardando encuesta localmente...')
         const pendingId = await indexedDBService.savePendingRespondent(
           respondentDTO,
           recordedBlob ?? undefined
         )
-        console.log(`✅ Encuesta guardada localmente con ID: ${pendingId}`)
-        console.log('🔄 Se sincronizará automáticamente cuando recuperes la conexión')
+        console.log(`Encuesta guardada localmente con ID: ${pendingId}`)
+        console.log('Se sincronizará automáticamente cuando recuperes la conexión')
         
         // Limpiar audio de memoria
         clearRecording()

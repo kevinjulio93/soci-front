@@ -8,6 +8,7 @@ import Login from '../pages/Login'
 import SociologistDashboard from '../pages/SociologistDashboard'
 import AdminDashboard from '../pages/AdminDashboard'
 import SurveyParticipant from '../pages/SurveyParticipant'
+import { SocializerManagement } from '../pages/SocializerManagement'
 import { ProtectedRoute } from '../components'
 
 export const router = createBrowserRouter([
@@ -30,8 +31,16 @@ export const router = createBrowserRouter([
   {
     path: '/admin/dashboard',
     element: (
-      <ProtectedRoute allowedSubjects={['admins']} requireAdminRole>
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
         <AdminDashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/socializers',
+    element: (
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+        <SocializerManagement />
       </ProtectedRoute>
     ),
   },

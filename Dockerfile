@@ -10,10 +10,10 @@ COPY package*.json ./
 # Instalar dependencias
 RUN npm ci --legacy-peer-deps
 
-# Copiar el resto del código
+# Copiar el resto del código (incluye .env.production)
 COPY . .
 
-# Build de producción
+# Build de producción (usa .env.production automáticamente)
 RUN npm run build
 
 # Etapa 2: Producción con PM2

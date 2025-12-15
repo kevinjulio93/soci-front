@@ -218,6 +218,143 @@ class ApiService {
 
     return await response.json()
   }
+
+  // =============================================
+  // SOCIALIZERS ENDPOINTS
+  // =============================================
+
+  async getSocializers(page: number = 1, perPage: number = 10): Promise<{
+    currentPage: number
+    itemsPerPage: number
+    totalItems: number
+    totalPages: number
+    data: Array<{
+      _id: string
+      fullName: string
+      idNumber: string
+      location: {
+        lat: number
+        long: number
+      }
+      status: 'enabled' | 'disabled'
+      user: {
+        _id: string
+        email: string
+        role: {
+          _id: string
+          role: string
+        }
+      }
+      createdAt: string
+      updatedAt: string
+    }>
+  }> {
+    return this.request(`/socializers?page=${page}&perPage=${perPage}`)
+  }
+
+  async getSocializer(id: string): Promise<{
+    _id: string
+    fullName: string
+    idNumber: string
+    location: {
+      lat: number
+      long: number
+    }
+    status: 'enabled' | 'disabled'
+    user: {
+      _id: string
+      email: string
+      role: {
+        _id: string
+        role: string
+      }
+    }
+    createdAt: string
+    updatedAt: string
+  }> {
+    return this.request(`/socializers/${id}`)
+  }
+
+  async createSocializer(data: {
+    fullName: string
+    idNumber: string
+    email: string
+    password: string
+    roleId: string
+    location?: {
+      lat: number
+      long: number
+    }
+    status?: 'enabled' | 'disabled'
+  }): Promise<{
+    message: string
+    data: {
+      _id: string
+      fullName: string
+      idNumber: string
+      location: {
+        lat: number
+        long: number
+      }
+      status: string
+      createdAt: string
+      updatedAt: string
+    }
+  }> {
+    return this.request('/socializers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateSocializer(id: string, data: {
+    fullName?: string
+    idNumber?: string
+    email?: string
+    password?: string
+    roleId?: string
+    location?: {
+      lat: number
+      long: number
+    }
+    status?: 'enabled' | 'disabled'
+  }): Promise<{
+    message: string
+    data: {
+      _id: string
+      fullName: string
+      idNumber: string
+      location: {
+        lat: number
+        long: number
+      }
+      status: string
+      updatedAt: string
+    }
+  }> {
+    return this.request(`/socializers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteSocializer(id: string): Promise<{
+    message: string
+  }> {
+    return this.request(`/socializers/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getRoles(): Promise<{
+    data: Array<{
+      _id: string
+      role: string
+      status: string
+    }>
+  }> {
+    return this.request('/roles')
+  }
 }
 
 export const apiService = new ApiService()

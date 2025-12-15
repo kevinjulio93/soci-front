@@ -1,15 +1,15 @@
 /**
- * AdminDashboard - Dashboard del administrador
- * Muestra directamente la tabla de socializadores con sidebar de navegación
+ * SocializerManagement - Página para gestionar socializadores (CRUD completo)
  */
 
 import { useState, useEffect } from 'react'
-import { Sidebar, SocializerTable, SocializerForm } from '../components'
+import { Sidebar, SocializerForm, SocializerTable } from '../components'
 import { apiService } from '../services/api.service'
 import type { Socializer, SocializerFormData } from '../types'
 import '../styles/Dashboard.scss'
 
-export default function AdminDashboard() {
+export function SocializerManagement() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [socializers, setSocializers] = useState<Socializer[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -20,10 +20,10 @@ export default function AdminDashboard() {
   const [editingSocializer, setEditingSocializer] = useState<Socializer | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const itemsPerPage = 10
 
+  // Cargar socializadores
   const loadSocializers = async (page: number = currentPage) => {
     try {
       setIsLoading(true)
@@ -41,27 +41,36 @@ export default function AdminDashboard() {
     }
   }
 
+  // Cargar al montar y cuando cambie la página
   useEffect(() => {
     loadSocializers(currentPage)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage])
 
+  // Manejar creación/edición
   const handleSubmit = async (data: SocializerFormData) => {
     try {
       setFormLoading(true)
       setFormError(null)
 
       if (editingSocializer) {
-        const finalData: Partial<SocializerFormData> = { ...data }
+        // Editar
+        const updateData = { ...data }
+        // Si la contraseña está vacía en modo edición, no la enviamos
+        const finalData: Partial<SocializerFormData> = { ...updateData }
         if (!finalData.password) {
           delete finalData.password
         }
         await apiService.updateSocializer(editingSocializer._id, finalData)
       } else {
+        // Crear
         await apiService.createSocializer(data)
       }
 
+      // Recargar lista
       await loadSocializers(1)
+      
+      // Cerrar formulario
       setShowForm(false)
       setEditingSocializer(null)
     } catch (err) {
@@ -76,6 +85,7 @@ export default function AdminDashboard() {
     }
   }
 
+  // Manejar eliminación
   const handleDelete = async (id: string) => {
     try {
       setIsLoading(true)
@@ -89,22 +99,26 @@ export default function AdminDashboard() {
     }
   }
 
+  // Manejar edición
   const handleEdit = (socializer: Socializer) => {
     setEditingSocializer(socializer)
     setFormError(null)
     setShowForm(true)
   }
 
+  // Manejar cambio de página
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
   }
 
+  // Abrir formulario para nuevo socializador
   const handleNewSocializer = () => {
     setEditingSocializer(null)
     setFormError(null)
     setShowForm(true)
   }
 
+  // Cancelar formulario
   const handleCancelForm = () => {
     setShowForm(false)
     setEditingSocializer(null)

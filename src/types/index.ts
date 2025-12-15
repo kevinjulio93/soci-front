@@ -66,3 +66,43 @@ export interface ApiError {
   code?: string
   details?: unknown
 }
+
+export interface Socializer {
+  _id: string
+  fullName: string
+  idNumber: string
+  location: {
+    lat: number
+    long: number
+  }
+  status: 'enabled' | 'disabled'
+  user: {
+    _id: string
+    email: string
+    role: {
+      _id: string
+      role: string
+    }
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SocializerFormData {
+  fullName: string
+  idNumber: string
+  email: string
+  password: string
+  roleId: string
+  location?: {
+    lat: number
+    long: number
+  }
+  status?: 'enabled' | 'disabled'
+}
+
+export interface RoleOption {
+  _id: string
+  role: string
+  status: string
+}

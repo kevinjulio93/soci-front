@@ -63,21 +63,34 @@ export function SurveyTable({
       </div>
 
       <div className="survey-table__wrapper">
-        <table className="survey-table__table">
-        <thead className="survey-table__thead">
-          <tr>
-            <th className="survey-table__th">ENCUESTADO</th>
-            <th className="survey-table__th">IDENTIFICACIÓN</th>
-            <th className="survey-table__th">CONTACTO</th>
-            <th className="survey-table__th">GÉNERO</th>
-            <th className="survey-table__th">EDAD</th>
-            <th className="survey-table__th">UBICACIÓN</th>
-            <th className="survey-table__th">FECHA</th>
-            <th className="survey-table__th">ACCIONES</th>
-          </tr>
-        </thead>
-        <tbody className="survey-table__tbody">
-          {currentSurveys.map((survey) => (
+        {currentSurveys.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state__icon">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <h3 className="empty-state__title">No hay encuestas disponibles</h3>
+            <p className="empty-state__description">
+              Aún no se han registrado encuestas. Comienza creando una nueva encuesta.
+            </p>
+          </div>
+        ) : (
+          <table className="survey-table__table">
+            <thead className="survey-table__thead">
+              <tr>
+                <th className="survey-table__th">ENCUESTADO</th>
+                <th className="survey-table__th">IDENTIFICACIÓN</th>
+                <th className="survey-table__th">CONTACTO</th>
+                <th className="survey-table__th">GÉNERO</th>
+                <th className="survey-table__th">EDAD</th>
+                <th className="survey-table__th">UBICACIÓN</th>
+                <th className="survey-table__th">FECHA</th>
+                <th className="survey-table__th">ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody className="survey-table__tbody">
+              {currentSurveys.map((survey) => (
             <tr key={survey.id} className="survey-table__row">
               <td className="survey-table__td survey-table__td--respondent">
                 <div className="respondent">
@@ -113,7 +126,7 @@ export function SurveyTable({
               </td>
               <td className="survey-table__td">
                 <div className="location-info">
-                  {survey.city && <span className="location-city">📍 {survey.city}</span>}
+                  {survey.city && <span className="location-city">{survey.city}</span>}
                   {survey.neighborhood && <span className="location-neighborhood">{survey.neighborhood}</span>}
                   {survey.stratum && <span className="location-stratum">Estrato {survey.stratum}</span>}
                   {!survey.city && !survey.neighborhood && <span>N/A</span>}
@@ -130,20 +143,23 @@ export function SurveyTable({
                 </button>
               </td>
             </tr>
-          ))}
-        </tbody>
-      </table>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
-      <div className="survey-table__footer">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageChange={handlePageChange}
-        />
-      </div>
+      {currentSurveys.length > 0 && (
+        <div className="survey-table__footer">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
     </div>
   )
 }

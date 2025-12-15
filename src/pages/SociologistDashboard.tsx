@@ -90,10 +90,14 @@ export default function SociologistDashboard() {
 
   const handleLogout = async () => {
     try {
-      // await logout()
+      // Limpiar localStorage
+      localStorage.removeItem('soci_token')
+      localStorage.removeItem('soci_user')
+      
+      // Navegar al login
       navigate('/login')
-    } catch {
-      // Error al cerrar sesión
+    } catch (err) {
+      console.error('Error al cerrar sesión:', err)
     }
   }
 
@@ -138,7 +142,6 @@ export default function SociologistDashboard() {
           <div className="dashboard__header-actions-group">
             {!isOnline && (
               <div className="offline-indicator">
-                <span className="offline-indicator__icon">📴</span>
                 <span className="offline-indicator__text">Sin conexión</span>
               </div>
             )}
