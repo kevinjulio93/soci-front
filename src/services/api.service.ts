@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Servicio de API - Abstracción de comunicación con backend
  * Principio: Single Responsibility (solo maneja HTTP)
@@ -5,6 +6,27 @@
  */
 
 import type { LoginCredentials, LoginResponse } from '../types'
+import {
+  CreateRespondentResponse,
+  GetRespondentsResponse,
+  GetRespondentResponse,
+  UpdateRespondentResponse,
+  DeleteRespondentResponse,
+  UploadAudioResponse,
+  GetSocializersResponse,
+  GetSocializerResponse,
+  CreateSocializerResponse,
+  UpdateSocializerResponse,
+  DeleteSocializerResponse,
+  GetRolesResponse,
+  RespondentData,
+  SocializerData,
+  RoleData,
+  CreateRespondentRequest,
+  UpdateRespondentRequest,
+  CreateSocializerRequest,
+  UpdateSocializerRequest,
+} from '../models/ApiResponses'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://82f60cf02a72.ngrok-free.app/api/v1'
 
@@ -72,127 +94,49 @@ class ApiService {
     })
   }
 
-  async createRespondent(data: {
-    fullName: string
-    idType: string
-    identification: string
-    email?: string
-    phone?: string
-    address?: string
-    gender?: string
-    ageRange?: string
-    region?: string
-    department?: string
-    city?: string
-    stratum?: string
-    neighborhood?: string
-  }): Promise<{ 
-    message: string
-    data: {
-      _id: string
-      fullName: string
-      idType: string
-      identification: string
-      email?: string
-      phone?: string
-      address?: string
-      gender?: string
-      ageRange?: string
-      region?: string
-      department?: string
-      city?: string
-      stratum?: number
-      neighborhood?: string
-      status: string
-      createdAt: string
-      updatedAt: string
-      __v: number
-    }
-  }> {
-    return this.request('/respondents', {
+  async createRespondent(data: CreateRespondentRequest): Promise<CreateRespondentResponse> {
+    const response = await this.request<{ message: string; data: any }>('/respondents', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    
+    return new CreateRespondentResponse(response.message, new RespondentData(response.data))
   }
 
-  async getRespondents(page: number = 1, perPage: number = 10): Promise<{
-    currentPage: number
-    itemsPerPage: number
-    totalItems: number
-    totalPages: number
-    data: Array<{
-      _id: string
-      fullName: string
-      idType: string
-      identification: string
-      email?: string
-      phone?: string
-      address?: string
-      gender?: string
-      ageRange?: string
-      region?: string
-      department?: string
-      city?: string
-      stratum?: number
-      neighborhood?: string
-      status: string
-      createdAt: string
-      updatedAt: string
-    }>
-  }> {
-    return this.request(`/respondents?page=${page}&perPage=${perPage}`, {
+  async getRespondents(page: number = 1, perPage: number = 10): Promise<GetRespondentsResponse> {
+    const response = await this.request<any>(`/respondents?page=${page}&perPage=${perPage}`, {
       method: 'GET',
     })
+    
+    const respondents = response.data.map((item: any) => new RespondentData(item))
+    
+    return new GetRespondentsResponse(
+      response.currentPage,
+      response.itemsPerPage,
+      response.totalItems,
+      response.totalPages,
+      respondents
+    )
   }
 
-  async getRespondentById(id: string): Promise<{
-    data: {
-      _id: string
-      fullName: string
-      idType: string
-      identification: string
-      email?: string
-      phone?: string
-      address?: string
-      gender?: string
-      ageRange?: string
-      region?: string
-      department?: string
-      city?: string
-      stratum?: number
-      neighborhood?: string
-      status: string
-      createdAt: string
-      updatedAt: string
-    }
-  }> {
-    return this.request(`/respondents/${id}`, {
+  async getRespondentById(id: string): Promise<GetRespondentResponse> {
+    const response = await this.request<any>(`/respondents/${id}`, {
       method: 'GET',
     })
+    
+    return new GetRespondentResponse(new RespondentData(response.data))
   }
 
-  async updateRespondent(id: string, data: {
-    fullName?: string
-    idType?: string
-    identification?: string
-    email?: string
-    phone?: string
-    address?: string
-    gender?: string
-    ageRange?: string
-    region?: string
-    department?: string
-    city?: string
-    stratum?: string
-    neighborhood?: string
-  }): Promise<{ id: string; message: string }> {
-    return this.request(`/respondents/${id}`, {
+  async updateRespondent(id: string, data: UpdateRespondentRequest): Promise<UpdateRespondentResponse> {
+    const response = await this.request<any>(`/respondents/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    
+    return new UpdateRespondentResponse(response.message, new RespondentData(response.data))
   }
 
-  async uploadAudio(respondentId: string, audioBlob: Blob): Promise<{ message: string; audioUrl: string }> {
+  async uploadAudio(respondentId: string, audioBlob: Blob): Promise<UploadAudioResponse> {
     const token = localStorage.getItem('soci_token')
     const formData = new FormData()
     formData.append('audio', audioBlob, `recording-${respondentId}-${Date.now()}.webm`)
@@ -216,144 +160,66 @@ class ApiService {
       throw error
     }
 
-    return await response.json()
+    const result = await response.json()
+    return new UploadAudioResponse(result.message, { audioUrl: result.audioUrl })
   }
 
   // =============================================
   // SOCIALIZERS ENDPOINTS
   // =============================================
 
-  async getSocializers(page: number = 1, perPage: number = 10): Promise<{
-    currentPage: number
-    itemsPerPage: number
-    totalItems: number
-    totalPages: number
-    data: Array<{
-      _id: string
-      fullName: string
-      idNumber: string
-      location: {
-        lat: number
-        long: number
-      }
-      status: 'enabled' | 'disabled'
-      user: {
-        _id: string
-        email: string
-        role: {
-          _id: string
-          role: string
-        }
-      }
-      createdAt: string
-      updatedAt: string
-    }>
-  }> {
-    return this.request(`/socializers?page=${page}&perPage=${perPage}`)
+  async getSocializers(page: number = 1, perPage: number = 10): Promise<GetSocializersResponse> {
+    const response = await this.request<any>(`/socializers?page=${page}&perPage=${perPage}`)
+    
+    const socializers = response.data.map((item: any) => new SocializerData(item))
+    
+    return new GetSocializersResponse(
+      response.currentPage,
+      response.itemsPerPage,
+      response.totalItems,
+      response.totalPages,
+      socializers
+    )
   }
 
-  async getSocializer(id: string): Promise<{
-    _id: string
-    fullName: string
-    idNumber: string
-    location: {
-      lat: number
-      long: number
-    }
-    status: 'enabled' | 'disabled'
-    user: {
-      _id: string
-      email: string
-      role: {
-        _id: string
-        role: string
-      }
-    }
-    createdAt: string
-    updatedAt: string
-  }> {
-    return this.request(`/socializers/${id}`)
+  async getSocializer(id: string): Promise<GetSocializerResponse> {
+    const response = await this.request<any>(`/socializers/${id}`)
+    
+    return new GetSocializerResponse(new SocializerData(response))
   }
 
-  async createSocializer(data: {
-    fullName: string
-    idNumber: string
-    email: string
-    password: string
-    roleId: string
-    location?: {
-      lat: number
-      long: number
-    }
-    status?: 'enabled' | 'disabled'
-  }): Promise<{
-    message: string
-    data: {
-      _id: string
-      fullName: string
-      idNumber: string
-      location: {
-        lat: number
-        long: number
-      }
-      status: string
-      createdAt: string
-      updatedAt: string
-    }
-  }> {
-    return this.request('/socializers', {
+  async createSocializer(data: CreateSocializerRequest): Promise<CreateSocializerResponse> {
+    const response = await this.request<any>('/socializers', {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    
+    return new CreateSocializerResponse(response.message, new SocializerData(response.data))
   }
 
-  async updateSocializer(id: string, data: {
-    fullName?: string
-    idNumber?: string
-    email?: string
-    password?: string
-    roleId?: string
-    location?: {
-      lat: number
-      long: number
-    }
-    status?: 'enabled' | 'disabled'
-  }): Promise<{
-    message: string
-    data: {
-      _id: string
-      fullName: string
-      idNumber: string
-      location: {
-        lat: number
-        long: number
-      }
-      status: string
-      updatedAt: string
-    }
-  }> {
-    return this.request(`/socializers/${id}`, {
+  async updateSocializer(id: string, data: UpdateSocializerRequest): Promise<UpdateSocializerResponse> {
+    const response = await this.request<any>(`/socializers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+    
+    return new UpdateSocializerResponse(response.message, new SocializerData(response.data))
   }
 
-  async deleteSocializer(id: string): Promise<{
-    message: string
-  }> {
-    return this.request(`/socializers/${id}`, {
+  async deleteSocializer(id: string): Promise<DeleteSocializerResponse> {
+    const response = await this.request<any>(`/socializers/${id}`, {
       method: 'DELETE',
     })
+    
+    return new DeleteSocializerResponse(response.message)
   }
 
-  async getRoles(): Promise<{
-    data: Array<{
-      _id: string
-      role: string
-      status: string
-    }>
-  }> {
-    return this.request('/roles')
+  async getRoles(): Promise<GetRolesResponse> {
+    const response = await this.request<any>('/roles')
+    
+    const roles = response.data.map((item: any) => new RoleData(item))
+    
+    return new GetRolesResponse(roles)
   }
 }
 

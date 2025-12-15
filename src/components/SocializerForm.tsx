@@ -4,17 +4,11 @@
 
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import type { SocializerFormData, RoleOption } from '../types'
+import type { RoleOption } from '../types'
+import { SocializerFormData } from '../models/FormData'
 import { apiService } from '../services/api.service'
+import type { SocializerFormProps } from './types'
 import '../styles/SurveyForm.scss'
-
-interface SocializerFormProps {
-  onSubmit: (data: SocializerFormData) => Promise<void>
-  isLoading?: boolean
-  error?: string | null
-  initialData?: Partial<SocializerFormData> | null
-  isEditMode?: boolean
-}
 
 export function SocializerForm({
   onSubmit,
@@ -30,16 +24,9 @@ export function SocializerForm({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<SocializerFormData>({
+  } = useForm<ReturnType<SocializerFormData['toFormData']>>({
     mode: 'onBlur',
-    defaultValues: initialData || {
-      fullName: '',
-      idNumber: '',
-      email: '',
-      password: '',
-      roleId: '',
-      status: 'enabled',
-    },
+    defaultValues: initialData || new SocializerFormData().toFormData(),
   })
 
   useEffect(() => {
@@ -49,7 +36,13 @@ export function SocializerForm({
   const loadRoles = async () => {
     try {
       const response = await apiService.getRoles()
-      setRoles(response.data.filter(role => role.status === 'enabled'))
+      // Usar el método helper de la clase GetRolesResponse
+      const activeRoles = response.getActiveRoles()
+      setRoles(activeRoles.map(role => ({
+        _id: role._id,
+        role: role.role,
+        status: role.status
+      })))
     } catch (err) {
       console.error('Error loading roles:', err)
     } finally {

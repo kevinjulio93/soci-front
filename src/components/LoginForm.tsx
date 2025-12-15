@@ -5,30 +5,18 @@
  */
 
 import { useForm } from 'react-hook-form'
+import { LoginFormData } from '../models/FormData'
+import type { LoginFormProps } from './types'
 import '../styles/Login.scss'
-
-interface LoginFormData {
-  email: string
-  password: string
-}
-
-interface LoginFormProps {
-  onSubmit: (data: LoginFormData) => Promise<void>
-  isLoading?: boolean
-  error?: string | null
-}
 
 export function LoginForm({ onSubmit, isLoading = false, error }: LoginFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
+  } = useForm<ReturnType<LoginFormData['toFormData']>>({
     mode: 'onBlur',
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: new LoginFormData().toFormData(),
   })
 
   return (

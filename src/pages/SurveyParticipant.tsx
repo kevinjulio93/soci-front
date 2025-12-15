@@ -61,27 +61,29 @@ export default function SurveyParticipant() {
   }, [])
 
   // Cargar datos del respondent si está en modo edición
-  useEffect(() => {
-    const loadRespondentData = async () => {
-      if (editMode && respondentId) {
-        try {
-          setIsLoadingData(true)
-          const response = await apiService.getRespondentById(respondentId)
-          
-          // Usar clase Respondent para transformar datos
-          const respondent = Respondent.fromDTO(response.data)
-          setInitialData(respondent.toFormData())
-        } catch (err) {
-          console.log(err)
-        } finally {
-          setIsLoadingData(false)
-        }
-      } else {
-        setIsLoadingData(false)
-      }
+  const loadRespondentData = async () => {
+    if (!editMode || !respondentId) {
+      setIsLoadingData(false)
+      return
     }
 
+    try {
+      setIsLoadingData(true)
+      const response = await apiService.getRespondentById(respondentId)
+      
+      // Usar clase Respondent para transformar datos
+      const respondent = Respondent.fromDTO(response.data)
+      setInitialData(respondent.toFormData())
+    } catch (err) {
+      console.error('Error loading respondent data:', err)
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
+
+  useEffect(() => {
     loadRespondentData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, respondentId])
 
   // Iniciar grabación cuando se llega desde "Nueva Encuesta"

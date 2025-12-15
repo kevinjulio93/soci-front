@@ -11,31 +11,9 @@ import {
   AGE_RANGE_OPTIONS,
   STRATUM_OPTIONS,
 } from '../constants/formOptions'
+import { Respondent } from '../models/Respondent'
+import type { SurveyFormData, SurveyFormProps } from './types'
 import '../styles/SurveyForm.scss'
-
-interface SurveyFormData {
-  fullName: string
-  idType: 'CC' | 'TI' | 'CE' | 'PA' | 'RC' | 'NIT' | ''
-  identification: string
-  email: string
-  phone: string
-  address: string
-  gender: 'Masculino' | 'Femenino' | 'Otro' | 'Prefiero no decir' | ''
-  ageRange: '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65+' | ''
-  region: string
-  department: string
-  city: string
-  stratum: '1' | '2' | '3' | '4' | '5' | '6' | ''
-  neighborhood: string
-}
-
-interface SurveyFormProps {
-  videoUrl?: string
-  onSubmit: (data: SurveyFormData) => Promise<void>
-  isLoading?: boolean
-  error?: string | null
-  initialData?: SurveyFormData | null
-}
 
 export function SurveyForm({
   videoUrl,
@@ -50,21 +28,7 @@ export function SurveyForm({
     formState: { errors },
   } = useForm<SurveyFormData>({
     mode: 'onBlur',
-    values: initialData || {
-      fullName: '',
-      idType: '',
-      identification: '',
-      email: '',
-      phone: '',
-      address: '',
-      gender: '',
-      ageRange: '',
-      region: '',
-      department: '',
-      city: '',
-      stratum: '',
-      neighborhood: '',
-    },
+    values: initialData || new Respondent().toFormData(),
   })
 
   return (

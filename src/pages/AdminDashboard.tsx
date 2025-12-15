@@ -111,6 +111,21 @@ export default function AdminDashboard() {
     setFormError(null)
   }
 
+  // Obtener datos iniciales del formulario
+  const getInitialFormData = () => {
+    if (!editingSocializer) return undefined
+    
+    return {
+      fullName: editingSocializer.fullName,
+      idNumber: editingSocializer.idNumber,
+      email: editingSocializer.user?.email || '',
+      password: '',
+      roleId: editingSocializer.user?.role?._id || '',
+      location: editingSocializer.location,
+      status: editingSocializer.status,
+    }
+  }
+
   return (
     <div className="dashboard-layout">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -155,15 +170,7 @@ export default function AdminDashboard() {
                 onSubmit={handleSubmit}
                 isLoading={formLoading}
                 error={formError}
-                initialData={editingSocializer ? {
-                  fullName: editingSocializer.fullName,
-                  idNumber: editingSocializer.idNumber,
-                  email: editingSocializer.user?.email || '',
-                  password: '',
-                  roleId: editingSocializer.user?.role?._id || '',
-                  location: editingSocializer.location,
-                  status: editingSocializer.status,
-                } : undefined}
+                initialData={getInitialFormData()}
                 isEditMode={!!editingSocializer}
               />
               <button
