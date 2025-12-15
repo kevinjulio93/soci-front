@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react'
 import { DashboardHeader, SurveyTable, PageHeader } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api.service'
-import { useSyncStatus } from '../hooks'
+import { useSyncStatus, useGeolocationTracking } from '../hooks'
 import type { Survey } from '../types'
 import '../styles/Dashboard.scss'
 
@@ -17,6 +17,13 @@ export default function SociologistDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { isOnline, pendingCount, isSyncing, manualSync } = useSyncStatus()
+  
+  // Tracking de geolocalización para socializadores
+  const { isTracking, error: geoError, permissionState } = useGeolocationTracking({
+    enabled: true,
+    intervalMs: 30000, // 30 segundos para pruebas
+  })
+  
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
@@ -118,7 +125,7 @@ export default function SociologistDashboard() {
 
   const handleNewSurvey = () => {
     // Navegar a la página de nueva encuesta, la grabación iniciará allí
-    navigate('/survey/4092/participant', { 
+    navigate('/survey/participant', { 
       state: { 
         startRecording: true,
         editMode: false
@@ -140,6 +147,18 @@ export default function SociologistDashboard() {
           description="Gestione los registros y comience nuevas sesiones de recolección de datos."
         >
           <div className="dashboard__header-actions-group">
+            {/* Indicador de tracking GPS */}
+            {isTracking && (
+              <div className="location-indicator">
+                <span className="location-indicator__icon">📍</span>
+                <span className="location-indicator__text">GPS Activo</span>
+              </div>
+            )}
+            {geoError && permissionState !== 'denied' && (
+              <div className="location-error">
+                <span className="location-error__text">{geoError}</span>
+              </div>
+            )}
             {!isOnline && (
               <div className="offline-indicator">
                 <span className="offline-indicator__text">Sin conexión</span>

@@ -323,6 +323,72 @@
 }
 
 // =============================================
+// LOCATION INDICATOR - BEM
+// =============================================
+
+// Block: .location-indicator
+.location-indicator {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+
+  // Element: .location-indicator__icon
+  &__icon {
+    font-size: $font-size-lg;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  // Element: .location-indicator__text
+  &__text {
+    font-size: $font-size-sm;
+    color: #4CAF50;
+    font-weight: $font-weight-semibold;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+// Block: .location-error
+.location-error {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background-color: rgba(244, 67, 54, 0.1);
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+
+  // Element: .location-error__text
+  &__text {
+    font-size: $font-size-sm;
+    color: #f44336;
+    font-weight: $font-weight-semibold;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+// Animación de pulso para el ícono de GPS
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// =============================================
 // FEATURE CARDS - BEM
 // =============================================
 

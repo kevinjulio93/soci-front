@@ -11,7 +11,6 @@ import {
   GetRespondentsResponse,
   GetRespondentResponse,
   UpdateRespondentResponse,
-  DeleteRespondentResponse,
   UploadAudioResponse,
   GetSocializersResponse,
   GetSocializerResponse,
@@ -220,6 +219,18 @@ class ApiService {
     const roles = response.data.map((item: any) => new RoleData(item))
     
     return new GetRolesResponse(roles)
+  }
+
+  async updateLocation(data: { userId: string; latitude: number; longitude: number; accuracy: number }): Promise<{ success: boolean; message: string }> {
+    const response = await this.request<any>('/locations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    
+    return {
+      success: response.success ?? true,
+      message: response.message ?? 'Ubicación actualizada correctamente',
+    }
   }
 }
 

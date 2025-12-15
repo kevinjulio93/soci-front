@@ -1,9 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Modelos de respuestas de API
  * Usar clases para crear instancias con métodos helper
  */
-
-import type { Socializer, RoleOption } from '../types'
 
 // =============================================
 // API REQUEST TYPES
