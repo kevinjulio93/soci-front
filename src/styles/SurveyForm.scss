@@ -2,7 +2,8 @@
 // SURVEY FORM - BEM
 // =============================================
 
-@import './variables';
+@use './variables' as *;
+@use 'sass:color';
 
 .survey-form {
   min-height: 100vh;
@@ -155,7 +156,7 @@
     margin-bottom: $spacing-md;
 
     &:hover:not(:disabled) {
-      background: darken($color-danger, 10%);
+      background: color.adjust($color-danger, $lightness: -10%);
       box-shadow: 0 8px 24px rgba(220, 53, 69, 0.3);
     }
   }

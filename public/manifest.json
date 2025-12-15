@@ -1,0 +1,18 @@
+{
+  "name": "Soci App",
+  "short_name": "Soci",
+  "description": "Aplicación de encuestas sociológicas",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#48bb78",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "scope": "/"
+}
