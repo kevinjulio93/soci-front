@@ -4,6 +4,9 @@
  */
 
 export const ROUTES = {
+  // Raíz
+  ROOT: '/',
+  
   // Autenticación
   LOGIN: '/login',
   
@@ -11,8 +14,14 @@ export const ROUTES = {
   DASHBOARD: '/sociologist/dashboard',
   ADMIN_DASHBOARD: '/admin/dashboard',
   
+  // Admin
+  ADMIN_SOCIALIZERS: '/admin/socializers',
+  ADMIN_SOCIALIZERS_NEW: '/admin/socializers/new',
+  ADMIN_SOCIALIZERS_EDIT: (id: string) => `/admin/socializers/edit/${id}`,
+  ADMIN_USERS: '/admin/users',
+  ADMIN_REPORTS: '/admin/reports',
+  ADMIN_SETTINGS: '/admin/settings',
+  
   // Encuestas
-  SURVEY_PARTICIPANT: '/survey',
-  NEW_SURVEY: '/survey/new',
-  EDIT_SURVEY: '/survey/edit',
+  SURVEY_PARTICIPANT: (surveyId: string) => `/survey/${surveyId}/participant`,
 } as const

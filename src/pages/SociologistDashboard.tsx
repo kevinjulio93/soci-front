@@ -10,6 +10,7 @@ import { DashboardHeader, SurveyTable, PageHeader } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api.service'
 import { useSyncStatus, useGeolocationTracking } from '../hooks'
+import { ROUTES } from '../constants'
 import type { Survey } from '../types'
 import '../styles/Dashboard.scss'
 
@@ -102,7 +103,7 @@ export default function SociologistDashboard() {
       localStorage.removeItem('soci_user')
       
       // Navegar al login
-      navigate('/login')
+      navigate(ROUTES.LOGIN)
     } catch (err) {
       console.error('Error al cerrar sesión:', err)
     }
@@ -114,7 +115,7 @@ export default function SociologistDashboard() {
 
   const handleViewSurveyDetails = (respondentId: string) => {
     // Navegar al formulario en modo edición
-    navigate(`/survey/${respondentId}/participant`, { 
+    navigate(ROUTES.SURVEY_PARTICIPANT(respondentId), { 
       state: { 
         startRecording: false,
         editMode: true,
@@ -125,7 +126,7 @@ export default function SociologistDashboard() {
 
   const handleNewSurvey = () => {
     // Navegar a la página de nueva encuesta, la grabación iniciará allí
-    navigate('/survey/participant', { 
+    navigate(ROUTES.SURVEY_PARTICIPANT('new'), { 
       state: { 
         startRecording: true,
         editMode: false

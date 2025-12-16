@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /**
  * Hook para tracking de geolocalización en tiempo real
  * Solo para usuarios con rol de socializador

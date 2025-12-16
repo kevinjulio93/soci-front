@@ -10,3 +10,29 @@ export const EXTERNAL_URLS = {
   // API
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://82f60cf02a72.ngrok-free.app/api/v1',
 } as const
+
+/**
+ * API Endpoints - Constantes de endpoints de API
+ * Centraliza todas las rutas de API
+ */
+export const API_ENDPOINTS = {
+  // Auth
+  AUTH_LOGIN: '/auth/login',
+  AUTH_LOGOUT: '/auth/logout',
+  
+  // Respondents
+  RESPONDENTS: '/respondents',
+  RESPONDENT_BY_ID: (id: string) => `/respondents/${id}`,
+  UPLOAD_AUDIO: '/respondents/upload-audio',
+  
+  // Socializers
+  SOCIALIZERS: '/socializers',
+  SOCIALIZER_BY_ID: (id: string) => `/socializers/${id}`,
+  
+  // Roles
+  ROLES: '/roles',
+  
+  // Location
+  LOCATIONS: '/locations',
+  LOCATION_LATEST: (userId: string) => `/locations/${userId}/latest`,
+} as const

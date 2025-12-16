@@ -5,7 +5,14 @@
  * Principio: Dependency Inversion (las dependencias apuntan a abstracciones)
  */
 
-import type { LoginCredentials, LoginResponse } from '../types'
+import type {
+  LoginCredentials,
+  LoginResponse,
+  CreateRespondentRequest,
+  UpdateRespondentRequest,
+  CreateSocializerRequest,
+  UpdateSocializerRequest,
+} from '../types'
 import {
   CreateRespondentResponse,
   GetRespondentsResponse,
@@ -21,13 +28,10 @@ import {
   RespondentData,
   SocializerData,
   RoleData,
-  CreateRespondentRequest,
-  UpdateRespondentRequest,
-  CreateSocializerRequest,
-  UpdateSocializerRequest,
 } from '../models/ApiResponses'
+import { EXTERNAL_URLS, API_ENDPOINTS } from '../constants'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://82f60cf02a72.ngrok-free.app/api/v1'
+const API_BASE_URL = EXTERNAL_URLS.API_BASE_URL
 
 interface ApiError {
   message: string
@@ -81,20 +85,20 @@ class ApiService {
   }
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    return this.request<LoginResponse>('/auth/login', {
+    return this.request<LoginResponse>(API_ENDPOINTS.AUTH_LOGIN, {
       method: 'POST',
       body: JSON.stringify(credentials),
     })
   }
 
   async logout(): Promise<void> {
-    return this.request<void>('/auth/logout', {
+    return this.request<void>(API_ENDPOINTS.AUTH_LOGOUT, {
       method: 'POST',
     })
   }
 
   async createRespondent(data: CreateRespondentRequest): Promise<CreateRespondentResponse> {
-    const response = await this.request<{ message: string; data: any }>('/respondents', {
+    const response = await this.request<{ message: string; data: any }>(API_ENDPOINTS.RESPONDENTS, {
       method: 'POST',
       body: JSON.stringify(data),
     })
@@ -103,7 +107,7 @@ class ApiService {
   }
 
   async getRespondents(page: number = 1, perPage: number = 10): Promise<GetRespondentsResponse> {
-    const response = await this.request<any>(`/respondents?page=${page}&perPage=${perPage}`, {
+    const response = await this.request<any>(`${API_ENDPOINTS.RESPONDENTS}?page=${page}&perPage=${perPage}`, {
       method: 'GET',
     })
     
@@ -119,7 +123,7 @@ class ApiService {
   }
 
   async getRespondentById(id: string): Promise<GetRespondentResponse> {
-    const response = await this.request<any>(`/respondents/${id}`, {
+    const response = await this.request<any>(API_ENDPOINTS.RESPONDENT_BY_ID(id), {
       method: 'GET',
     })
     
@@ -127,7 +131,7 @@ class ApiService {
   }
 
   async updateRespondent(id: string, data: UpdateRespondentRequest): Promise<UpdateRespondentResponse> {
-    const response = await this.request<any>(`/respondents/${id}`, {
+    const response = await this.request<any>(API_ENDPOINTS.RESPONDENT_BY_ID(id), {
       method: 'PUT',
       body: JSON.stringify(data),
     })
@@ -141,7 +145,7 @@ class ApiService {
     formData.append('audio', audioBlob, `recording-${respondentId}-${Date.now()}.webm`)
     formData.append('respondentId', respondentId)
     
-    const url = `${this.baseUrl}/respondents/upload-audio`
+    const url = `${this.baseUrl}${API_ENDPOINTS.UPLOAD_AUDIO}`
     
     const response = await fetch(url, {
       method: 'POST',
@@ -168,7 +172,7 @@ class ApiService {
   // =============================================
 
   async getSocializers(page: number = 1, perPage: number = 10): Promise<GetSocializersResponse> {
-    const response = await this.request<any>(`/socializers?page=${page}&perPage=${perPage}`)
+    const response = await this.request<any>(`${API_ENDPOINTS.SOCIALIZERS}?page=${page}&perPage=${perPage}`)
     
     const socializers = response.data.map((item: any) => new SocializerData(item))
     
@@ -182,13 +186,13 @@ class ApiService {
   }
 
   async getSocializer(id: string): Promise<GetSocializerResponse> {
-    const response = await this.request<any>(`/socializers/${id}`)
+    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZER_BY_ID(id))
     
-    return new GetSocializerResponse(new SocializerData(response))
+    return new GetSocializerResponse(new SocializerData(response.data))
   }
 
   async createSocializer(data: CreateSocializerRequest): Promise<CreateSocializerResponse> {
-    const response = await this.request<any>('/socializers', {
+    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZERS, {
       method: 'POST',
       body: JSON.stringify(data),
     })
@@ -197,7 +201,7 @@ class ApiService {
   }
 
   async updateSocializer(id: string, data: UpdateSocializerRequest): Promise<UpdateSocializerResponse> {
-    const response = await this.request<any>(`/socializers/${id}`, {
+    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZER_BY_ID(id), {
       method: 'PUT',
       body: JSON.stringify(data),
     })
@@ -206,7 +210,7 @@ class ApiService {
   }
 
   async deleteSocializer(id: string): Promise<DeleteSocializerResponse> {
-    const response = await this.request<any>(`/socializers/${id}`, {
+    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZER_BY_ID(id), {
       method: 'DELETE',
     })
     
@@ -214,7 +218,7 @@ class ApiService {
   }
 
   async getRoles(): Promise<GetRolesResponse> {
-    const response = await this.request<any>('/roles')
+    const response = await this.request<any>(API_ENDPOINTS.ROLES)
     
     const roles = response.data.map((item: any) => new RoleData(item))
     
@@ -222,7 +226,7 @@ class ApiService {
   }
 
   async updateLocation(data: { userId: string; latitude: number; longitude: number; accuracy: number }): Promise<{ success: boolean; message: string }> {
-    const response = await this.request<any>('/locations', {
+    const response = await this.request<any>(API_ENDPOINTS.LOCATIONS, {
       method: 'POST',
       body: JSON.stringify(data),
     })
@@ -230,6 +234,22 @@ class ApiService {
     return {
       success: response.success ?? true,
       message: response.message ?? 'Ubicación actualizada correctamente',
+    }
+  }
+
+  async getLatestLocation(userId: string): Promise<{ lat: number; long: number; timestamp: string; accuracy?: number }> {
+    const response = await this.request<any>(API_ENDPOINTS.LOCATION_LATEST(userId), {
+      method: 'GET',
+    })
+    
+    // La API devuelve coordinates en formato [longitude, latitude] (GeoJSON format)
+    const [longitude, latitude] = response.data.location.coordinates
+    
+    return {
+      lat: latitude,
+      long: longitude,
+      timestamp: response.data.timestamp,
+      accuracy: response.data.accuracy,
     }
   }
 }

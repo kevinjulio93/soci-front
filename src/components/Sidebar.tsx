@@ -4,6 +4,7 @@
 
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { ROUTES } from '../constants'
 import '../styles/Sidebar.scss'
 
 interface SidebarProps {
@@ -52,8 +53,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
         <nav className="sidebar__nav">
           <Link
-            to="/admin/dashboard"
-            className={`sidebar__link ${isActive('/admin/dashboard') ? 'sidebar__link--active' : ''}`}
+            to={ROUTES.ADMIN_DASHBOARD}
+            className={`sidebar__link ${isActive(ROUTES.ADMIN_DASHBOARD) ? 'sidebar__link--active' : ''}`}
             onClick={onClose}
           >
             <svg className="sidebar__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -63,8 +64,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </Link>
 
           <Link
-            to="/admin/socializers"
-            className={`sidebar__link ${isActive('/admin/socializers') ? 'sidebar__link--active' : ''}`}
+            to={ROUTES.ADMIN_SOCIALIZERS}
+            className={`sidebar__link ${isActive(ROUTES.ADMIN_SOCIALIZERS) ? 'sidebar__link--active' : ''}`}
             onClick={onClose}
           >
             <svg className="sidebar__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -74,8 +75,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </Link>
 
           <Link
-            to="/admin/users"
-            className={`sidebar__link ${isActive('/admin/users') ? 'sidebar__link--active' : ''}`}
+            to={ROUTES.ADMIN_USERS}
+            className={`sidebar__link ${isActive(ROUTES.ADMIN_USERS) ? 'sidebar__link--active' : ''}`}
             onClick={onClose}
           >
             <svg className="sidebar__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,8 +86,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </Link>
 
           <Link
-            to="/admin/reports"
-            className={`sidebar__link ${isActive('/admin/reports') ? 'sidebar__link--active' : ''}`}
+            to={ROUTES.ADMIN_REPORTS}
+            className={`sidebar__link ${isActive(ROUTES.ADMIN_REPORTS) ? 'sidebar__link--active' : ''}`}
             onClick={onClose}
           >
             <svg className="sidebar__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -96,8 +97,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </Link>
 
           <Link
-            to="/admin/settings"
-            className={`sidebar__link ${isActive('/admin/settings') ? 'sidebar__link--active' : ''}`}
+            to={ROUTES.ADMIN_SETTINGS}
+            className={`sidebar__link ${isActive(ROUTES.ADMIN_SETTINGS) ? 'sidebar__link--active' : ''}`}
             onClick={onClose}
           >
             <svg className="sidebar__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">

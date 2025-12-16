@@ -24,10 +24,18 @@ export function SocializerForm({
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<ReturnType<SocializerFormData['toFormData']>>({
     mode: 'onBlur',
     defaultValues: initialData || new SocializerFormData().toFormData(),
   })
+
+  // Actualizar valores del formulario cuando cambien los datos iniciales
+  useEffect(() => {
+    if (initialData) {
+      reset(initialData)
+    }
+  }, [initialData, reset])
 
   useEffect(() => {
     loadRoles()

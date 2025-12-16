@@ -3,12 +3,18 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Sidebar, SocializerForm, SocializerTable } from '../components'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { Sidebar, SocializerForm, SocializerTable, LocationModal, ConfirmModal } from '../components'
 import { apiService } from '../services/api.service'
+import { ROUTES } from '../constants'
 import type { Socializer, SocializerFormData } from '../types'
 import '../styles/Dashboard.scss'
 
 export function SocializerManagement() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { id } = useParams<{ id: string }>()
+  
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [socializers, setSocializers] = useState<Socializer[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -16,10 +22,19 @@ export function SocializerManagement() {
   const [totalItems, setTotalItems] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showForm, setShowForm] = useState(false)
   const [editingSocializer, setEditingSocializer] = useState<Socializer | null>(null)
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [selectedSocializer, setSelectedSocializer] = useState<Socializer | null>(null)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [socializerToDelete, setSocializerToDelete] = useState<{ id: string; name: string } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  
+  // Determinar si estamos en modo formulario
+  const isNewMode = location.pathname === ROUTES.ADMIN_SOCIALIZERS_NEW
+  const isEditMode = location.pathname.includes('/edit/')
+  const showForm = isNewMode || isEditMode
 
   const itemsPerPage = 10
 
@@ -41,11 +56,47 @@ export function SocializerManagement() {
     }
   }
 
+  // Cargar socializador para edición
+  const loadSocializerForEdit = async (socializerId: string) => {
+    try {
+      setFormLoading(true)
+      setFormError(null)
+      const response = await apiService.getSocializer(socializerId)
+      setEditingSocializer(response.data)
+    } catch (err) {
+      console.error('Error loading socializer:', err)
+      setFormError('Error al cargar los datos del socializador')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
   // Cargar al montar y cuando cambie la página
   useEffect(() => {
-    loadSocializers(currentPage)
+    if (!showForm) {
+      loadSocializers(currentPage)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage])
+  }, [currentPage, showForm])
+
+  // Cargar socializador cuando estamos en modo edición
+  useEffect(() => {
+    console.log('[SocializerManagement] useEffect triggered:', { id, isEditMode, isNewMode, pathname: location.pathname })
+    
+    if (isEditMode && id) {
+      console.log('[SocializerManagement] Loading socializer for edit:', id)
+      loadSocializerForEdit(id)
+    } else if (isNewMode) {
+      console.log('[SocializerManagement] New mode - clearing editing socializer')
+      setEditingSocializer(null)
+      setFormError(null)
+    } else if (!showForm) {
+      console.log('[SocializerManagement] List mode - clearing editing socializer')
+      setEditingSocializer(null)
+      setFormError(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, location.pathname])
 
   // Manejar creación/edición
   const handleSubmit = async (data: SocializerFormData) => {
@@ -67,12 +118,8 @@ export function SocializerManagement() {
         await apiService.createSocializer(data)
       }
 
-      // Recargar lista
-      await loadSocializers(1)
-      
-      // Cerrar formulario
-      setShowForm(false)
-      setEditingSocializer(null)
+      // Navegar de vuelta a la lista
+      navigate(ROUTES.ADMIN_SOCIALIZERS)
     } catch (err) {
       console.error('Error saving socializer:', err)
       const error = err as { response?: { data?: { message?: string } } }
@@ -85,25 +132,54 @@ export function SocializerManagement() {
     }
   }
 
-  // Manejar eliminación
-  const handleDelete = async (id: string) => {
+  // Manejar eliminación - abrir modal
+  const handleDelete = (id: string, name: string) => {
+    setSocializerToDelete({ id, name })
+    setDeleteModalOpen(true)
+  }
+
+  // Confirmar eliminación
+  const handleConfirmDelete = async () => {
+    if (!socializerToDelete) return
+
     try {
-      setIsLoading(true)
-      await apiService.deleteSocializer(id)
+      setIsDeleting(true)
+      await apiService.deleteSocializer(socializerToDelete.id)
       await loadSocializers(currentPage)
+      setDeleteModalOpen(false)
+      setSocializerToDelete(null)
     } catch (err) {
       console.error('Error deleting socializer:', err)
       alert('Error al eliminar el socializador')
     } finally {
-      setIsLoading(false)
+      setIsDeleting(false)
     }
+  }
+
+  // Cancelar eliminación
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false)
+    setSocializerToDelete(null)
   }
 
   // Manejar edición
   const handleEdit = (socializer: Socializer) => {
-    setEditingSocializer(socializer)
-    setFormError(null)
-    setShowForm(true)
+    navigate(ROUTES.ADMIN_SOCIALIZERS_EDIT(socializer._id))
+  }
+
+  // Manejar visualización de ubicación
+  const handleViewLocation = (socializer: Socializer) => {
+    if (socializer.user?._id) {
+      setSelectedSocializer(socializer)
+      setLocationModalOpen(true)
+    } else {
+      alert('No se puede obtener la ubicación de este socializador')
+    }
+  }
+
+  const handleCloseLocationModal = () => {
+    setLocationModalOpen(false)
+    setSelectedSocializer(null)
   }
 
   // Manejar cambio de página
@@ -113,28 +189,29 @@ export function SocializerManagement() {
 
   // Abrir formulario para nuevo socializador
   const handleNewSocializer = () => {
-    setEditingSocializer(null)
-    setFormError(null)
-    setShowForm(true)
+    navigate(ROUTES.ADMIN_SOCIALIZERS_NEW)
   }
 
   // Cancelar formulario
   const handleCancelForm = () => {
-    setShowForm(false)
-    setEditingSocializer(null)
-    setFormError(null)
+    navigate(ROUTES.ADMIN_SOCIALIZERS)
   }
 
   // Obtener datos iniciales del formulario
   const getInitialFormData = () => {
     if (!editingSocializer) return undefined
     
+    // Obtener el roleId: puede ser un string o un objeto con _id
+    const roleId = typeof editingSocializer.user?.role === 'string' 
+      ? editingSocializer.user.role 
+      : editingSocializer.user?.role?._id || ''
+    
     return {
       fullName: editingSocializer.fullName,
       idNumber: editingSocializer.idNumber,
       email: editingSocializer.user?.email || '',
       password: '',
-      roleId: editingSocializer.user?.role?._id || '',
+      roleId: roleId,
       location: editingSocializer.location,
       status: editingSocializer.status,
     }
@@ -185,7 +262,7 @@ export function SocializerManagement() {
                 isLoading={formLoading}
                 error={formError}
                 initialData={getInitialFormData()}
-                isEditMode={!!editingSocializer}
+                isEditMode={isEditMode}
               />
               <button
                 className="btn btn--secondary"
@@ -207,11 +284,35 @@ export function SocializerManagement() {
               onPageChange={handlePageChange}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onViewLocation={handleViewLocation}
               isLoading={isLoading}
             />
           )}
         </div>
       </div>
+
+      {/* Modal de ubicación */}
+      {selectedSocializer && (
+        <LocationModal
+          isOpen={locationModalOpen}
+          onClose={handleCloseLocationModal}
+          userId={selectedSocializer.user?._id || ''}
+          socializerName={selectedSocializer.fullName}
+        />
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar Socializador"
+        message={`¿Está seguro de eliminar a ${socializerToDelete?.name || 'este socializador'}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        isLoading={isDeleting}
+        variant="danger"
+      />
     </div>
   )
 }

@@ -343,7 +343,7 @@ export function SurveyForm({
             className="survey-form__button"
             disabled={isLoading}
           >
-            {isLoading ? 'Guardando...' : '➤ Guardar y Continuar'}
+            {isLoading ? 'Guardando...' : 'Guardar'}
           </button>
         </form>
       </div>

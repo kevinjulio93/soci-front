@@ -106,3 +106,65 @@ export interface RoleOption {
   role: string
   status: string
 }
+
+// =============================================
+// API REQUEST TYPES
+// =============================================
+
+export interface CreateRespondentRequest {
+  fullName: string
+  idType: string
+  identification: string
+  email?: string
+  phone?: string
+  address?: string
+  gender?: string
+  ageRange?: string
+  region?: string
+  department?: string
+  city?: string
+  stratum?: string
+  neighborhood?: string
+}
+
+export interface UpdateRespondentRequest {
+  fullName?: string
+  idType?: string
+  identification?: string
+  email?: string
+  phone?: string
+  address?: string
+  gender?: string
+  ageRange?: string
+  region?: string
+  department?: string
+  city?: string
+  stratum?: string
+  neighborhood?: string
+}
+
+export interface CreateSocializerRequest {
+  fullName: string
+  idNumber: string
+  email: string
+  password: string
+  roleId: string
+  location?: {
+    lat: number
+    long: number
+  }
+  status?: 'enabled' | 'disabled'
+}
+
+export interface UpdateSocializerRequest {
+  fullName?: string
+  idNumber?: string
+  email?: string
+  password?: string
+  roleId?: string
+  location?: {
+    lat: number
+    long: number
+  }
+  status?: 'enabled' | 'disabled'
+}

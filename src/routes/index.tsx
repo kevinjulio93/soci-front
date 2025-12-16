@@ -9,19 +9,22 @@ import SociologistDashboard from '../pages/SociologistDashboard'
 import AdminDashboard from '../pages/AdminDashboard'
 import SurveyParticipant from '../pages/SurveyParticipant'
 import { SocializerManagement } from '../pages/SocializerManagement'
+import UserManagement from '../pages/UserManagement'
+import Reports from '../pages/Reports'
 import { ProtectedRoute } from '../components'
+import { ROUTES } from '../constants'
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: ROUTES.ROOT,
     element: <Login />,
   },
   {
-    path: '/login',
+    path: ROUTES.LOGIN,
     element: <Login />,
   },
   {
-    path: '/sociologist/dashboard',
+    path: ROUTES.DASHBOARD,
     element: (
       <ProtectedRoute requireSocializerRole>
         <SociologistDashboard />
@@ -29,7 +32,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/admin/dashboard',
+    path: ROUTES.ADMIN_DASHBOARD,
     element: (
       <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
         <AdminDashboard />
@@ -37,10 +40,42 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: '/admin/socializers',
+    path: ROUTES.ADMIN_SOCIALIZERS,
     element: (
       <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
         <SocializerManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.ADMIN_SOCIALIZERS_NEW,
+    element: (
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+        <SocializerManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin/socializers/edit/:id',
+    element: (
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+        <SocializerManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.ADMIN_USERS,
+    element: (
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+        <UserManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.ADMIN_REPORTS,
+    element: (
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+        <Reports />
       </ProtectedRoute>
     ),
   },

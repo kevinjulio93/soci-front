@@ -21,5 +21,5 @@ export { TITLES, DESCRIPTIONS } from './ui'
 // Rutas
 export { ROUTES } from './routes'
 
-// URLs externas
-export { EXTERNAL_URLS } from './urls'
+// URLs externas y API endpoints
+export { EXTERNAL_URLS, API_ENDPOINTS } from './urls'

@@ -5,68 +5,6 @@
  */
 
 // =============================================
-// API REQUEST TYPES
-// =============================================
-
-export interface CreateRespondentRequest {
-  fullName: string
-  idType: string
-  identification: string
-  email?: string
-  phone?: string
-  address?: string
-  gender?: string
-  ageRange?: string
-  region?: string
-  department?: string
-  city?: string
-  stratum?: string
-  neighborhood?: string
-}
-
-export interface UpdateRespondentRequest {
-  fullName?: string
-  idType?: string
-  identification?: string
-  email?: string
-  phone?: string
-  address?: string
-  gender?: string
-  ageRange?: string
-  region?: string
-  department?: string
-  city?: string
-  stratum?: string
-  neighborhood?: string
-}
-
-export interface CreateSocializerRequest {
-  fullName: string
-  idNumber: string
-  email: string
-  password: string
-  roleId: string
-  location?: {
-    lat: number
-    long: number
-  }
-  status?: 'enabled' | 'disabled'
-}
-
-export interface UpdateSocializerRequest {
-  fullName?: string
-  idNumber?: string
-  email?: string
-  password?: string
-  roleId?: string
-  location?: {
-    lat: number
-    long: number
-  }
-  status?: 'enabled' | 'disabled'
-}
-
-// =============================================
 // BASE RESPONSE CLASSES
 // =============================================
 
@@ -197,7 +135,7 @@ export class SocializerData {
   public _id: string
   public fullName: string
   public idNumber: string
-  public location: {
+  public location?: {
     lat: number
     long: number
   }
@@ -205,10 +143,14 @@ export class SocializerData {
   public user: {
     _id: string
     email: string
-    role: {
+    password?: string
+    role: string | {
       _id: string
       role: string
     }
+    status: string
+    createdAt: string
+    updatedAt: string
   }
   public createdAt: string
   public updatedAt: string
@@ -228,8 +170,12 @@ export class SocializerData {
     return this.status === 'enabled'
   }
 
+  getRoleId(): string {
+    return typeof this.user.role === 'string' ? this.user.role : this.user.role._id
+  }
+
   getRoleName(): string {
-    return this.user.role.role
+    return typeof this.user.role === 'string' ? this.user.role : this.user.role.role
   }
 }
 
