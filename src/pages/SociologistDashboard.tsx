@@ -6,11 +6,11 @@
 
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { DashboardHeader, SurveyTable, PageHeader } from '../components'
+import { DashboardHeader, DataTable, PageHeader } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api.service'
 import { useSyncStatus, useGeolocationTracking } from '../hooks'
-import { ROUTES } from '../constants'
+import { ROUTES, getRespondentsTableColumns } from '../constants'
 import type { Survey } from '../types'
 import '../styles/Dashboard.scss'
 
@@ -182,21 +182,24 @@ export default function SociologistDashboard() {
         </PageHeader>
 
         <section className="dashboard__content">
-          {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem' }}>
-              Cargando encuestados...
-            </div>
-          ) : (
-            <SurveyTable 
-              surveys={surveys} 
-              onViewDetails={handleViewSurveyDetails}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
-            />
-          )}
+          <DataTable<Survey>
+            columns={getRespondentsTableColumns(handleViewSurveyDetails)}
+            data={surveys}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            isLoading={isLoading}
+            emptyStateIcon={
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            }
+            emptyStateTitle="No hay encuestas disponibles"
+            emptyStateDescription="Aún no se han registrado encuestas. Comienza creando una nueva encuesta."
+            getRowKey={(survey) => survey.id}
+          />
         </section>
       </main>
     </div>

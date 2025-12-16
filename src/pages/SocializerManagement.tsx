@@ -4,9 +4,9 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { Sidebar, SocializerForm, SocializerTable, LocationModal, ConfirmModal } from '../components'
+import { Sidebar, SocializerForm, DataTable, LocationModal, ConfirmModal } from '../components'
 import { apiService } from '../services/api.service'
-import { ROUTES } from '../constants'
+import { ROUTES, getSocializersTableColumns } from '../constants'
 import type { Socializer, SocializerFormData } from '../types'
 import '../styles/Dashboard.scss'
 
@@ -231,7 +231,7 @@ export function SocializerManagement() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <h1 className="dashboard-layout__title">Gestión de Socializadores</h1>
+          <h1 className="dashboard-layout__title">Gestión de Usuarios</h1>
         </div>
 
         <div className="dashboard-layout__body">
@@ -250,7 +250,7 @@ export function SocializerManagement() {
                 className="btn btn--primary"
                 onClick={handleNewSocializer}
               >
-                Nuevo Socializador
+                Nuevo Usuario
               </button>
             </div>
           )}
@@ -276,16 +276,22 @@ export function SocializerManagement() {
           )}
 
           {!showForm && (
-            <SocializerTable
-              socializers={socializers}
+            <DataTable<Socializer>
+              columns={getSocializersTableColumns(handleEdit, handleDelete, handleViewLocation, isLoading)}
+              data={socializers}
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={totalItems}
               onPageChange={handlePageChange}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onViewLocation={handleViewLocation}
               isLoading={isLoading}
+              emptyStateIcon={
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              }
+              emptyStateTitle="No hay socializadores registrados"
+              emptyStateDescription="Comienza creando el primer socializador para tu equipo"
+              getRowKey={(socializer) => socializer._id}
             />
           )}
         </div>
@@ -306,8 +312,8 @@ export function SocializerManagement() {
         isOpen={deleteModalOpen}
         onClose={handleCancelDelete}
         onConfirm={handleConfirmDelete}
-        title="Eliminar Socializador"
-        message={`¿Está seguro de eliminar a ${socializerToDelete?.name || 'este socializador'}? Esta acción no se puede deshacer.`}
+        title="Eliminar Usuario"
+        message={`¿Está seguro de eliminar a ${socializerToDelete?.name || 'este usuario'}? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         isLoading={isDeleting}

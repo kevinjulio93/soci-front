@@ -63,7 +63,7 @@ export function SocializerForm({
       <div className="survey-form__container">
         <div className="survey-form__header">
           <h2 className="survey-form__title">
-            {isEditMode ? 'Editar Socializador' : 'Nuevo Socializador'}
+            {isEditMode ? 'Editar Usuario' : 'Nuevo Usuario'}
           </h2>
         </div>
 
@@ -94,7 +94,7 @@ export function SocializerForm({
               disabled={isLoading}
             />
             {errors.fullName && (
-              <span className="form-group__error">{errors.fullName.message}</span>
+              <span className="form-group__error-text">{errors.fullName.message}</span>
             )}
           </div>
 
@@ -118,7 +118,7 @@ export function SocializerForm({
               disabled={isLoading}
             />
             {errors.idNumber && (
-              <span className="form-group__error">{errors.idNumber.message}</span>
+              <span className="form-group__error-text">{errors.idNumber.message}</span>
             )}
           </div>
 
@@ -142,7 +142,7 @@ export function SocializerForm({
               disabled={isLoading}
             />
             {errors.email && (
-              <span className="form-group__error">{errors.email.message}</span>
+              <span className="form-group__error-text">{errors.email.message}</span>
             )}
           </div>
 
@@ -166,7 +166,7 @@ export function SocializerForm({
               disabled={isLoading}
             />
             {errors.password && (
-              <span className="form-group__error">{errors.password.message}</span>
+              <span className="form-group__error-text">{errors.password.message}</span>
             )}
           </div>
 
@@ -191,7 +191,7 @@ export function SocializerForm({
               ))}
             </select>
             {errors.roleId && (
-              <span className="form-group__error">{errors.roleId.message}</span>
+              <span className="form-group__error-text">{errors.roleId.message}</span>
             )}
           </div>
 
@@ -218,7 +218,7 @@ export function SocializerForm({
               className="btn btn--primary"
               disabled={isLoading || loadingRoles}
             >
-              {isLoading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear Socializador'}
+              {isLoading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear Usuario'}
             </button>
           </div>
         </form>

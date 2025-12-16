@@ -3,7 +3,6 @@
  * Separación de tipos para mejor organización
  */
 
-import type { Respondent } from '../models/Respondent'
 import type { LoginFormData, SocializerFormData } from '../models/FormData'
 
 // LoginForm types

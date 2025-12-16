@@ -9,6 +9,7 @@ import SociologistDashboard from '../pages/SociologistDashboard'
 import AdminDashboard from '../pages/AdminDashboard'
 import SurveyParticipant from '../pages/SurveyParticipant'
 import { SocializerManagement } from '../pages/SocializerManagement'
+import SurveysList from '../pages/SurveysList'
 import UserManagement from '../pages/UserManagement'
 import Reports from '../pages/Reports'
 import { ProtectedRoute } from '../components'
@@ -60,6 +61,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
         <SocializerManagement />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.ADMIN_SURVEYS,
+    element: (
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+        <SurveysList />
       </ProtectedRoute>
     ),
   },

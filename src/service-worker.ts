@@ -19,15 +19,15 @@ const CRITICAL_URLS = [
 ]
 
 // Helpers
-function isHttpRequest(url) {
+function isHttpRequest(url: URL): boolean {
   return url.protocol.startsWith('http')
 }
 
-function isOwnOrigin(url) {
+function isOwnOrigin(url: URL): boolean {
   return url.origin.includes(self.location.origin) || url.origin.includes('ngrok')
 }
 
-function isViteDevResource(url, request) {
+function isViteDevResource(url: URL, request: Request): boolean {
   const isDev = url.hostname === 'localhost' || url.hostname.includes('127.0.0.1')
   
   // En desarrollo, no cachear recursos de Vite HMR
@@ -54,16 +54,16 @@ function isViteDevResource(url, request) {
   )
 }
 
-function isApiRequest(url) {
+function isApiRequest(url: URL): boolean {
   return url.pathname.includes('/api/') || url.hostname.includes('ngrok')
 }
 
-function hasHashInFilename(url) {
-  return /\.[a-f0-9]{8}\.(js|css)$/i.test(url)
+function hasHashInFilename(url: URL): boolean {
+  return /\.[a-f0-9]{8}\.(js|css)$/i.test(url.pathname)
 }
 
-function isImageRequest(url) {
-  return /\.(png|jpg|jpeg|gif|svg|ico)$/i.test(url)
+function isImageRequest(url: URL): boolean {
+  return /\.(png|jpg|jpeg|gif|svg|ico)$/i.test(url.pathname)
 }
 
 // Install event - Cachear recursos críticos
@@ -150,7 +150,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // Estrategia para recursos con hash: Cache First
-    if (hasHashInFilename(request.url)) {
+    if (hasHashInFilename(url)) {
       event.respondWith(handleHashedResourceRequest(request))
       return
     }
@@ -163,7 +163,7 @@ self.addEventListener('fetch', (event) => {
 })
 
 // Estrategia Network First para API
-async function handleApiRequest(request) {
+async function handleApiRequest(request: Request): Promise<Response> {
   try {
     const response = await fetch(request)
     
@@ -200,7 +200,7 @@ async function handleApiRequest(request) {
 }
 
 // Estrategia Network First para navegación
-async function handleNavigationRequest(request) {
+async function handleNavigationRequest(request: Request): Promise<Response> {
   try {
     const response = await fetch(request)
     
@@ -243,7 +243,7 @@ async function handleNavigationRequest(request) {
 }
 
 // Estrategia Cache First para recursos con hash
-async function handleHashedResourceRequest(request) {
+async function handleHashedResourceRequest(request: Request): Promise<Response> {
   const cachedResponse = await caches.match(request)
   if (cachedResponse) {
     return cachedResponse
@@ -264,7 +264,7 @@ async function handleHashedResourceRequest(request) {
 }
 
 // Estrategia Network First con cache para otros recursos
-async function handleOtherResourceRequest(request) {
+async function handleOtherResourceRequest(request: Request): Promise<Response> {
   try {
     const response = await fetch(request)
     
@@ -283,8 +283,10 @@ async function handleOtherResourceRequest(request) {
       return cachedResponse
     }
     
+    const requestUrl = new URL(request.url)
+    
     // Placeholder para imágenes
-    if (isImageRequest(request.url)) {
+    if (isImageRequest(requestUrl)) {
       return new Response('', {
         status: 200,
         headers: { 'Content-Type': 'image/svg+xml' },

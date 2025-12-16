@@ -9,20 +9,35 @@
 // =============================================
 
 export class ApiResponse<T> {
-  constructor(
-    public message: string,
-    public data: T
-  ) {}
+  readonly message: string
+  readonly data: T
+  
+  constructor(message: string, data: T) {
+    this.message = message
+    this.data = data
+  }
 }
 
 export class PaginatedResponse<T> {
+  readonly currentPage: number
+  readonly itemsPerPage: number
+  readonly totalItems: number
+  readonly totalPages: number
+  readonly data: T[]
+  
   constructor(
-    public currentPage: number,
-    public itemsPerPage: number,
-    public totalItems: number,
-    public totalPages: number,
-    public data: T[]
-  ) {}
+    currentPage: number,
+    itemsPerPage: number,
+    totalItems: number,
+    totalPages: number,
+    data: T[]
+  ) {
+    this.currentPage = currentPage
+    this.itemsPerPage = itemsPerPage
+    this.totalItems = totalItems
+    this.totalPages = totalPages
+    this.data = data
+  }
 
   hasNextPage(): boolean {
     return this.currentPage < this.totalPages
@@ -59,6 +74,8 @@ export class RespondentData {
   public city?: string
   public stratum?: number
   public neighborhood?: string
+  public audioPath?: string
+  public autor?: any
 
   constructor(data: any) {
     this._id = data._id
@@ -78,6 +95,8 @@ export class RespondentData {
     this.city = data.city
     this.stratum = data.stratum
     this.neighborhood = data.neighborhood
+    this.audioPath = data.audioPath
+    this.autor = data.autor
   }
 }
 
@@ -100,7 +119,11 @@ export class GetRespondentsResponse extends PaginatedResponse<RespondentData> {
 }
 
 export class GetRespondentResponse {
-  constructor(public data: RespondentData) {}
+  readonly data: RespondentData
+  
+  constructor(data: RespondentData) {
+    this.data = data
+  }
 }
 
 export class UpdateRespondentResponse extends ApiResponse<RespondentData> {
@@ -110,7 +133,11 @@ export class UpdateRespondentResponse extends ApiResponse<RespondentData> {
 }
 
 export class DeleteRespondentResponse {
-  constructor(public message: string) {}
+  readonly message: string
+  
+  constructor(message: string) {
+    this.message = message
+  }
 }
 
 // =============================================
@@ -192,7 +219,11 @@ export class GetSocializersResponse extends PaginatedResponse<SocializerData> {
 }
 
 export class GetSocializerResponse {
-  constructor(public data: SocializerData) {}
+  readonly data: SocializerData
+  
+  constructor(data: SocializerData) {
+    this.data = data
+  }
 }
 
 export class CreateSocializerResponse extends ApiResponse<SocializerData> {
@@ -208,7 +239,11 @@ export class UpdateSocializerResponse extends ApiResponse<SocializerData> {
 }
 
 export class DeleteSocializerResponse {
-  constructor(public message: string) {}
+  readonly message: string
+  
+  constructor(message: string) {
+    this.message = message
+  }
 }
 
 // =============================================
@@ -232,7 +267,11 @@ export class RoleData {
 }
 
 export class GetRolesResponse {
-  constructor(public data: RoleData[]) {}
+  readonly data: RoleData[]
+  
+  constructor(data: RoleData[]) {
+    this.data = data
+  }
 
   getActiveRoles(): RoleData[] {
     return this.data.filter(role => role.isActive())

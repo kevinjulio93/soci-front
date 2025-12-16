@@ -21,7 +21,6 @@ class GeolocationService {
   private watchId: number | null = null
   private intervalId: number | null = null
   private isTracking: boolean = false
-  private updateInterval: number = 30000 // 30 segundos por defecto
   private lastPosition: GeolocationPosition | null = null
 
   /**
@@ -40,7 +39,6 @@ class GeolocationService {
         return
       }
 
-      this.updateInterval = intervalMs
       this.isTracking = true
 
       // Configuración de opciones de geolocalización

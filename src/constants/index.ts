@@ -18,6 +18,9 @@ export { MESSAGES } from './messages'
 // UI (Títulos y descripciones)
 export { TITLES, DESCRIPTIONS } from './ui'
 
+// Table Columns
+export { getSurveysTableColumns, getSocializersTableColumns, getRespondentsTableColumns } from './tableColumns'
+
 // Rutas
 export { ROUTES } from './routes'
 

@@ -71,7 +71,7 @@ export interface Socializer {
   _id: string
   fullName: string
   idNumber: string
-  location: {
+  location?: {
     lat: number
     long: number
   }
@@ -82,7 +82,7 @@ export interface Socializer {
     role: {
       _id: string
       role: string
-    }
+    } | string
   }
   createdAt: string
   updatedAt: string
