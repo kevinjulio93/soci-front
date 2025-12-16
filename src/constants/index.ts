@@ -21,6 +21,10 @@ export { TITLES, DESCRIPTIONS } from './ui'
 // Table Columns
 export { getSurveysTableColumns, getSocializersTableColumns, getRespondentsTableColumns } from './tableColumns'
 
+// Dashboard Cards
+export { ADMIN_DASHBOARD_CARDS, REPORT_CARDS } from './dashboardCards'
+export type { DashboardCardConfig } from './dashboardCards'
+
 // Rutas
 export { ROUTES } from './routes'
 
