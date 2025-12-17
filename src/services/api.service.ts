@@ -139,6 +139,17 @@ class ApiService {
     return new UpdateRespondentResponse(response.message, new RespondentData(response.data))
   }
 
+  async deleteRespondent(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await this.request<any>(API_ENDPOINTS.RESPONDENT_BY_ID(id), {
+      method: 'DELETE',
+    })
+    
+    return {
+      success: response.success ?? true,
+      message: response.message ?? 'Encuestado eliminado correctamente',
+    }
+  }
+
   async uploadAudio(respondentId: string, audioBlob: Blob): Promise<UploadAudioResponse> {
     const token = localStorage.getItem('soci_token')
     const formData = new FormData()

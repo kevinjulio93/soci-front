@@ -52,3 +52,12 @@ export function selectFromArrayByHash<T>(str: string, array: T[]): T {
   const hash = simpleHash(str)
   return array[hash % array.length]
 }
+
+/**
+ * Obtiene el primer nombre de un nombre completo en mayúsculas
+ * @param fullName - Nombre completo
+ * @returns Primer nombre en mayúsculas
+ */
+export function getFirstName(fullName: string): string {
+  return fullName.split(' ')[0].toUpperCase()
+}

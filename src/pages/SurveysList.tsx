@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Sidebar, DataTable } from '../components'
+import { Sidebar, DataTable, ConfirmModal, SurveyDetailModal } from '../components'
 import { apiService } from '../services/api.service'
 import { getSurveysTableColumns } from '../constants'
 import type { RespondentData } from '../models/ApiResponses'
@@ -18,6 +18,11 @@ export default function SurveysList() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
   const [audioPlaying, setAudioPlaying] = useState<string | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [respondentToDelete, setRespondentToDelete] = useState<{ id: string; name: string } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [selectedSurvey, setSelectedSurvey] = useState<RespondentData | null>(null)
 
   const loadSurveys = async (page: number) => {
     try {
@@ -60,19 +65,56 @@ export default function SurveysList() {
     return date.toLocaleDateString('es-CO', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     })
   }
 
-  const getAudioUrl = (audioPath: string) => {
-    if (!audioPath) return null
-    // Si ya es una URL completa, retornarla
-    if (audioPath.startsWith('http')) return audioPath
-    // Si es una ruta relativa, construir la URL completa
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://82f60cf02a72.ngrok-free.app/api/v1'
-    return `${baseUrl.replace('/api/v1', '')}${audioPath}`
+  const getAudioUrl = (respondent: RespondentData) => {
+    // Usar directamente audioUrl del backend si está disponible
+    return respondent.audioUrl || null
+  }
+
+  const handleDeleteClick = (id: string, name: string) => {
+    setRespondentToDelete({ id, name })
+    setShowDeleteModal(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!respondentToDelete) return
+
+    try {
+      setIsDeleting(true)
+      await apiService.deleteRespondent(respondentToDelete.id)
+      
+      // Recargar la lista
+      await loadSurveys(currentPage)
+      
+      setShowDeleteModal(false)
+      setRespondentToDelete(null)
+    } catch (error) {
+      console.error('Error al eliminar encuestado:', error)
+      alert('Error al eliminar el encuestado. Por favor, intenta de nuevo.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false)
+    setRespondentToDelete(null)
+  }
+
+  const handleViewDetails = (id: string) => {
+    const survey = surveys.find(s => s._id === id)
+    if (survey) {
+      setSelectedSurvey(survey)
+      setShowDetailModal(true)
+    }
+  }
+
+  const handleCloseDetailModal = () => {
+    setShowDetailModal(false)
+    setSelectedSurvey(null)
   }
 
   return (
@@ -103,7 +145,7 @@ export default function SurveysList() {
           </div>
 
           <DataTable
-            columns={getSurveysTableColumns(formatDate, getAudioUrl, handlePlayAudio, audioPlaying)}
+            columns={getSurveysTableColumns(formatDate, handleViewDetails, handleDeleteClick)}
             data={surveys}
             currentPage={currentPage}
             totalPages={totalPages}
@@ -122,6 +164,24 @@ export default function SurveysList() {
           />
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        title="Eliminar Encuestado"
+        message={`¿Está seguro de eliminar a ${respondentToDelete?.name || 'este encuestado'}?`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        isLoading={isDeleting}
+      />
+
+      <SurveyDetailModal
+        isOpen={showDetailModal}
+        onClose={handleCloseDetailModal}
+        survey={selectedSurvey}
+        formatDate={formatDate}
+      />
     </div>
   )
 }

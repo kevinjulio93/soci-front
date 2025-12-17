@@ -6,17 +6,16 @@
 import type { TableColumn } from '../components'
 import type { RespondentData } from '../models/ApiResponses'
 import type { Survey, Socializer } from '../types'
-import { getAvatarColor, getInitials } from '../utils'
+import { getAvatarColor, getInitials, getFirstName } from '../utils'
 
 export const getSurveysTableColumns = (
   formatDate: (dateString: string) => string,
-  getAudioUrl: (audioPath: string) => string | null,
-  handlePlayAudio: (id: string) => void,
-  audioPlaying: string | null
+  handleViewDetails: (id: string) => void,
+  onDelete?: (id: string, name: string) => void
 ): TableColumn<RespondentData>[] => [
   {
     key: 'name',
-    header: 'NOMBRE',
+    header: 'ENCUESTADO',
     render: (survey) => (
       <div className="respondent">
         <div
@@ -26,7 +25,7 @@ export const getSurveysTableColumns = (
           {getInitials(survey.fullName)}
         </div>
         <div className="respondent__details">
-          <span className="respondent__name">{survey.fullName}</span>
+          <span className="respondent__name">{getFirstName(survey.fullName)}</span>
         </div>
       </div>
     ),
@@ -46,18 +45,25 @@ export const getSurveysTableColumns = (
     }
   },
   {
-    key: 'document',
-    header: 'DOCUMENTO',
+    key: 'idType',
+    header: 'TIPO ID',
     render: (survey) => (
-      <div className="id-info">
-        <span className="id-number">{survey.identification || 'N/A'}</span>
-      </div>
+      <span className="id-type">{survey.idType || 'N/A'}</span>
     )
   },
   {
-    key: 'age',
-    header: 'RANGO DE EDAD',
-    render: (survey) => survey.ageRange || 'N/A'
+    key: 'identification',
+    header: 'N° IDENTIFICACIÓN',
+    render: (survey) => (
+      <span className="id-number">{survey.identification || 'N/A'}</span>
+    )
+  },
+  {
+    key: 'contact',
+    header: 'TELÉFONO',
+    render: (survey) => (
+      <span className="contact-phone">{survey.phone || 'N/A'}</span>
+    )
   },
   {
     key: 'gender',
@@ -69,14 +75,22 @@ export const getSurveysTableColumns = (
     )
   },
   {
-    key: 'city',
-    header: 'CIUDAD',
-    render: (survey) => survey.city || 'N/A'
+    key: 'age',
+    header: 'EDAD',
+    render: (survey) => <span className="age-badge">{survey.ageRange || 'N/A'}</span>
   },
   {
-    key: 'neighborhood',
-    header: 'BARRIO',
-    render: (survey) => survey.neighborhood || 'N/A'
+    key: 'stratum',
+    header: 'ESTRATO',
+    render: (survey) => (
+      <div className="stratum-info">
+        {survey.stratum ? (
+          <span className="stratum-badge">Estrato {survey.stratum}</span>
+        ) : (
+          <span>N/A</span>
+        )}
+      </div>
+    )
   },
   {
     key: 'date',
@@ -85,47 +99,32 @@ export const getSurveysTableColumns = (
     className: 'survey-table__td--date'
   },
   {
-    key: 'audio',
-    header: 'AUDIO',
-    render: (survey) => {
-      const audioUrl = getAudioUrl(survey.audioPath || '')
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-          {audioUrl ? (
-            <>
-              <button
-                className="audio-btn"
-                onClick={() => handlePlayAudio(survey._id)}
-                title="Reproducir audio"
-              >
-                {audioPlaying === survey._id ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                  </svg>
-                ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                )}
-              </button>
-              {audioPlaying === survey._id && (
-                <div className="audio-player">
-                  <audio
-                    src={audioUrl}
-                    controls
-                    autoPlay
-                    onEnded={() => handlePlayAudio(survey._id)}
-                    className="audio-player__element"
-                  />
-                </div>
-              )}
-            </>
-          ) : (
-            <span className="no-audio">Sin audio</span>
-          )}
-        </div>
-      )
-    }
+    key: 'actions' as const,
+    header: 'ACCIONES',
+    render: (survey: RespondentData) => (
+      <div className="action-buttons">
+        <span
+          className="action-icon action-icon--view"
+          onClick={() => handleViewDetails(survey._id)}
+          title="Ver detalles"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
+            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+          </svg>
+        </span>
+        {onDelete && (
+          <span
+            className="action-icon action-icon--delete"
+            onClick={() => onDelete(survey._id, survey.fullName)}
+            title="Eliminar encuestado"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+          </span>
+        )}
+      </div>
+    )
   }
 ]
 
@@ -157,7 +156,7 @@ export const getSocializersTableColumns = (
             {getInitials(socializer.fullName)}
           </div>
           <div className="respondent__details">
-            <span className="respondent__name">{socializer.fullName}</span>
+            <span className="respondent__name">{getFirstName(socializer.fullName)}</span>
           </div>
         </div>
       ),
@@ -167,21 +166,14 @@ export const getSocializersTableColumns = (
       key: 'identification',
       header: 'IDENTIFICACIÓN',
       render: (socializer) => (
-        <div className="id-info">
-          <span className="id-number">{socializer.idNumber}</span>
-        </div>
+        <span className="id-number">{socializer.idNumber}</span>
       )
     },
     {
       key: 'contact',
       header: 'CONTACTO',
       render: (socializer) => (
-        <div className="contact-info">
-          {socializer.user?.email && (
-            <span className="contact-email">{socializer.user.email}</span>
-          )}
-          {!socializer.user?.email && <span>N/A</span>}
-        </div>
+        <span className="contact-phone">{socializer.user?.email || 'N/A'}</span>
       )
     },
     {
@@ -219,43 +211,40 @@ export const getSocializersTableColumns = (
         const isAdmin = typeof socializer.user?.role === 'object' && socializer.user.role.role === 'admin'
         
         return (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div className="action-buttons">
             {!isAdmin && (
-              <button
-                className="action-btn action-btn--location"
-                onClick={() => onViewLocation(socializer)}
-                disabled={isLoading}
+              <span
+                className="action-icon action-icon--location"
+                onClick={() => !isLoading && onViewLocation(socializer)}
                 title="Ver ubicación en tiempo real"
+                style={{ opacity: isLoading ? 0.5 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                  <circle cx="12" cy="10" r="3" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-              </button>
+              </span>
             )}
-            <button
-              className="action-btn action-btn--edit"
-              onClick={() => onEdit(socializer)}
-              disabled={isLoading}
+            <span
+              className="action-icon action-icon--edit"
+              onClick={() => !isLoading && onEdit(socializer)}
               title="Editar usuario"
+              style={{ opacity: isLoading ? 0.5 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
               </svg>
-            </button>
+            </span>
             {!isAdmin && (
-              <button
-                className="action-btn action-btn--delete"
-                onClick={() => onDelete(socializer._id, socializer.fullName)}
-                disabled={isLoading}
+              <span
+                className="action-icon action-icon--delete"
+                onClick={() => !isLoading && onDelete(socializer._id, socializer.fullName)}
                 title="Eliminar usuario"
+                style={{ opacity: isLoading ? 0.5 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                 </svg>
-              </button>
+              </span>
             )}
           </div>
         )
@@ -279,31 +268,31 @@ export const getRespondentsTableColumns = (
           {getInitials(survey.title)}
         </div>
         <div className="respondent__details">
-          <span className="respondent__name">{survey.title}</span>
+          <span className="respondent__name">{getFirstName(survey.title)}</span>
         </div>
       </div>
     ),
     className: 'survey-table__td--respondent'
   },
   {
-    key: 'identification',
-    header: 'IDENTIFICACIÓN',
+    key: 'idType',
+    header: 'TIPO ID',
     render: (survey) => (
-      <div className="id-info">
-        <span className="id-type">{survey.idType || 'N/A'}</span>
-        <span className="id-number">{survey.identification || 'N/A'}</span>
-      </div>
+      <span className="id-type">{survey.idType || 'N/A'}</span>
+    )
+  },
+  {
+    key: 'identification',
+    header: 'N° IDENTIFICACIÓN',
+    render: (survey) => (
+      <span className="id-number">{survey.identification || 'N/A'}</span>
     )
   },
   {
     key: 'contact',
-    header: 'CONTACTO',
+    header: 'TELÉFONO',
     render: (survey) => (
-      <div className="contact-info">
-        {survey.phone && <span className="contact-phone">📱 {survey.phone}</span>}
-        {survey.email && <span className="contact-email">✉️ {survey.email}</span>}
-        {!survey.phone && !survey.email && <span>N/A</span>}
-      </div>
+      <span className="contact-phone">{survey.phone || 'N/A'}</span>
     )
   },
   {
@@ -317,14 +306,15 @@ export const getRespondentsTableColumns = (
     render: (survey) => <span className="age-badge">{survey.ageRange || 'N/A'}</span>
   },
   {
-    key: 'location',
-    header: 'UBICACIÓN',
+    key: 'stratum',
+    header: 'ESTRATO',
     render: (survey) => (
-      <div className="location-info">
-        {survey.city && <span className="location-city">{survey.city}</span>}
-        {survey.neighborhood && <span className="location-neighborhood">{survey.neighborhood}</span>}
-        {survey.stratum && <span className="location-stratum">Estrato {survey.stratum}</span>}
-        {!survey.city && !survey.neighborhood && <span>N/A</span>}
+      <div className="stratum-info">
+        {survey.stratum ? (
+          <span className="stratum-badge">Estrato {survey.stratum}</span>
+        ) : (
+          <span>N/A</span>
+        )}
       </div>
     )
   },
@@ -338,13 +328,17 @@ export const getRespondentsTableColumns = (
     key: 'actions',
     header: 'ACCIONES',
     render: (survey) => (
-      <button
-        className="action-btn action-btn--edit"
-        onClick={() => onViewDetails?.(survey.id)}
-        title="Editar encuestado"
-      >
-        Editar
-      </button>
+      <div className="action-buttons">
+        <span
+          className="action-icon action-icon--edit"
+          onClick={() => onViewDetails?.(survey.id)}
+          title="Editar encuestado"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+          </svg>
+        </span>
+      </div>
     )
   }
 ]

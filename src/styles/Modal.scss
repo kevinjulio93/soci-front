@@ -321,3 +321,120 @@
     cursor: not-allowed;
   }
 }
+
+// =============================================
+// SURVEY DETAIL MODAL STYLES
+// =============================================
+
+.modal-content--detail {
+  max-width: 800px;
+  
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
+}
+
+.modal-body--detail {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+}
+
+// Detail sections
+.detail-section {
+  &__title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $color-secondary;
+    margin: 0 0 $spacing-md 0;
+    padding-bottom: $spacing-sm;
+    border-bottom: 2px solid $color-secondary;
+  }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: $spacing-lg;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+
+  &__label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-light-text;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__value {
+    font-size: $font-size-base;
+    font-weight: $font-weight-regular;
+    color: $color-text;
+    padding: $spacing-sm $spacing-md;
+    background-color: #f9fafb;
+    border-radius: $border-radius-sm;
+    border: 1px solid #e5e7eb;
+  }
+}
+
+// Audio control in detail modal
+.audio-control {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  background-color: #f9fafb;
+  border-radius: $border-radius-sm;
+  border: 1px solid #e5e7eb;
+
+  &__btn {
+    background-color: $color-tertiary;
+    color: $color-white;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(45, 74, 95, 0.3);
+
+    &:hover:not(:disabled) {
+      background-color: $color-secondary;
+      box-shadow: 0 4px 12px rgba(74, 124, 111, 0.5);
+      transform: scale(1.05);
+    }
+
+    &:disabled {
+      background-color: #9ca3af;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &__error {
+    color: $color-error-text;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+  }
+}

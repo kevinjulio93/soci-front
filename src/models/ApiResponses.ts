@@ -75,6 +75,9 @@ export class RespondentData {
   public stratum?: number
   public neighborhood?: string
   public audioPath?: string
+  public audioUrl?: string | null
+  public audioFile?: string
+  public audioFileKey?: string
   public autor?: any
 
   constructor(data: any) {
@@ -96,6 +99,9 @@ export class RespondentData {
     this.stratum = data.stratum
     this.neighborhood = data.neighborhood
     this.audioPath = data.audioPath
+    this.audioUrl = data.audioUrl
+    this.audioFile = data.audioFile
+    this.audioFileKey = data.audioFileKey
     this.autor = data.autor
   }
 }
