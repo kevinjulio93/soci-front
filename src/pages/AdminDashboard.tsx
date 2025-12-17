@@ -3,17 +3,47 @@
  * Página de bienvenida con navegación a diferentes secciones
  */
 
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { Sidebar, Card } from '../components'
-import { ADMIN_DASHBOARD_CARDS } from '../constants'
+import { Sidebar } from '../components'
+import { apiService } from '../services/api.service'
 import '../styles/Dashboard.scss'
 
 export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user } = useAuth()
-  const navigate = useNavigate()
+  const [totalSurveys, setTotalSurveys] = useState<number>(0)
+  const [topSocializers, setTopSocializers] = useState<Array<{
+    socializerId: string;
+    fullName: string;
+    idNumber: string;
+    userId: string;
+    email: string;
+    totalSurveys: number;
+    enabledSurveys: number;
+    disabledSurveys: number;
+  }>>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setIsLoading(true)
+        const [stats, topSocializersData] = await Promise.all([
+          apiService.getRespondentStats(),
+          apiService.getTopSocializers(10)
+        ])
+        setTotalSurveys(stats.totalSurveys)
+        setTopSocializers(topSocializersData)
+      } catch (error) {
+        console.error('Error loading stats:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadStats()
+  }, [])
 
   return (
     <div className="dashboard-layout">
@@ -33,31 +63,75 @@ export default function AdminDashboard() {
         </div>
 
         <div className="dashboard-layout__body">
-          <div className="empty-state">
-            <div className="empty-state__icon">
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-            </div>
-            <h2 className="empty-state__title">
-              ¡Bienvenido, {user?.email}!
-            </h2>
-            <p className="empty-state__description">
-              Utiliza el menú lateral para navegar por las diferentes secciones del sistema.
-            </p>
-            <div className="empty-state__hints">
-              {ADMIN_DASHBOARD_CARDS.map((card) => (
-                <Card
-                  key={card.id}
-                  icon={card.icon}
-                  title={card.title}
-                  description={card.description}
-                  onClick={() => card.route && navigate(card.route)}
-                  clickable
-                />
-              ))}
+          <div className="dashboard__header-section">
+            <div className="dashboard__header-text">
+              <h2 className="dashboard__section-title">¡Bienvenido, {user?.email}!</h2>
+              <p className="dashboard__section-desc">
+                Resumen general del sistema
+              </p>
             </div>
           </div>
+
+          {isLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+              <div className="loading-spinner"></div>
+            </div>
+          ) : (
+            <>
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-card__icon stat-card__icon--primary">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="stat-card__content">
+                    <h3 className="stat-card__title">Total Encuestas</h3>
+                    <p className="stat-card__value">{totalSurveys.toLocaleString()}</p>
+                    <p className="stat-card__description">Encuestas registradas en el sistema</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="dashboard__section" style={{ marginTop: '2rem' }}>
+                <h3 className="dashboard__section-subtitle">Top 10 Socializadores</h3>
+                <div className="ranking-list">
+                  {topSocializers.map((item, index) => (
+                    <div key={item.socializerId} className="ranking-item">
+                      <div className="ranking-item__position">
+                        <span className={`ranking-badge ${index < 3 ? `ranking-badge--${index + 1}` : ''}`}>
+                          #{index + 1}
+                        </span>
+                      </div>
+                      <div className="ranking-item__info">
+                        <h4 className="ranking-item__name">{item.fullName}</h4>
+                        <p className="ranking-item__email">{item.email}</p>
+                      </div>
+                      <div className="ranking-item__stats">
+                        <div className="ranking-item__main">
+                          <span className="ranking-item__count">{item.totalSurveys}</span>
+                          <span className="ranking-item__label">total</span>
+                        </div>
+                        <div className="ranking-item__breakdown">
+                          <span className="ranking-item__detail ranking-item__detail--enabled">
+                            {item.enabledSurveys} activas
+                          </span>
+                          <span className="ranking-item__detail ranking-item__detail--disabled">
+                            {item.disabledSurveys} inactivas
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {topSocializers.length === 0 && (
+                    <div className="ranking-empty">
+                      <p>No hay datos disponibles</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

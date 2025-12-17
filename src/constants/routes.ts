@@ -21,7 +21,6 @@ export const ROUTES = {
   ADMIN_SURVEYS: '/admin/surveys',
   ADMIN_USERS: '/admin/users',
   ADMIN_REPORTS: '/admin/reports',
-  ADMIN_SETTINGS: '/admin/settings',
   
   // Encuestas
   SURVEY_PARTICIPANT: (surveyId: string) => `/survey/${surveyId}/participant`,

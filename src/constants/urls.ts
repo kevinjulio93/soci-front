@@ -24,6 +24,8 @@ export const API_ENDPOINTS = {
   RESPONDENTS: '/respondents',
   RESPONDENT_BY_ID: (id: string) => `/respondents/${id}`,
   UPLOAD_AUDIO: '/respondents/upload-audio',
+  RESPONDENTS_STATS_TOTAL: '/respondents/stats/total',
+  RESPONDENTS_STATS_TOP_SOCIALIZERS: (limit: number = 10) => `/respondents/stats/top-socializers?limit=${limit}`,
   
   // Socializers
   SOCIALIZERS: '/socializers',

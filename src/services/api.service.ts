@@ -150,6 +150,33 @@ class ApiService {
     }
   }
 
+  async getRespondentStats(): Promise<{ totalSurveys: number }> {
+    const response = await this.request<any>(API_ENDPOINTS.RESPONDENTS_STATS_TOTAL, {
+      method: 'GET',
+    })
+    
+    return {
+      totalSurveys: response.data?.total || 0,
+    }
+  }
+
+  async getTopSocializers(limit: number = 10): Promise<Array<{
+    socializerId: string;
+    fullName: string;
+    idNumber: string;
+    userId: string;
+    email: string;
+    totalSurveys: number;
+    enabledSurveys: number;
+    disabledSurveys: number;
+  }>> {
+    const response = await this.request<any>(API_ENDPOINTS.RESPONDENTS_STATS_TOP_SOCIALIZERS(limit), {
+      method: 'GET',
+    })
+    
+    return response.data || []
+  }
+
   async uploadAudio(respondentId: string, audioBlob: Blob): Promise<UploadAudioResponse> {
     const token = localStorage.getItem('soci_token')
     const formData = new FormData()

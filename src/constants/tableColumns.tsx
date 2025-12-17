@@ -68,29 +68,46 @@ export const getSurveysTableColumns = (
   {
     key: 'gender',
     header: 'GÉNERO',
-    render: (survey) => (
-      <span className={`gender-badge gender-badge--${survey.gender?.toLowerCase()}`}>
-        {survey.gender || 'N/A'}
-      </span>
-    )
+    render: (survey) => {
+      const genderClass = survey.gender?.toLowerCase() === 'masculino' ? 'badge-blue' : 
+                          survey.gender?.toLowerCase() === 'femenino' ? 'badge-pink' : 'badge-gray'
+      return (
+        <span className={`badge ${genderClass}`}>
+          {survey.gender || 'N/A'}
+        </span>
+      )
+    }
   },
   {
     key: 'age',
     header: 'EDAD',
-    render: (survey) => <span className="age-badge">{survey.ageRange || 'N/A'}</span>
+    render: (survey) => {
+      const getAgeClass = (range: string) => {
+        if (range?.includes('18-25')) return 'badge-green'
+        if (range?.includes('26-35')) return 'badge-teal'
+        if (range?.includes('36-45')) return 'badge-orange'
+        if (range?.includes('46-60')) return 'badge-purple'
+        if (range?.includes('60')) return 'badge-brown'
+        return 'badge-gray'
+      }
+      return <span className={`badge ${getAgeClass(survey.ageRange || '')}`}>{survey.ageRange || 'N/A'}</span>
+    }
   },
   {
     key: 'stratum',
     header: 'ESTRATO',
-    render: (survey) => (
-      <div className="stratum-info">
-        {survey.stratum ? (
-          <span className="stratum-badge">Estrato {survey.stratum}</span>
-        ) : (
-          <span>N/A</span>
-        )}
-      </div>
-    )
+    render: (survey) => {
+      const getStratumClass = (stratum: number) => {
+        if (stratum <= 2) return 'badge-red'
+        if (stratum <= 4) return 'badge-yellow'
+        return 'badge-indigo'
+      }
+      return (
+        <span className={`badge ${survey.stratum ? getStratumClass(survey.stratum) : 'badge-gray'}`}>
+          {survey.stratum ? `Estrato ${survey.stratum}` : 'N/A'}
+        </span>
+      )
+    }
   },
   {
     key: 'date',
@@ -179,19 +196,24 @@ export const getSocializersTableColumns = (
     {
       key: 'role',
       header: 'ROL',
-      render: (socializer) => (
-        <span className="gender-badge">
-          {typeof socializer.user?.role === 'object' ? socializer.user.role.role : 'N/A'}
-        </span>
-      )
+      render: (socializer) => {
+        const role = typeof socializer.user?.role === 'object' ? socializer.user.role.role : 'N/A'
+        const roleClass = role === 'admin' ? 'badge-purple' : 
+                          role === 'socializer' ? 'badge-blue' : 'badge-gray'
+        return (
+          <span className={`badge ${roleClass}`}>
+            {role}
+          </span>
+        )
+      }
     },
     {
       key: 'status',
       header: 'ESTADO',
       render: (socializer) => (
         <span
-          className={`age-badge ${
-            socializer.status === 'enabled' ? 'age-badge--success' : 'age-badge--disabled'
+          className={`badge ${
+            socializer.status === 'enabled' ? 'badge-success' : 'badge-danger'
           }`}
         >
           {socializer.status === 'enabled' ? 'Habilitado' : 'Deshabilitado'}
@@ -298,25 +320,42 @@ export const getRespondentsTableColumns = (
   {
     key: 'gender',
     header: 'GÉNERO',
-    render: (survey) => <span className="gender-badge">{survey.gender || 'N/A'}</span>
+    render: (survey) => {
+      const genderClass = survey.gender?.toLowerCase() === 'masculino' ? 'badge-blue' : 
+                          survey.gender?.toLowerCase() === 'femenino' ? 'badge-pink' : 'badge-gray'
+      return <span className={`badge ${genderClass}`}>{survey.gender || 'N/A'}</span>
+    }
   },
   {
     key: 'age',
     header: 'EDAD',
-    render: (survey) => <span className="age-badge">{survey.ageRange || 'N/A'}</span>
+    render: (survey) => {
+      const getAgeClass = (range: string) => {
+        if (range?.includes('18-25')) return 'badge-green'
+        if (range?.includes('26-35')) return 'badge-teal'
+        if (range?.includes('36-45')) return 'badge-orange'
+        if (range?.includes('46-60')) return 'badge-purple'
+        if (range?.includes('60')) return 'badge-brown'
+        return 'badge-gray'
+      }
+      return <span className={`badge ${getAgeClass(survey.ageRange || '')}`}>{survey.ageRange || 'N/A'}</span>
+    }
   },
   {
     key: 'stratum',
     header: 'ESTRATO',
-    render: (survey) => (
-      <div className="stratum-info">
-        {survey.stratum ? (
-          <span className="stratum-badge">Estrato {survey.stratum}</span>
-        ) : (
-          <span>N/A</span>
-        )}
-      </div>
-    )
+    render: (survey) => {
+      const getStratumClass = (stratum: number) => {
+        if (stratum <= 2) return 'badge-red'
+        if (stratum <= 4) return 'badge-yellow'
+        return 'badge-indigo'
+      }
+      return (
+        <span className={`badge ${survey.stratum ? getStratumClass(survey.stratum) : 'badge-gray'}`}>
+          {survey.stratum ? `Estrato ${survey.stratum}` : 'N/A'}
+        </span>
+      )
+    }
   },
   {
     key: 'date',
