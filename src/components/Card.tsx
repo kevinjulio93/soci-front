@@ -2,7 +2,7 @@
  * Card - Componente reutilizable para tarjetas informativas
  */
 
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 export interface CardProps {
   icon: ReactNode

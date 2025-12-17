@@ -17,7 +17,6 @@ export default function SurveysList() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
-  const [audioPlaying, setAudioPlaying] = useState<string | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [respondentToDelete, setRespondentToDelete] = useState<{ id: string; name: string } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -52,14 +51,6 @@ export default function SurveysList() {
     await loadSurveys(page)
   }
 
-  const handlePlayAudio = (audioUrl: string) => {
-    if (audioPlaying === audioUrl) {
-      setAudioPlaying(null)
-    } else {
-      setAudioPlaying(audioUrl)
-    }
-  }
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('es-CO', {
@@ -67,11 +58,6 @@ export default function SurveysList() {
       month: 'short',
       day: 'numeric'
     })
-  }
-
-  const getAudioUrl = (respondent: RespondentData) => {
-    // Usar directamente audioUrl del backend si está disponible
-    return respondent.audioUrl || null
   }
 
   const handleDeleteClick = (id: string, name: string) => {
@@ -172,7 +158,7 @@ export default function SurveysList() {
         confirmText="Eliminar"
         cancelText="Cancelar"
         onConfirm={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
+        onClose={handleDeleteCancel}
         isLoading={isDeleting}
       />
 

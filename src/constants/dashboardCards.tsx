@@ -2,7 +2,7 @@
  * Dashboard Cards - Configuración de tarjetas para dashboards
  */
 
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { ROUTES } from './routes'
 
 export interface DashboardCardConfig {
