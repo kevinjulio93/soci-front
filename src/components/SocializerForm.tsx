@@ -103,6 +103,29 @@ export function SocializerForm({
     }
   }
 
+  // Submit wrapper para transformar coordinatorId si corresponde
+  const handleFormSubmit = (formData: any) => {
+    let payload = { ...formData }
+    console.log('[SocializerForm] Form data before transform:', payload)
+    
+    // Si el rol es socializer/socializador, enviar coordinatorId
+    if (
+      payload.roleId &&
+      payload.coordinator &&
+      (
+        roles.find(r => r._id === payload.roleId)?.role === 'socializer' ||
+        roles.find(r => r._id === payload.roleId)?.role === 'socializador'
+      )
+    ) {
+      payload.coordinatorId = payload.coordinator
+      delete payload.coordinator
+      console.log('[SocializerForm] Transformed to coordinatorId:', payload.coordinatorId)
+    }
+    
+    console.log('[SocializerForm] Final payload:', payload)
+    onSubmit(payload)
+  }
+
   return (
     <div className="survey-form">
       <div className="survey-form__container">
@@ -118,7 +141,7 @@ export function SocializerForm({
           </div>
         )}
 
-        <form className="survey-form__form" onSubmit={handleSubmit(onSubmit)}>
+        <form className="survey-form__form" onSubmit={handleSubmit(handleFormSubmit)}>
           {/* Nombre completo */}
           <div className="form-group">
             <label htmlFor="fullName" className="form-group__label">

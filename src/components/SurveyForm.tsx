@@ -37,12 +37,10 @@ export function SurveyForm({
         {/* Video Section */}
         {videoUrl && (
           <div className="survey-form__video-section">
-            <iframe
+            <video
               className="survey-form__video"
-              src={videoUrl}
-              title="Survey Video"
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              src="https://storage.googleapis.com/soci_example_video/video/video_intro.mp4"
+              controls
             />
           </div>
         )}

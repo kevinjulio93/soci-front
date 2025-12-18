@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Sidebar, SocializerForm, DataTable, LocationModal, ConfirmModal, BatchAssignCoordinatorModal } from '../components'
 import { apiService } from '../services/api.service'
+import { notificationService } from '../services/notification.service'
 import { ROUTES, getSocializersTableColumns } from '../constants'
 import type { Socializer, SocializerFormData } from '../types'
 import '../styles/Dashboard.scss'
@@ -115,15 +116,17 @@ export function SocializerManagement() {
           delete finalData.password
         }
         await apiService.updateSocializer(editingSocializer._id, finalData)
+        notificationService.success('Usuario actualizado correctamente')
       } else {
         // Crear
         await apiService.createSocializer(data)
+        notificationService.success('Usuario creado correctamente')
       }
 
       // Navegar de vuelta a la lista
       navigate(ROUTES.ADMIN_SOCIALIZERS)
     } catch (err) {
-      console.error('Error saving socializer:', err)
+      notificationService.handleApiError(err, 'Error al guardar el usuario')
       const error = err as { response?: { data?: { message?: string } } }
       setFormError(
         error?.response?.data?.message || 
@@ -147,12 +150,12 @@ export function SocializerManagement() {
     try {
       setIsDeleting(true)
       await apiService.deleteSocializer(socializerToDelete.id)
+      notificationService.success('Usuario eliminado correctamente')
       await loadSocializers(currentPage)
       setDeleteModalOpen(false)
       setSocializerToDelete(null)
     } catch (err) {
-      console.error('Error deleting socializer:', err)
-      alert('Error al eliminar el socializador')
+      notificationService.handleApiError(err, 'Error al eliminar el usuario')
     } finally {
       setIsDeleting(false)
     }
@@ -241,6 +244,16 @@ export function SocializerManagement() {
       ? editingSocializer.user.role 
       : editingSocializer.user?.role?._id || ''
     
+    // Obtener el coordinatorId: puede ser un string o un objeto con _id
+    let coordinatorId = ''
+    if (editingSocializer.coordinator) {
+      if (typeof editingSocializer.coordinator === 'string') {
+        coordinatorId = editingSocializer.coordinator
+      } else if (editingSocializer.coordinator._id) {
+        coordinatorId = editingSocializer.coordinator._id
+      }
+    }
+    
     return {
       fullName: editingSocializer.fullName,
       idNumber: editingSocializer.idNumber,
@@ -248,7 +261,7 @@ export function SocializerManagement() {
       email: editingSocializer.user?.email || '',
       password: '',
       roleId: roleId,
-      coordinator: editingSocializer.coordinator || '',
+      coordinator: coordinatorId,
       location: editingSocializer.location,
       status: editingSocializer.status,
     }

@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   UPLOAD_AUDIO: '/respondents/upload-audio',
   RESPONDENTS_STATS_TOTAL: '/respondents/stats/total',
   RESPONDENTS_STATS_TOP_SOCIALIZERS: (limit: number = 10) => `/respondents/stats/top-socializers?limit=${limit}`,
+  RESPONDENTS_REPORTS_BY_SOCIALIZER_DATE: '/respondents/reports/by-socializer-date',
   
   // Socializers
   SOCIALIZERS: '/socializers',

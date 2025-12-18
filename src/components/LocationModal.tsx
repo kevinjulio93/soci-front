@@ -4,7 +4,10 @@
  */
 
 import { useState, useEffect } from 'react'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { Icon } from 'leaflet'
 import { apiService } from '../services/api.service'
+import 'leaflet/dist/leaflet.css'
 import '../styles/Modal.scss'
 
 interface LocationData {
@@ -20,6 +23,17 @@ interface LocationModalProps {
   userId: string
   socializerName: string
 }
+
+// Fix para los iconos de Leaflet en Vite/Webpack
+const defaultIcon = new Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+})
 
 export function LocationModal({ isOpen, onClose, userId, socializerName }: LocationModalProps) {
   const [location, setLocation] = useState<LocationData | null>(null)
@@ -132,15 +146,23 @@ export function LocationModal({ isOpen, onClose, userId, socializerName }: Locat
               </div>
 
               <div className="location-map">
-                <iframe
-                  title="Mapa de ubicación"
-                  width="100%"
-                  height="400"
-                  frameBorder="0"
-                  style={{ border: 0 }}
-                  src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'}&q=${location.lat},${location.long}&zoom=15`}
-                  allowFullScreen
-                />
+                <MapContainer
+                  center={[location.lat, location.long]}
+                  zoom={15}
+                  style={{ height: '400px', width: '100%' }}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker position={[location.lat, location.long]} icon={defaultIcon}>
+                    <Popup>
+                      <strong>{socializerName}</strong>
+                      <br />
+                      {formatDate(location.timestamp)}
+                    </Popup>
+                  </Marker>
+                </MapContainer>
               </div>
 
               <div className="location-actions">

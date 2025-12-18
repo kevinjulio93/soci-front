@@ -358,6 +358,24 @@ class ApiService {
       accuracy: response.data.accuracy,
     }
   }
+
+  async getReportsBySocializerAndDate(
+    startDate: string,
+    endDate: string,
+    socializerId?: string
+  ): Promise<any> {
+    let url = `${API_ENDPOINTS.RESPONDENTS_REPORTS_BY_SOCIALIZER_DATE}?startDate=${startDate}&endDate=${endDate}`
+    
+    if (socializerId) {
+      url += `&socializerId=${socializerId}`
+    }
+
+    const response = await this.request<any>(url, {
+      method: 'GET',
+    })
+    
+    return response
+  }
 }
 
 export const apiService = new ApiService()

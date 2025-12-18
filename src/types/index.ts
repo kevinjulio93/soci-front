@@ -73,7 +73,16 @@ export interface Socializer {
   fullName: string
   idNumber: string
   phone: string
-  coordinator?: string
+  coordinator?: string | {
+    _id: string
+    fullName: string
+    idNumber: string
+    phone: string
+    user?: {
+      _id: string
+      email: string
+    }
+  }
   location?: {
     lat: number
     long: number

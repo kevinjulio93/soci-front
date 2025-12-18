@@ -20,27 +20,45 @@ interface SocializerOption {
   idNumber: string
 }
 
-interface ReportData {
+interface DailyStat {
+  date: string
+  totalSurveys: number
+  enabledSurveys: number
+  disabledSurveys: number
+  surveys: unknown[]
+}
+
+interface SocializerReport {
   _id: string
   socializerName: string
   socializerIdNumber: string
-  surveyName: string
-  respondentName: string
-  respondentIdNumber: string
-  completedAt: string
-  location?: {
-    lat: number
-    long: number
+  userEmail: string
+  totalSurveys: number
+  totalEnabled: number
+  totalDisabled: number
+  dailyStats: DailyStat[]
+}
+
+interface ReportResponse {
+  message: string
+  data: {
+    dateRange: {
+      startDate: string
+      endDate: string
+    }
+    totalSocializers: number
+    report: SocializerReport[]
   }
 }
 
 export default function ReportsGenerate() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [socializers, setSocializers] = useState<SocializerOption[]>([])
-  const [reportData, setReportData] = useState<ReportData[]>([])
+  const [reportData, setReportData] = useState<SocializerReport[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [reportResponse, setReportResponse] = useState<ReportResponse | null>(null)
   
   const [filters, setFilters] = useState<ReportFilters>({
     startDate: '',
@@ -56,9 +74,15 @@ export default function ReportsGenerate() {
     try {
       setIsLoading(true)
       const response = await apiService.getSocializers(1, 1000)
+      
       setSocializers(
         response.data
-          .filter(s => s.status === 'enabled')
+          .filter(s => {
+            const role = typeof s.user?.role === 'string' 
+              ? s.user.role 
+              : s.user?.role?.role
+            return role === 'socializer'
+          })
           .map(s => ({
             _id: s._id,
             fullName: s.fullName,
@@ -87,23 +111,14 @@ export default function ReportsGenerate() {
       setIsGenerating(true)
       setError(null)
       
-      // TODO: Implementar endpoint de reportes en el backend
-      // const response = await apiService.generateReport(filters)
-      // setReportData(response.data)
+      const response = await apiService.getReportsBySocializerAndDate(
+        filters.startDate,
+        filters.endDate,
+        filters.socializerId || undefined
+      )
       
-      // Datos de ejemplo por ahora
-      setReportData([
-        {
-          _id: '1',
-          socializerName: 'JUAN PÉREZ',
-          socializerIdNumber: '1234567890',
-          surveyName: 'Encuesta de Satisfacción 2024',
-          respondentName: 'MARÍA GONZÁLEZ',
-          respondentIdNumber: '9876543210',
-          completedAt: new Date().toISOString(),
-          location: { lat: 4.6097, long: -74.0817 },
-        },
-      ])
+      setReportResponse(response)
+      setReportData(response.data.report)
       
     } catch (err) {
       console.error('Error generating report:', err)
@@ -122,24 +137,30 @@ export default function ReportsGenerate() {
     const headers = [
       'Socializador',
       'ID Socializador',
-      'Encuesta',
-      'Encuestado',
-      'ID Encuestado',
-      'Fecha Completado',
-      'Latitud',
-      'Longitud',
+      'Email',
+      'Total Encuestas',
+      'Activas',
+      'Inactivas',
+      'Fecha',
+      'Encuestas del Día',
     ]
 
-    const rows = reportData.map(item => [
-      item.socializerName,
-      item.socializerIdNumber,
-      item.surveyName,
-      item.respondentName,
-      item.respondentIdNumber,
-      new Date(item.completedAt).toLocaleString('es-CO'),
-      item.location?.lat?.toFixed(6) || '',
-      item.location?.long?.toFixed(6) || '',
-    ])
+    const rows: string[][] = []
+    
+    reportData.forEach(socializer => {
+      socializer.dailyStats.forEach(day => {
+        rows.push([
+          socializer.socializerName,
+          socializer.socializerIdNumber,
+          socializer.userEmail,
+          socializer.totalSurveys.toString(),
+          socializer.totalEnabled.toString(),
+          socializer.totalDisabled.toString(),
+          day.date,
+          day.totalSurveys.toString(),
+        ])
+      })
+    })
 
     const csvContent = [
       headers.join(','),
@@ -151,23 +172,12 @@ export default function ReportsGenerate() {
     const url = URL.createObjectURL(blob)
     
     link.setAttribute('href', url)
-    link.setAttribute('download', `reporte_${filters.startDate}_${filters.endDate}.csv`)
+    link.setAttribute('download', `reporte_socializadores_${filters.startDate}_${filters.endDate}.csv`)
     link.style.visibility = 'hidden'
     
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-  }
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleString('es-CO', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
   }
 
   return (
@@ -271,15 +281,20 @@ export default function ReportsGenerate() {
               </div>
             </div>
 
-            {reportData.length > 0 && (
+            {reportData.length > 0 && reportResponse && (
               <div className="reports-generate__results">
                 <div className="results-header">
                   <h3 className="results-header__title">
                     Resultados del Reporte
                   </h3>
-                  <span className="results-header__count">
-                    {reportData.length} {reportData.length === 1 ? 'registro' : 'registros'}
-                  </span>
+                  <div className="results-header__info">
+                    <span className="results-header__count">
+                      {reportResponse.data.totalSocializers} {reportResponse.data.totalSocializers === 1 ? 'socializador' : 'socializadores'}
+                    </span>
+                    <span className="results-header__date-range">
+                      {reportResponse.data.dateRange.startDate} - {reportResponse.data.dateRange.endDate}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="reports-table-container">
@@ -288,30 +303,42 @@ export default function ReportsGenerate() {
                       <tr>
                         <th className="survey-table__th">Socializador</th>
                         <th className="survey-table__th">ID</th>
-                        <th className="survey-table__th">Encuesta</th>
-                        <th className="survey-table__th">Encuestado</th>
-                        <th className="survey-table__th">ID Encuestado</th>
-                        <th className="survey-table__th">Fecha</th>
-                        <th className="survey-table__th">Ubicación</th>
+                        <th className="survey-table__th">Email</th>
+                        <th className="survey-table__th">Total Encuestas</th>
+                        <th className="survey-table__th">Activas</th>
+                        <th className="survey-table__th">Inactivas</th>
+                        <th className="survey-table__th">Detalles por Día</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {reportData.map((item) => (
-                        <tr key={item._id}>
-                          <td className="survey-table__td">{item.socializerName}</td>
-                          <td className="survey-table__td">{item.socializerIdNumber}</td>
-                          <td className="survey-table__td">{item.surveyName}</td>
-                          <td className="survey-table__td">{item.respondentName}</td>
-                          <td className="survey-table__td">{item.respondentIdNumber}</td>
-                          <td className="survey-table__td">{formatDate(item.completedAt)}</td>
+                      {reportData.map((socializer) => (
+                        <tr key={socializer._id}>
+                          <td className="survey-table__td">{socializer.socializerName}</td>
+                          <td className="survey-table__td">{socializer.socializerIdNumber}</td>
+                          <td className="survey-table__td">{socializer.userEmail}</td>
                           <td className="survey-table__td">
-                            {item.location ? (
-                              <span className="location-info">
-                                {item.location.lat.toFixed(4)}, {item.location.long.toFixed(4)}
-                              </span>
-                            ) : (
-                              '-'
-                            )}
+                            <strong>{socializer.totalSurveys}</strong>
+                          </td>
+                          <td className="survey-table__td">
+                            <span style={{ color: '#28a745' }}>{socializer.totalEnabled}</span>
+                          </td>
+                          <td className="survey-table__td">
+                            <span style={{ color: '#dc3545' }}>{socializer.totalDisabled}</span>
+                          </td>
+                          <td className="survey-table__td">
+                            <details>
+                              <summary style={{ cursor: 'pointer', color: '#4a7c6f' }}>
+                                Ver {socializer.dailyStats.length} días
+                              </summary>
+                              <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                                {socializer.dailyStats.map((day, idx) => (
+                                  <div key={idx} style={{ padding: '0.25rem 0', borderBottom: '1px solid #eee' }}>
+                                    <strong>{day.date}:</strong> {day.totalSurveys} encuestas
+                                    ({day.enabledSurveys} activas, {day.disabledSurveys} inactivas)
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
                           </td>
                         </tr>
                       ))}

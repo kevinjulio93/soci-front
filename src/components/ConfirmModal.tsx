@@ -66,9 +66,12 @@ export function ConfirmModal({
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content modal-content--confirm" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div className={`confirm-icon confirm-icon--${variant}`}>
-            {getIconByVariant()}
+        <div className="modal-header modal-header--confirm">
+          <div className="modal-header__title-group">
+            <div className={`confirm-icon confirm-icon--${variant}`}>
+              {getIconByVariant()}
+            </div>
+            <h2 className="modal-header__title">{title}</h2>
           </div>
           <button className="modal-close" onClick={onClose} disabled={isLoading}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -79,7 +82,6 @@ export function ConfirmModal({
         </div>
 
         <div className="modal-body">
-          <h2 className="confirm-title">{title}</h2>
           <p className="confirm-message">{message}</p>
         </div>
 

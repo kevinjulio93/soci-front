@@ -1,0 +1,124 @@
+// =============================================
+// TOAST NOTIFICATIONS - BEM
+// =============================================
+
+@use './variables' as *;
+
+.toast-container {
+  position: fixed;
+  top: $spacing-xl;
+  right: $spacing-xl;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  max-width: 400px;
+  pointer-events: none;
+
+  @media (max-width: 768px) {
+    top: $spacing-md;
+    right: $spacing-md;
+    left: $spacing-md;
+    max-width: none;
+  }
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background: $color-white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-lg;
+  pointer-events: auto;
+  animation: slideInRight 0.3s ease-out;
+  border-left: 4px solid;
+  min-width: 300px;
+
+  @media (max-width: 768px) {
+    min-width: auto;
+  }
+
+  &--success {
+    border-left-color: $color-success;
+
+    .toast__icon {
+      color: $color-success;
+    }
+  }
+
+  &--error {
+    border-left-color: $color-danger;
+
+    .toast__icon {
+      color: $color-danger;
+    }
+  }
+
+  &--warning {
+    border-left-color: $color-warning;
+
+    .toast__icon {
+      color: $color-warning;
+    }
+  }
+
+  &--info {
+    border-left-color: $color-primary;
+
+    .toast__icon {
+      color: $color-primary;
+    }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__message {
+    flex: 1;
+    margin: 0;
+    font-size: $font-size-sm;
+    color: $color-text;
+    line-height: $line-height-normal;
+    padding-top: 2px;
+  }
+
+  &__close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: $color-light-text;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color $transition-fast;
+
+    &:hover {
+      color: $color-text;
+    }
+
+    &:focus {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
+      border-radius: $border-radius-sm;
+    }
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
