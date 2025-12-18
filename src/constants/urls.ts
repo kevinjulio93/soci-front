@@ -5,7 +5,7 @@
 
 export const EXTERNAL_URLS = {
   // Videos
-  VIDEO_TUTORIAL: import.meta.env.VITE_VIDEO_TUTORIAL_URL || 'https://www.youtube.com/embed/vVy9Lgpg1m8?si=0Jr7F2YQh58n9JMF',
+  VIDEO_TUTORIAL: import.meta.env.VITE_VIDEO_TUTORIAL_URL || 'https://www.youtube.com/embed/Y5M2EsGqJbI?si=BBTaXX0lPCn_TW9O',
   
   // API
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://82f60cf02a72.ngrok-free.app/api/v1',
@@ -30,9 +30,15 @@ export const API_ENDPOINTS = {
   // Socializers
   SOCIALIZERS: '/socializers',
   SOCIALIZER_BY_ID: (id: string) => `/socializers/${id}`,
+  SOCIALIZERS_WITH_LOCATIONS: '/socializers/with-locations',
   
   // Roles
   ROLES: '/roles',
+  
+  // Coordinators
+  COORDINATORS: '/socializers/coordinators',
+  COORDINATOR_ASSIGNMENTS_BATCH: '/coordinator-assignments/batch',
+  COORDINATOR_ASSIGNMENTS_BATCH_UNASSIGN: '/coordinator-assignments/batch-unassign',
   
   // Location
   LOCATIONS: '/locations',

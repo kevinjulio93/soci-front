@@ -19,8 +19,9 @@ export const ROUTES = {
   ADMIN_SOCIALIZERS_NEW: '/admin/socializers/new',
   ADMIN_SOCIALIZERS_EDIT: (id: string) => `/admin/socializers/edit/${id}`,
   ADMIN_SURVEYS: '/admin/surveys',
-  ADMIN_USERS: '/admin/users',
   ADMIN_REPORTS: '/admin/reports',
+  ADMIN_REPORTS_REALTIME: '/admin/reports/realtime',
+  ADMIN_REPORTS_GENERATE: '/admin/reports/generate',
   
   // Encuestas
   SURVEY_PARTICIPANT: (surveyId: string) => `/survey/${surveyId}/participant`,

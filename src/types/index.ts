@@ -27,6 +27,7 @@ export interface User {
   role: Role
   token: string
   abilities: Ability[]
+  status?: 'enabled' | 'disabled'
 }
 
 export interface LoginCredentials {
@@ -71,6 +72,8 @@ export interface Socializer {
   _id: string
   fullName: string
   idNumber: string
+  phone: string
+  coordinator?: string
   location?: {
     lat: number
     long: number
@@ -91,9 +94,11 @@ export interface Socializer {
 export interface SocializerFormData {
   fullName: string
   idNumber: string
+  phone: string
   email: string
   password: string
   roleId: string
+  coordinator?: string
   location?: {
     lat: number
     long: number
@@ -146,9 +151,11 @@ export interface UpdateRespondentRequest {
 export interface CreateSocializerRequest {
   fullName: string
   idNumber: string
+  phone: string
   email: string
   password: string
   roleId: string
+  coordinator?: string
   location?: {
     lat: number
     long: number
@@ -159,9 +166,11 @@ export interface CreateSocializerRequest {
 export interface UpdateSocializerRequest {
   fullName?: string
   idNumber?: string
+  phone?: string
   email?: string
   password?: string
   roleId?: string
+  coordinator?: string
   location?: {
     lat: number
     long: number

@@ -168,6 +168,8 @@ export class SocializerData {
   public _id: string
   public fullName: string
   public idNumber: string
+  public phone: string
+  public coordinator?: string
   public location?: {
     lat: number
     long: number
@@ -192,6 +194,8 @@ export class SocializerData {
     this._id = data._id
     this.fullName = data.fullName
     this.idNumber = data.idNumber
+    this.phone = data.phone
+    this.coordinator = data.coordinator
     this.location = data.location
     this.status = data.status
     this.user = data.user

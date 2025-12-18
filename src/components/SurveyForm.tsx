@@ -75,6 +75,7 @@ export function SurveyForm({
                   value: 3,
                   message: 'El nombre debe tener al menos 3 caracteres',
                 },
+                setValueAs: (value) => value?.toUpperCase() || '',
               })}
             />
             {errors.fullName && (

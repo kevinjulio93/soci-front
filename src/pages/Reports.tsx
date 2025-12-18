@@ -1,15 +1,19 @@
 /**
  * Reports - Reportes y estadísticas
- * Página para visualizar reportes del sistema
+ * Página principal con submenú para reportes
  */
 
 import { useState } from 'react'
-import { Sidebar, Card } from '../components'
-import { REPORT_CARDS } from '../constants'
+import { Link, useLocation } from 'react-router-dom'
+import { Sidebar } from '../components'
+import { ROUTES } from '../constants'
 import '../styles/Dashboard.scss'
 
 export default function Reports() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const location = useLocation()
+
+  const isActive = (path: string) => location.pathname === path
 
   return (
     <div className="dashboard-layout">
@@ -29,27 +33,65 @@ export default function Reports() {
         </div>
 
         <div className="dashboard-layout__body">
-          <div className="empty-state">
-            <div className="empty-state__icon">
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+          <div className="reports-menu">
+            <div className="reports-menu__grid">
+              <Link 
+                to={ROUTES.ADMIN_REPORTS_REALTIME}
+                className={`reports-menu__card ${isActive(ROUTES.ADMIN_REPORTS_REALTIME) ? 'reports-menu__card--active' : ''}`}
+              >
+                <div className="reports-menu__icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                </div>
+                <h3 className="reports-menu__title">Ubicaciones en Tiempo Real</h3>
+                <p className="reports-menu__description">
+                  Visualiza la ubicación actual de todos los socializadores activos en el sistema
+                </p>
+                <div className="reports-menu__badge">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="8" />
+                  </svg>
+                  En vivo
+                </div>
+              </Link>
+
+              <Link 
+                to={ROUTES.ADMIN_REPORTS_GENERATE}
+                className={`reports-menu__card ${isActive(ROUTES.ADMIN_REPORTS_GENERATE) ? 'reports-menu__card--active' : ''}`}
+              >
+                <div className="reports-menu__icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="reports-menu__title">Generar Reporte Tabular</h3>
+                <p className="reports-menu__description">
+                  Crea reportes personalizados por rango de fechas y socializador, exporta en CSV
+                </p>
+                <div className="reports-menu__badge reports-menu__badge--secondary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Exportable
+                </div>
+              </Link>
             </div>
-            <h2 className="empty-state__title">
-              Reportes y Estadísticas
-            </h2>
-            <p className="empty-state__description">
-              Consulta y analiza estadísticas detalladas sobre el uso del sistema, encuestas completadas y rendimiento de los socializadores.
-            </p>
-            <div className="empty-state__hints">
-              {REPORT_CARDS.map((card) => (
-                <Card
-                  key={card.id}
-                  icon={card.icon}
-                  title={card.title}
-                  description={card.description}
-                />
-              ))}
+
+            <div className="reports-menu__info">
+              <div className="info-card">
+                <svg className="info-card__icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
+                </svg>
+                <div className="info-card__content">
+                  <h4 className="info-card__title">Acerca de los Reportes</h4>
+                  <p className="info-card__text">
+                    Los reportes te permiten monitorear la actividad de los socializadores y generar análisis detallados del trabajo de campo. 
+                    Los datos se actualizan en tiempo real y puedes exportarlos para análisis externos.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

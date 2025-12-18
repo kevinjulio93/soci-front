@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form'
 import type { RoleOption } from '../types'
 import { SocializerFormData } from '../models/FormData'
 import { apiService } from '../services/api.service'
+import { useAuth } from '../contexts/AuthContext'
 import type { SocializerFormProps } from './types'
 import '../styles/SurveyForm.scss'
 
@@ -17,18 +18,26 @@ export function SocializerForm({
   initialData,
   isEditMode = false,
 }: SocializerFormProps) {
+  const { user } = useAuth()
   const [roles, setRoles] = useState<RoleOption[]>([])
   const [loadingRoles, setLoadingRoles] = useState(true)
+  const [coordinators, setCoordinators] = useState<Array<{ _id: string; fullName: string; email: string }>>([])
+  const [loadingCoordinators, setLoadingCoordinators] = useState(false)
+  const [selectedRole, setSelectedRole] = useState<string>('')
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<ReturnType<SocializerFormData['toFormData']>>({
     mode: 'onBlur',
     defaultValues: initialData || new SocializerFormData().toFormData(),
   })
+
+  // Watch role changes to show/hide coordinator field
+  const watchedRoleId = watch('roleId')
 
   // Actualizar valores del formulario cuando cambien los datos iniciales
   useEffect(() => {
@@ -37,15 +46,51 @@ export function SocializerForm({
     }
   }, [initialData, reset])
 
+  // Update selectedRole when roleId changes
+  useEffect(() => {
+    if (watchedRoleId) {
+      const role = roles.find(r => r._id === watchedRoleId)
+      setSelectedRole(role?.role || '')
+    }
+  }, [watchedRoleId, roles])
+
   useEffect(() => {
     loadRoles()
+    loadCoordinators()
   }, [])
+
+  const loadCoordinators = async () => {
+    try {
+      setLoadingCoordinators(true)
+      const response = await apiService.getCoordinators()
+      setCoordinators(response)
+    } catch (err) {
+      console.error('Error loading coordinators:', err)
+    } finally {
+      setLoadingCoordinators(false)
+    }
+  }
 
   const loadRoles = async () => {
     try {
       const response = await apiService.getRoles()
       // Usar el método helper de la clase GetRolesResponse
-      const activeRoles = response.getActiveRoles()
+      let activeRoles = response.getActiveRoles()
+      
+      // Filtrar roles según jerarquía:
+      // - admin/root pueden crear todos los roles
+      // - coordinador NO puede crear usuarios admin
+      const currentUserRole = user?.role?.role || ''
+      
+      if (currentUserRole === 'coordinador' || currentUserRole === 'coordinator') {
+        // Coordinador solo puede crear socializadores
+        activeRoles = activeRoles.filter(role => 
+          role.role === 'socializer' || 
+          role.role === 'socializador'
+        )
+      }
+      // admin y root pueden ver todos los roles (no filtrar)
+      
       setRoles(activeRoles.map(role => ({
         _id: role._id,
         role: role.role,
@@ -89,6 +134,7 @@ export function SocializerForm({
                   value: 3,
                   message: 'El nombre debe tener al menos 3 caracteres',
                 },
+                setValueAs: (value) => value?.toUpperCase() || '',
               })}
               placeholder="Ingrese el nombre completo"
               disabled={isLoading}
@@ -119,6 +165,30 @@ export function SocializerForm({
             />
             {errors.idNumber && (
               <span className="form-group__error-text">{errors.idNumber.message}</span>
+            )}
+          </div>
+
+          {/* Teléfono */}
+          <div className="form-group">
+            <label htmlFor="phone" className="form-group__label">
+              Teléfono *
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              className={`form-group__input ${errors.phone ? 'form-group__input--error' : ''}`}
+              {...register('phone', {
+                required: 'El teléfono es obligatorio',
+                pattern: {
+                  value: /^[0-9]{10}$/,
+                  message: 'El teléfono debe tener 10 dígitos',
+                },
+              })}
+              placeholder="3001234567"
+              disabled={isLoading}
+            />
+            {errors.phone && (
+              <span className="form-group__error-text">{errors.phone.message}</span>
             )}
           </div>
 
@@ -194,6 +264,38 @@ export function SocializerForm({
               <span className="form-group__error-text">{errors.roleId.message}</span>
             )}
           </div>
+
+          {/* Coordinador - Solo visible cuando el rol es "socializer" */}
+          {(selectedRole === 'socializer' || selectedRole === 'socializador') && (
+            <div className="form-group">
+              <label htmlFor="coordinator" className="form-group__label">
+                Coordinador *
+              </label>
+              <select
+                id="coordinator"
+                className={`form-group__input ${errors.coordinator ? 'form-group__input--error' : ''}`}
+                {...register('coordinator', {
+                  required: (selectedRole === 'socializer' || selectedRole === 'socializador') ? 'Debe seleccionar un coordinador' : false,
+                })}
+                disabled={isLoading || loadingCoordinators}
+              >
+                <option value="">Seleccione un coordinador</option>
+                {coordinators.map((coordinator) => (
+                  <option key={coordinator._id} value={coordinator._id}>
+                    {coordinator.fullName} - {coordinator.email}
+                  </option>
+                ))}
+              </select>
+              {errors.coordinator && (
+                <span className="form-group__error-text">{errors.coordinator.message}</span>
+              )}
+              {coordinators.length === 0 && !loadingCoordinators && (
+                <span className="form-group__hint">
+                  No hay coordinadores disponibles. Por favor, cree un coordinador primero.
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Estado */}
           <div className="form-group">

@@ -1,0 +1,294 @@
+/**
+ * ReportsRealtime - Ubicación en tiempo real de socializadores
+ * Muestra un mapa con las ubicaciones actuales de todos los socializadores
+ */
+
+import { useState, useEffect } from 'react'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { Icon } from 'leaflet'
+import { Sidebar } from '../components'
+import { apiService } from '../services/api.service'
+import 'leaflet/dist/leaflet.css'
+import '../styles/Dashboard.scss'
+
+interface SocializerLocation {
+  _id: string
+  fullName: string
+  idNumber: string
+  user: {
+    _id: string
+    email: string
+  }
+  coordinator?: {
+    _id: string
+    fullName: string
+    idNumber: string
+  }
+  latestLocation?: {
+    coordinates: [number, number]
+    latitude: number
+    longitude: number
+    accuracy: number
+    timestamp: string
+    speed?: number
+    heading?: number
+  }
+}
+
+// Fix para los iconos de Leaflet en Vite/Webpack
+const defaultIcon = new Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+})
+
+export default function ReportsRealtime() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [socializers, setSocializers] = useState<SocializerLocation[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadSocializers()
+    
+    // Actualizar cada 30 segundos
+    const interval = setInterval(loadSocializers, 30000)
+    
+    return () => clearInterval(interval)
+  }, [])
+
+  const loadSocializers = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const response = await apiService.getSocializersWithLocations()
+      
+      console.log('📍 Total socializers with locations from API:', response.data?.length || 0)
+      console.log('📍 Sample socializer:', response.data?.[0])
+      
+      // El endpoint ya devuelve solo socializadores con ubicaciones
+      const socializersList = response.data || []
+      
+      socializersList.forEach((s: SocializerLocation) => {
+        console.log(`📍 ${s.fullName}: hasLocation=${!!s.latestLocation}, coords=[${s.latestLocation?.latitude}, ${s.latestLocation?.longitude}]`)
+      })
+      
+      console.log('📍 Total socializers with location data:', socializersList.length)
+      
+      setSocializers(socializersList)
+    } catch (err) {
+      console.error('Error loading socializers:', err)
+      setError('Error al cargar las ubicaciones')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Sin datos'
+    
+    const date = new Date(dateString)
+    return date.toLocaleString('es-CO', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  const socializersWithLocation = socializers.filter(s => s.latestLocation)
+  const socializersWithoutLocation = socializers.filter(s => !s.latestLocation)
+
+  // Calcular el centro del mapa basado en las ubicaciones
+  const getMapCenter = (): [number, number] => {
+    if (socializersWithLocation.length === 0) {
+      return [4.6097, -74.0817] // Bogotá por defecto
+    }
+
+    // Filtrar solo los que tienen coordenadas válidas
+    const validLocations = socializersWithLocation.filter(
+      s => s.latestLocation?.latitude != null && s.latestLocation?.longitude != null
+    )
+
+    if (validLocations.length === 0) {
+      return [4.6097, -74.0817] // Bogotá por defecto
+    }
+
+    const avgLat = validLocations.reduce((sum, s) => sum + s.latestLocation!.latitude, 0) / validLocations.length
+    const avgLong = validLocations.reduce((sum, s) => sum + s.latestLocation!.longitude, 0) / validLocations.length
+    
+    return [avgLat, avgLong]
+  }
+
+  return (
+    <div className="dashboard-layout">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      
+      <div className="dashboard-layout__content">
+        <div className="dashboard-layout__header">
+          <button 
+            className="dashboard-layout__menu-btn"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h1 className="dashboard-layout__title">Reportes - Ubicaciones en Tiempo Real</h1>
+        </div>
+
+        <div className="dashboard-layout__body">
+          {error && (
+            <div className="survey-form__error" style={{ marginBottom: '1rem' }}>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {isLoading && socializers.length === 0 ? (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Cargando ubicaciones de socializadores...</p>
+            </div>
+          ) : socializers.length === 0 && !isLoading ? (
+            <div className="empty-state">
+              <div className="empty-state__icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+              </div>
+              <h2 className="empty-state__title">
+                No hay ubicaciones disponibles
+              </h2>
+              <p className="empty-state__description">
+                Los socializadores aún no han compartido su ubicación o no hay socializadores activos en este momento.
+              </p>
+              <button 
+                className="btn btn--primary"
+                onClick={loadSocializers}
+                style={{ marginTop: '1.5rem' }}
+              >
+                🔄 Intentar nuevamente
+              </button>
+            </div>
+          ) : (
+            <div className="reports-realtime">
+              <div className="reports-realtime__header">
+                <div className="reports-realtime__stats">
+                  <div className="stat-card">
+                    <div className="stat-card__value">{socializersWithLocation.length}</div>
+                    <div className="stat-card__label">Con ubicación</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-card__value">{socializersWithoutLocation.length}</div>
+                    <div className="stat-card__label">Sin ubicación</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-card__value">{socializers.length}</div>
+                    <div className="stat-card__label">Total socializadores</div>
+                  </div>
+                </div>
+                <button 
+                  className="btn btn--secondary"
+                  onClick={loadSocializers}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Actualizando...' : '🔄 Actualizar'}
+                </button>
+              </div>
+
+              <div className="reports-realtime__content">
+                {socializersWithLocation.length > 0 ? (
+                <div className="reports-realtime__map-container">
+                  <h3 style={{ marginBottom: '1rem', color: '#4a7c6f' }}>
+                    Mapa de Ubicaciones ({socializersWithLocation.length} {socializersWithLocation.length === 1 ? 'socializador' : 'socializadores'})
+                  </h3>
+                  <MapContainer
+                    key={`map-${socializersWithLocation.length}-${socializersWithLocation[0]?._id}`}
+                    center={getMapCenter()}
+                    zoom={socializersWithLocation.length === 1 ? 15 : 11}
+                    style={{ height: '500px', width: '100%', borderRadius: '8px' }}
+                    scrollWheelZoom={true}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {socializersWithLocation
+                      .filter(s => s.latestLocation?.latitude != null && s.latestLocation?.longitude != null)
+                      .map((socializer) => {
+                        console.log(`🗺️ Rendering marker for ${socializer.fullName} at [${socializer.latestLocation!.latitude}, ${socializer.latestLocation!.longitude}]`)
+                        return (
+                          <Marker
+                            key={socializer._id}
+                            position={[socializer.latestLocation!.latitude, socializer.latestLocation!.longitude]}
+                            icon={defaultIcon}
+                          >
+                          <Popup>
+                            <div className="map-popup">
+                              <h4 className="map-popup__title">{socializer.fullName}</h4>
+                              <p className="map-popup__info">
+                                <strong>ID:</strong> {socializer.idNumber}
+                              </p>
+                              <p className="map-popup__info">
+                                <strong>Email:</strong> {socializer.user.email}
+                              </p>
+                              {socializer.coordinator && (
+                                <p className="map-popup__info">
+                                  <strong>Coordinador:</strong> {socializer.coordinator.fullName}
+                                </p>
+                              )}
+                              <p className="map-popup__info">
+                                <strong>Coordenadas:</strong><br />
+                                Lat: {socializer.latestLocation!.latitude?.toFixed(6) || 'N/A'}<br />
+                                Long: {socializer.latestLocation!.longitude?.toFixed(6) || 'N/A'}
+                              </p>
+                              {socializer.latestLocation!.accuracy != null && (
+                                <p className="map-popup__info">
+                                  <strong>Precisión:</strong> ±{socializer.latestLocation!.accuracy.toFixed(1)}m
+                                </p>
+                              )}
+                              {socializer.latestLocation!.speed != null && (
+                                <p className="map-popup__info">
+                                  <strong>Velocidad:</strong> {socializer.latestLocation!.speed.toFixed(1)} m/s
+                                </p>
+                              )}
+                              <p className="map-popup__info">
+                                <strong>Última actualización:</strong><br />
+                                {formatDate(socializer.latestLocation!.timestamp)}
+                              </p>
+                            </div>
+                          </Popup>
+                        </Marker>
+                      )
+                    })}
+                  </MapContainer>
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-state__icon">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                  </div>
+                  <h2 className="empty-state__title">
+                    No se encontraron ubicaciones
+                  </h2>
+                  <p className="empty-state__description">
+                    Ningún socializador tiene ubicación registrada en este momento.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

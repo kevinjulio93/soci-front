@@ -34,6 +34,13 @@ export function ProtectedRoute({
     return <Navigate to="/login" replace />
   }
 
+  // Validar si el usuario está deshabilitado
+  if (user.status === 'disabled') {
+    // Limpiar sesión y redirigir al login
+    authService.logout()
+    return <Navigate to="/login" replace />
+  }
+
   // Validar que sea admin si se requiere
   if (requireAdminRole) {
     const isAdmin = authService.isAdminOrRoot(user)

@@ -29,6 +29,10 @@ interface DataTableProps<T> {
   onSearch?: (query: string) => void
   showSearch?: boolean
   getRowKey: (item: T) => string
+  // Selection support
+  selectable?: boolean
+  selectedItems?: Set<string>
+  onSelectionChange?: (selectedIds: Set<string>) => void
 }
 
 export function DataTable<T>({
@@ -47,7 +51,36 @@ export function DataTable<T>({
   onSearch,
   showSearch = false,
   getRowKey,
+  selectable = false,
+  selectedItems = new Set(),
+  onSelectionChange,
 }: DataTableProps<T>) {
+  const handleSelectAll = () => {
+    if (!onSelectionChange) return
+    
+    if (selectedItems.size === data.length) {
+      // Deselect all
+      onSelectionChange(new Set())
+    } else {
+      // Select all on current page
+      const allIds = new Set(data.map(item => getRowKey(item)))
+      onSelectionChange(allIds)
+    }
+  }
+
+  const handleSelectItem = (id: string) => {
+    if (!onSelectionChange) return
+    
+    const newSelection = new Set(selectedItems)
+    if (newSelection.has(id)) {
+      newSelection.delete(id)
+    } else {
+      newSelection.add(id)
+    }
+    onSelectionChange(newSelection)
+  }
+
+  const isAllSelected = data.length > 0 && selectedItems.size === data.length
   return (
     <div className="survey-table">
       {showSearch && onSearch && (
@@ -76,6 +109,16 @@ export function DataTable<T>({
           <table className="survey-table__table">
             <thead className="survey-table__thead">
               <tr>
+                {selectable && (
+                  <th className="survey-table__th survey-table__th--checkbox">
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={handleSelectAll}
+                      className="table-checkbox"
+                    />
+                  </th>
+                )}
                 {columns.map((column) => (
                   <th key={column.key} className={`survey-table__th ${column.className || ''}`}>
                     {column.header}
@@ -86,7 +129,7 @@ export function DataTable<T>({
             <tbody className="survey-table__tbody">
               {isLoading ? (
                 <tr className="survey-table__row">
-                  <td colSpan={columns.length} style={{ textAlign: 'center', padding: '2rem' }}>
+                  <td colSpan={selectable ? columns.length + 1 : columns.length} style={{ textAlign: 'center', padding: '2rem' }}>
                     <div className="loading-state">
                       <div className="loading-spinner"></div>
                       <p>Cargando...</p>
@@ -94,15 +137,28 @@ export function DataTable<T>({
                   </td>
                 </tr>
               ) : (
-                data.map((item) => (
-                  <tr key={getRowKey(item)} className="survey-table__row">
-                    {columns.map((column) => (
-                      <td key={column.key} className={`survey-table__td ${column.className || ''}`}>
-                        {column.render(item)}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+                data.map((item) => {
+                  const itemId = getRowKey(item)
+                  return (
+                    <tr key={itemId} className="survey-table__row">
+                      {selectable && (
+                        <td className="survey-table__td survey-table__td--checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.has(itemId)}
+                            onChange={() => handleSelectItem(itemId)}
+                            className="table-checkbox"
+                          />
+                        </td>
+                      )}
+                      {columns.map((column) => (
+                        <td key={column.key} className={`survey-table__td ${column.className || ''}`}>
+                          {column.render(item)}
+                        </td>
+                      ))}
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

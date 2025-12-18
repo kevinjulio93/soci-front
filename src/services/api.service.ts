@@ -229,6 +229,11 @@ class ApiService {
     return new GetSocializerResponse(new SocializerData(response.data))
   }
 
+  async getSocializersWithLocations(): Promise<any> {
+    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZERS_WITH_LOCATIONS)
+    return response
+  }
+
   async createSocializer(data: CreateSocializerRequest): Promise<CreateSocializerResponse> {
     const response = await this.request<any>(API_ENDPOINTS.SOCIALIZERS, {
       method: 'POST',
@@ -261,6 +266,69 @@ class ApiService {
     const roles = response.data.map((item: any) => new RoleData(item))
     
     return new GetRolesResponse(roles)
+  }
+
+  async getCoordinators(): Promise<Array<{
+    _id: string;
+    fullName: string;
+    idNumber: string;
+    email: string;
+  }>> {
+    // Obtener todos los socializers (con paginación grande para obtener todos)
+    const response = await this.request<any>(`${API_ENDPOINTS.SOCIALIZERS}?page=1&perPage=1000`, {
+      method: 'GET',
+    })
+    
+    // Filtrar solo los que tienen rol de coordinador
+    const coordinators = (response.data || [])
+      .filter((item: any) => {
+        const roleString = typeof item.user?.role === 'string' 
+          ? item.user.role 
+          : item.user?.role?.role || ''
+        return roleString.toLowerCase() === 'coordinador' || roleString.toLowerCase() === 'coordinator'
+      })
+      .map((item: any) => ({
+        _id: item._id,
+        fullName: item.fullName,
+        idNumber: item.idNumber,
+        email: item.user?.email || ''
+      }))
+    
+    return coordinators
+  }
+
+  async batchAssignCoordinator(data: {
+    coordinatorId: string;
+    socializerIds: string[];
+    notes?: string;
+    replaceExisting?: boolean;
+  }): Promise<{ success: boolean; message: string; data?: any }> {
+    const response = await this.request<any>(API_ENDPOINTS.COORDINATOR_ASSIGNMENTS_BATCH, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    
+    return {
+      success: response.success ?? true,
+      message: response.message ?? 'Coordinador asignado correctamente',
+      data: response.data,
+    }
+  }
+
+  async batchUnassignCoordinator(data: {
+    coordinatorId: string;
+    socializerIds: string[];
+    deleteRecords?: boolean;
+  }): Promise<{ success: boolean; message: string }> {
+    const response = await this.request<any>(API_ENDPOINTS.COORDINATOR_ASSIGNMENTS_BATCH_UNASSIGN, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    
+    return {
+      success: response.success ?? true,
+      message: response.message ?? 'Coordinador desasignado correctamente',
+    }
   }
 
   async updateLocation(data: { userId: string; latitude: number; longitude: number; accuracy: number }): Promise<{ success: boolean; message: string }> {

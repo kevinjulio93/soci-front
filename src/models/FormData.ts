@@ -33,24 +33,30 @@ export class LoginFormData {
 export class SocializerFormData {
   fullName: string
   idNumber: string
+  phone: string
   email: string
   password: string
   roleId: string
+  coordinator?: string
   status: 'enabled' | 'disabled'
 
   constructor(
     fullName: string = '',
     idNumber: string = '',
+    phone: string = '',
     email: string = '',
     password: string = '',
     roleId: string = '',
+    coordinator: string = '',
     status: 'enabled' | 'disabled' = 'enabled'
   ) {
     this.fullName = fullName
     this.idNumber = idNumber
+    this.phone = phone
     this.email = email
     this.password = password
     this.roleId = roleId
+    this.coordinator = coordinator
     this.status = status
   }
 
@@ -58,9 +64,11 @@ export class SocializerFormData {
     return {
       fullName: this.fullName,
       idNumber: this.idNumber,
+      phone: this.phone,
       email: this.email,
       password: this.password,
       roleId: this.roleId,
+      coordinator: this.coordinator,
       status: this.status,
     }
   }
@@ -73,9 +81,11 @@ export class SocializerFormData {
     return new SocializerFormData(
       data.fullName || '',
       data.idNumber || '',
+      data.phone || '',
       data.email || '',
       data.password || '',
       data.roleId || '',
+      data.coordinator || '',
       data.status || 'enabled'
     )
   }

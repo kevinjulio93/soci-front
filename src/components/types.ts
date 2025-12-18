@@ -97,14 +97,6 @@ export interface PageHeaderProps {
   }
 }
 
-// FeatureCard types
-export interface FeatureCardProps {
-  title: string
-  description: string
-  icon: string
-  onClick?: () => void
-}
-
 // Sidebar types
 export interface SidebarProps {
   userName?: string

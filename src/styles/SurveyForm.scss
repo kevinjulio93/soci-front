@@ -234,6 +234,11 @@
   }
 }
 
+// Uppercase transform for fullName field
+#fullName {
+  text-transform: uppercase;
+}
+
 .form-group__select {
   appearance: none;
   cursor: pointer;
@@ -252,6 +257,15 @@
   font-weight: $font-weight-medium;
   text-align: left;
   animation: slideDown 0.3s ease-out;
+}
+
+.form-group__hint {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-light-text;
+  margin-top: $spacing-xs;
+  font-style: italic;
+  text-align: left;
 }
 
 // =============================================

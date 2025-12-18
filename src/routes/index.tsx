@@ -10,8 +10,9 @@ import AdminDashboard from '../pages/AdminDashboard'
 import SurveyParticipant from '../pages/SurveyParticipant'
 import { SocializerManagement } from '../pages/SocializerManagement'
 import SurveysList from '../pages/SurveysList'
-import UserManagement from '../pages/UserManagement'
 import Reports from '../pages/Reports'
+import ReportsRealtime from '../pages/ReportsRealtime'
+import ReportsGenerate from '../pages/ReportsGenerate'
 import { ProtectedRoute } from '../components'
 import { ROUTES } from '../constants'
 
@@ -73,18 +74,26 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: ROUTES.ADMIN_USERS,
-    element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
-        <UserManagement />
-      </ProtectedRoute>
-    ),
-  },
-  {
     path: ROUTES.ADMIN_REPORTS,
     element: (
       <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
         <Reports />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.ADMIN_REPORTS_REALTIME,
+    element: (
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+        <ReportsRealtime />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.ADMIN_REPORTS_GENERATE,
+    element: (
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+        <ReportsGenerate />
       </ProtectedRoute>
     ),
   },
