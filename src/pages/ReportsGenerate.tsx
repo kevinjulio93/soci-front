@@ -22,12 +22,20 @@ interface SocializerOption {
   idNumber: string
 }
 
+interface Survey {
+  _id: string
+  fullName: string
+  identification: string
+  status: 'enabled' | 'disabled'
+  createdAt: string
+}
+
 interface DailyStat {
   date: string
   totalSurveys: number
   enabledSurveys: number
   disabledSurveys: number
-  surveys: unknown[]
+  surveys: Survey[]
 }
 
 interface SocializerReport {
@@ -39,6 +47,7 @@ interface SocializerReport {
   totalEnabled: number
   totalDisabled: number
   dailyStats: DailyStat[]
+  allSurveys: Survey[]
 }
 
 interface ReportResponse {
@@ -303,52 +312,92 @@ export default function ReportsGenerate() {
                 </div>
 
                 <div className="reports-table-container">
-                  <table className="survey-table">
-                    <thead>
-                      <tr>
-                        <th className="survey-table__th">Socializador</th>
-                        <th className="survey-table__th">ID</th>
-                        <th className="survey-table__th">Email</th>
-                        <th className="survey-table__th">Total Encuestas</th>
-                        <th className="survey-table__th">Activas</th>
-                        <th className="survey-table__th">Inactivas</th>
-                        <th className="survey-table__th">Detalles por Día</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reportData.map((socializer) => (
-                        <tr key={socializer._id}>
-                          <td className="survey-table__td">{socializer.socializerName}</td>
-                          <td className="survey-table__td">{socializer.socializerIdNumber}</td>
-                          <td className="survey-table__td">{socializer.userEmail}</td>
-                          <td className="survey-table__td">
-                            <strong>{socializer.totalSurveys}</strong>
-                          </td>
-                          <td className="survey-table__td">
-                            <span style={{ color: '#28a745' }}>{socializer.totalEnabled}</span>
-                          </td>
-                          <td className="survey-table__td">
-                            <span style={{ color: '#dc3545' }}>{socializer.totalDisabled}</span>
-                          </td>
-                          <td className="survey-table__td">
-                            <details>
-                              <summary style={{ cursor: 'pointer', color: '#4a7c6f' }}>
-                                Ver {socializer.dailyStats.length} días
-                              </summary>
-                              <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                                {socializer.dailyStats.map((day, idx) => (
-                                  <div key={idx} style={{ padding: '0.25rem 0', borderBottom: '1px solid #eee' }}>
-                                    <strong>{day.date}:</strong> {day.totalSurveys} encuestas
-                                    ({day.enabledSurveys} activas, {day.disabledSurveys} inactivas)
-                                  </div>
-                                ))}
-                              </div>
-                            </details>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {reportData.map((socializer) => (
+                    <div key={socializer._id} style={{ marginBottom: '2rem', border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                      {/* Header del socializador */}
+                      <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderBottom: '2px solid #4a7c6f' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <h3 style={{ margin: 0, color: '#4a7c6f', fontSize: '1.25rem' }}>
+                              {socializer.socializerName}
+                            </h3>
+                            <p style={{ margin: '0.25rem 0 0', color: '#666', fontSize: '0.875rem' }}>
+                              ID: {socializer.socializerIdNumber} | Email: {socializer.userEmail}
+                            </p>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#4a7c6f' }}>
+                              {socializer.totalSurveys}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#666' }}>Total Encuestas</div>
+                            <div style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>
+                              <span style={{ color: '#28a745', marginRight: '0.5rem' }}>✓ {socializer.totalEnabled} activas</span>
+                              <span style={{ color: '#dc3545' }}>✗ {socializer.totalDisabled} inactivas</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Tabla de encuestas */}
+                      <div style={{ overflow: 'auto' }}>
+                        <table className="survey-table" style={{ width: '100%', marginBottom: 0 }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f1f3f5' }}>
+                              <th className="survey-table__th" style={{ textAlign: 'left' }}>#</th>
+                              <th className="survey-table__th" style={{ textAlign: 'left' }}>Nombre Completo</th>
+                              <th className="survey-table__th" style={{ textAlign: 'left' }}>Identificación</th>
+                              <th className="survey-table__th" style={{ textAlign: 'center' }}>Estado</th>
+                              <th className="survey-table__th" style={{ textAlign: 'left' }}>Fecha Creación</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {socializer.allSurveys && socializer.allSurveys.length > 0 ? (
+                              socializer.allSurveys.map((survey, idx) => (
+                                <tr key={survey._id} style={{ borderBottom: '1px solid #e9ecef' }}>
+                                  <td className="survey-table__td" style={{ textAlign: 'left', fontWeight: 'bold', color: '#666' }}>
+                                    {idx + 1}
+                                  </td>
+                                  <td className="survey-table__td" style={{ textAlign: 'left' }}>
+                                    {survey.fullName}
+                                  </td>
+                                  <td className="survey-table__td" style={{ textAlign: 'left' }}>
+                                    {survey.identification}
+                                  </td>
+                                  <td className="survey-table__td" style={{ textAlign: 'center' }}>
+                                    <span style={{
+                                      padding: '0.25rem 0.5rem',
+                                      borderRadius: '4px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 'bold',
+                                      backgroundColor: survey.status === 'enabled' ? '#d4edda' : '#f8d7da',
+                                      color: survey.status === 'enabled' ? '#155724' : '#721c24'
+                                    }}>
+                                      {survey.status === 'enabled' ? 'ACTIVA' : 'INACTIVA'}
+                                    </span>
+                                  </td>
+                                  <td className="survey-table__td" style={{ textAlign: 'left', fontSize: '0.875rem', color: '#666' }}>
+                                    {new Date(survey.createdAt).toLocaleString('es-CO', {
+                                      year: 'numeric',
+                                      month: '2-digit',
+                                      day: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
+                                  No hay encuestas registradas
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

@@ -24,16 +24,35 @@ export function SurveyDetailModal({
   const [audioError, setAudioError] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
+  // Limpiar y resetear estado cuando cambia la encuesta o se cierra el modal
   useEffect(() => {
-    // Limpiar audio al cerrar
-    return () => {
+    if (!isOpen) {
+      // Limpiar audio
       if (audioRef.current) {
         audioRef.current.pause()
+        audioRef.current.src = ''
         audioRef.current = null
       }
+      // Resetear estados
       setIsPlaying(false)
+      setAudioError(false)
     }
   }, [isOpen])
+
+  // Resetear estados cuando cambia la encuesta
+  useEffect(() => {
+    if (isOpen && survey) {
+      // Detener audio anterior si está reproduciendo
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
+        audioRef.current = null
+      }
+      // Resetear estados para la nueva encuesta
+      setIsPlaying(false)
+      setAudioError(false)
+    }
+  }, [survey, isOpen])
 
   if (!isOpen || !survey) return null
 

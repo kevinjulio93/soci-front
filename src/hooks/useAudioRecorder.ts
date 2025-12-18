@@ -66,11 +66,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         // Crear el blob con el formato grabado
         const originalBlob = new Blob(chunksRef.current, { type: mimeType })
         
-        // Convertir a MP3
-        const mp3Blob = await convertToMp3(originalBlob)
-        
-        setAudioBlob(mp3Blob)
-        setAudioUrl(URL.createObjectURL(mp3Blob))
+        // Usar el blob original directamente (sin conversión MP3)
+        setAudioBlob(originalBlob)
+        setAudioUrl(URL.createObjectURL(originalBlob))
         
         // Detener el stream
         if (streamRef.current) {
@@ -111,11 +109,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           // Crear el blob con el formato grabado
           const originalBlob = new Blob(chunksRef.current, { type: mimeType })
           
-          // Convertir a MP3
-          const mp3Blob = await convertToMp3(originalBlob)
-          
-          setAudioBlob(mp3Blob)
-          setAudioUrl(URL.createObjectURL(mp3Blob))
+          // Usar el blob original directamente (sin conversión MP3)
+          setAudioBlob(originalBlob)
+          setAudioUrl(URL.createObjectURL(originalBlob))
           
           // Detener el stream
           if (streamRef.current) {
@@ -127,7 +123,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             originalOnStop.call(mediaRecorderRef.current, new Event('stop'))
           }
           
-          resolve(mp3Blob)
+          resolve(originalBlob)
         }
 
         mediaRecorderRef.current.stop()

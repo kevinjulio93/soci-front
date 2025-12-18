@@ -176,9 +176,8 @@ export default function SurveyParticipant() {
       if (recordedBlob && !editMode && createdRespondentId) {
         try {
           await apiService.uploadAudio(createdRespondentId, recordedBlob)
-          notificationService.success(MESSAGES.AUDIO_SUCCESS)
         } catch (audioErr) {
-          notificationService.warning(MESSAGES.AUDIO_WARNING)
+          // Error silencioso en la subida de audio
         } finally {
           // Limpiar audio de memoria después de intentar subirlo
           clearRecording()

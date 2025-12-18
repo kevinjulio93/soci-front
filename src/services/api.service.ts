@@ -178,6 +178,11 @@ class ApiService {
   }
 
   async uploadAudio(respondentId: string, audioBlob: Blob): Promise<UploadAudioResponse> {
+    // Validar que el blob tenga contenido
+    if (!audioBlob || audioBlob.size === 0) {
+      throw new Error('El audio está vacío o no se pudo grabar correctamente')
+    }
+    
     const token = localStorage.getItem('soci_token')
     const formData = new FormData()
     

@@ -9,6 +9,7 @@ import { Icon } from 'leaflet'
 import { Sidebar } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
+import { useAuth } from '../contexts/AuthContext'
 import { EXTERNAL_URLS, MAP_CONFIG, MESSAGES, LOCALE_CONFIG, SYNC_CONFIG } from '../constants'
 import 'leaflet/dist/leaflet.css'
 import '../styles/Dashboard.scss'
@@ -25,6 +26,7 @@ interface SocializerLocation {
     _id: string
     fullName: string
     idNumber: string
+    user: string  // ID del usuario del coordinador
   }
   latestLocation?: {
     coordinates: [number, number]
@@ -49,6 +51,7 @@ const defaultIcon = new Icon({
 })
 
 export default function ReportsRealtime() {
+  const { user } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [socializers, setSocializers] = useState<SocializerLocation[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -71,7 +74,15 @@ export default function ReportsRealtime() {
       const response = await apiService.getSocializersWithLocations()
       
       // El endpoint ya devuelve solo socializadores con ubicaciones
-      const socializersList = response.data || []
+      let socializersList = response.data || []
+      
+      // Si el usuario es coordinador, filtrar solo sus socializadores asignados
+      const userRole = user?.role?.role?.toLowerCase()
+      if (userRole === 'coordinador' || userRole === 'coordinator') {
+        socializersList = socializersList.filter((s: SocializerLocation) => 
+          s.coordinator && s.coordinator.user === user?.id
+        )
+      }
       
       setSocializers(socializersList)
     } catch (err) {
