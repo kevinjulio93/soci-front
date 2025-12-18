@@ -3,3 +3,4 @@
  */
 
 export { getAvatarColor, getInitials, simpleHash, selectFromArrayByHash, getFirstName } from './helpers'
+export { convertToMp3 } from './audioConverter'

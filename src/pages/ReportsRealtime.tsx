@@ -8,6 +8,8 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Icon } from 'leaflet'
 import { Sidebar } from '../components'
 import { apiService } from '../services/api.service'
+import { notificationService } from '../services/notification.service'
+import { EXTERNAL_URLS, MAP_CONFIG, MESSAGES, LOCALE_CONFIG, SYNC_CONFIG } from '../constants'
 import 'leaflet/dist/leaflet.css'
 import '../styles/Dashboard.scss'
 
@@ -37,13 +39,13 @@ interface SocializerLocation {
 
 // Fix para los iconos de Leaflet en Vite/Webpack
 const defaultIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  iconUrl: EXTERNAL_URLS.LEAFLET_MARKER_ICON,
+  iconRetinaUrl: EXTERNAL_URLS.LEAFLET_MARKER_ICON_2X,
+  shadowUrl: EXTERNAL_URLS.LEAFLET_MARKER_SHADOW,
+  iconSize: MAP_CONFIG.MARKER_SIZE,
+  iconAnchor: MAP_CONFIG.MARKER_ANCHOR,
+  popupAnchor: MAP_CONFIG.POPUP_ANCHOR,
+  shadowSize: MAP_CONFIG.SHADOW_SIZE
 })
 
 export default function ReportsRealtime() {
@@ -56,7 +58,7 @@ export default function ReportsRealtime() {
     loadSocializers()
     
     // Actualizar cada 30 segundos
-    const interval = setInterval(loadSocializers, 30000)
+    const interval = setInterval(loadSocializers, SYNC_CONFIG.AUTO_SYNC_INTERVAL)
     
     return () => clearInterval(interval)
   }, [])
@@ -68,32 +70,23 @@ export default function ReportsRealtime() {
       
       const response = await apiService.getSocializersWithLocations()
       
-      console.log('📍 Total socializers with locations from API:', response.data?.length || 0)
-      console.log('📍 Sample socializer:', response.data?.[0])
-      
       // El endpoint ya devuelve solo socializadores con ubicaciones
       const socializersList = response.data || []
       
-      socializersList.forEach((s: SocializerLocation) => {
-        console.log(`📍 ${s.fullName}: hasLocation=${!!s.latestLocation}, coords=[${s.latestLocation?.latitude}, ${s.latestLocation?.longitude}]`)
-      })
-      
-      console.log('📍 Total socializers with location data:', socializersList.length)
-      
       setSocializers(socializersList)
     } catch (err) {
-      console.error('Error loading socializers:', err)
-      setError('Error al cargar las ubicaciones')
+      notificationService.handleApiError(err, MESSAGES.LOCATION_LOAD_ERROR)
+      setError(MESSAGES.LOCATION_LOAD_ERROR)
     } finally {
       setIsLoading(false)
     }
   }
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Sin datos'
+    if (!dateString) return MESSAGES.NO_DATA
     
     const date = new Date(dateString)
-    return date.toLocaleString('es-CO', {
+    return date.toLocaleString(LOCALE_CONFIG.DEFAULT_LOCALE, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -216,14 +209,12 @@ export default function ReportsRealtime() {
                     scrollWheelZoom={true}
                   >
                     <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution={EXTERNAL_URLS.LEAFLET_ATTRIBUTION}
+                      url={EXTERNAL_URLS.LEAFLET_TILE_URL}
                     />
                     {socializersWithLocation
                       .filter(s => s.latestLocation?.latitude != null && s.latestLocation?.longitude != null)
-                      .map((socializer) => {
-                        console.log(`🗺️ Rendering marker for ${socializer.fullName} at [${socializer.latestLocation!.latitude}, ${socializer.latestLocation!.longitude}]`)
-                        return (
+                      .map((socializer) => (
                           <Marker
                             key={socializer._id}
                             position={[socializer.latestLocation!.latitude, socializer.latestLocation!.longitude]}
@@ -265,8 +256,7 @@ export default function ReportsRealtime() {
                             </div>
                           </Popup>
                         </Marker>
-                      )
-                    })}
+                      ))}
                   </MapContainer>
                 </div>
               ) : (

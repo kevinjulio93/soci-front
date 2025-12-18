@@ -37,9 +37,8 @@ function serviceWorkerPlugin(): Plugin {
             res.statusCode = 200
             res.end(swContent)
           } catch (error) {
-            console.error('[SW Plugin] Error:', error)
             res.statusCode = 500
-            res.end('console.error("Service Worker error")')
+            res.end('// Service Worker error')
           }
           return
         }

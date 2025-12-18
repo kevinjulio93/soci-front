@@ -28,7 +28,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     try {
       await logout()
     } catch (err) {
-      console.error('Error logging out:', err)
+      // Error silencioso
     }
   }
 

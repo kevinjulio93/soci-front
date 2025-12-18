@@ -10,12 +10,10 @@ export function useOnlineStatus() {
 
   useEffect(() => {
     const handleOnline = () => {
-      console.log('Conexión restaurada')
       setIsOnline(true)
     }
 
     const handleOffline = () => {
-      console.log('Conexión perdida - modo offline activado')
       setIsOnline(false)
     }
 

@@ -9,8 +9,9 @@ import { useState, useEffect } from 'react'
 import { DashboardHeader, DataTable, PageHeader } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api.service'
+import { notificationService } from '../services/notification.service'
 import { useSyncStatus, useGeolocationTracking } from '../hooks'
-import { ROUTES, getRespondentsTableColumns } from '../constants'
+import { ROUTES, getRespondentsTableColumns, MESSAGES } from '../constants'
 import type { Survey } from '../types'
 import '../styles/Dashboard.scss'
 
@@ -70,9 +71,10 @@ export default function SociologistDashboard() {
         }))
         
         setSurveys(surveysData)
-      } catch {
+      } catch (error) {
         if (!isMounted) return
         // Error al cargar encuestados
+        notificationService.handleApiError(error, MESSAGES.LOAD_ERROR)
         setSurveys([])
       } finally {
         if (isMounted) {
@@ -105,7 +107,7 @@ export default function SociologistDashboard() {
       // Navegar al login
       navigate(ROUTES.LOGIN)
     } catch (err) {
-      console.error('Error al cerrar sesión:', err)
+      // Error silencioso
     }
   }
 

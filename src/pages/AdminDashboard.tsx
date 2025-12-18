@@ -7,6 +7,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Sidebar } from '../components'
 import { apiService } from '../services/api.service'
+import { notificationService } from '../services/notification.service'
+import { MESSAGES } from '../constants'
 import '../styles/Dashboard.scss'
 
 export default function AdminDashboard() {
@@ -36,7 +38,7 @@ export default function AdminDashboard() {
         setTotalSurveys(stats.totalSurveys)
         setTopSocializers(topSocializersData)
       } catch (error) {
-        console.error('Error loading stats:', error)
+        notificationService.handleApiError(error, MESSAGES.STATS_LOAD_ERROR)
       } finally {
         setIsLoading(false)
       }

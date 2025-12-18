@@ -10,6 +10,7 @@ import { SurveyForm, DashboardHeader, PageHeader } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { useAudioRecorderContext } from '../contexts/AudioRecorderContext'
 import { apiService } from '../services/api.service'
+import { notificationService } from '../services/notification.service'
 import { indexedDBService } from '../services/indexedDB.service'
 import { Respondent } from '../models/Respondent'
 import { useOnlineStatus } from '../hooks'
@@ -55,8 +56,8 @@ export default function SurveyParticipant() {
 
   // Inicializar IndexedDB
   useEffect(() => {
-    indexedDBService.init().catch(err => {
-      console.error('Error al inicializar IndexedDB:', err)
+    indexedDBService.init().catch(() => {
+      // Error silencioso
     })
   }, [])
 
@@ -75,7 +76,7 @@ export default function SurveyParticipant() {
       const respondent = Respondent.fromDTO(response.data)
       setInitialData(respondent.toFormData())
     } catch (err) {
-      console.error('Error loading respondent data:', err)
+      notificationService.handleApiError(err, MESSAGES.RESPONDENT_LOAD_ERROR)
     } finally {
       setIsLoadingData(false)
     }
@@ -136,7 +137,6 @@ export default function SurveyParticipant() {
       
       // Validar datos básicos
       if (!respondent.isValid()) {
-        console.log(MESSAGES.VALIDATION_ERROR)
         return
       }
 
@@ -145,13 +145,10 @@ export default function SurveyParticipant() {
 
       // Si está offline, guardar localmente
       if (!isOnline) {
-        console.log('Sin conexión - Guardando encuesta localmente...')
-        const pendingId = await indexedDBService.savePendingRespondent(
+        await indexedDBService.savePendingRespondent(
           respondentDTO,
           recordedBlob ?? undefined
         )
-        console.log(`Encuesta guardada localmente con ID: ${pendingId}`)
-        console.log('Se sincronizará automáticamente cuando recuperes la conexión')
         
         // Limpiar audio de memoria
         clearRecording()
@@ -167,22 +164,21 @@ export default function SurveyParticipant() {
       // Enviar datos al backend (crear o actualizar)
       if (editMode && respondentId) {
         await apiService.updateRespondent(respondentId, respondentDTO)
-        console.log(MESSAGES.UPDATE_SUCCESS)
+        notificationService.success(MESSAGES.RESPONDENT_UPDATE_SUCCESS)
       } else {
         // Crear nuevo respondent
         const response = await apiService.createRespondent(respondentDTO)
         createdRespondentId = response.data._id
-        console.log(MESSAGES.CREATE_SUCCESS, response.data)
+        notificationService.success(MESSAGES.RESPONDENT_CREATE_SUCCESS)
       }
 
       // Subir audio si hay uno y es modo creación
       if (recordedBlob && !editMode && createdRespondentId) {
         try {
           await apiService.uploadAudio(createdRespondentId, recordedBlob)
-          console.log(MESSAGES.AUDIO_SUCCESS)
+          notificationService.success(MESSAGES.AUDIO_SUCCESS)
         } catch (audioErr) {
-          const audioErrorMessage = audioErr instanceof Error ? audioErr.message : MESSAGES.AUDIO_UPLOAD_ERROR
-          console.error(`${MESSAGES.AUDIO_ERROR}: ${audioErrorMessage}`, audioErr)
+          notificationService.warning(MESSAGES.AUDIO_WARNING)
         } finally {
           // Limpiar audio de memoria después de intentar subirlo
           clearRecording()
@@ -192,8 +188,7 @@ export default function SurveyParticipant() {
       // Retornar al dashboard después de guardar exitosamente
       navigate(ROUTES.DASHBOARD)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : MESSAGES.SAVE_ERROR
-      console.error('Error:', errorMessage, err)
+      notificationService.handleApiError(err, MESSAGES.RESPONDENT_SAVE_ERROR)
     } finally {
       setIsSubmitting(false)
     }

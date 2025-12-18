@@ -47,7 +47,6 @@ export function BatchAssignCoordinatorModal({
       const response = await apiService.getCoordinators()
       setCoordinators(response)
     } catch (err) {
-      console.error('Error loading coordinators:', err)
       setError('Error al cargar coordinadores')
     }
   }
@@ -89,7 +88,6 @@ export function BatchAssignCoordinatorModal({
       onSuccess()
       handleClose()
     } catch (err) {
-      console.error('Error in batch operation:', err)
       setError(
         action === 'assign'
           ? 'Error al asignar coordinador'

@@ -29,7 +29,7 @@ import {
   SocializerData,
   RoleData,
 } from '../models/ApiResponses'
-import { EXTERNAL_URLS, API_ENDPOINTS } from '../constants'
+import { EXTERNAL_URLS, API_ENDPOINTS, FILE_CONFIG, MESSAGES } from '../constants'
 
 const API_BASE_URL = EXTERNAL_URLS.API_BASE_URL
 
@@ -180,7 +180,18 @@ class ApiService {
   async uploadAudio(respondentId: string, audioBlob: Blob): Promise<UploadAudioResponse> {
     const token = localStorage.getItem('soci_token')
     const formData = new FormData()
-    formData.append('audio', audioBlob, `recording-${respondentId}-${Date.now()}.webm`)
+    
+    // Determinar la extensión del archivo basado en el tipo MIME
+    let extension = FILE_CONFIG.AUDIO_EXTENSIONS.MP3
+    if (audioBlob.type.includes('webm')) {
+      extension = FILE_CONFIG.AUDIO_EXTENSIONS.WEBM
+    } else if (audioBlob.type.includes('mp4')) {
+      extension = FILE_CONFIG.AUDIO_EXTENSIONS.M4A
+    } else if (audioBlob.type.includes('mpeg') || audioBlob.type.includes('mp3')) {
+      extension = FILE_CONFIG.AUDIO_EXTENSIONS.MP3
+    }
+    
+    formData.append('audio', audioBlob, `recording-${respondentId}-${Date.now()}.${extension}`)
     formData.append('respondentId', respondentId)
     
     const url = `${this.baseUrl}${API_ENDPOINTS.UPLOAD_AUDIO}`

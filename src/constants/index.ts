@@ -26,3 +26,14 @@ export { ROUTES } from './routes'
 
 // URLs externas y API endpoints
 export { EXTERNAL_URLS, API_ENDPOINTS } from './urls'
+
+// Configuraciones
+export { 
+  MAP_CONFIG, 
+  AUDIO_CONFIG, 
+  PAGINATION_CONFIG, 
+  TOAST_CONFIG, 
+  SYNC_CONFIG,
+  FILE_CONFIG,
+  LOCALE_CONFIG,
+} from './config'

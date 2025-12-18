@@ -18,7 +18,7 @@ export function useSyncStatus() {
       const count = await syncService.getPendingCount()
       setPendingCount(count)
     } catch (error) {
-      console.error('Error al obtener conteo de pendientes:', error)
+      // Error silencioso
     }
   }, [])
 
@@ -48,7 +48,6 @@ export function useSyncStatus() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error de sincronización'
       setLastSyncError(errorMessage)
-      console.error('Error en sincronización manual:', error)
     } finally {
       setIsSyncing(false)
     }
@@ -62,7 +61,6 @@ export function useSyncStatus() {
   // Auto-sincronizar cuando se recupera la conexión
   useEffect(() => {
     if (isOnline && pendingCount > 0) {
-      console.log('Conexión restaurada, sincronizando automáticamente...')
       setTimeout(() => {
         manualSync()
       }, 2000) // Esperar 2 segundos para estabilidad

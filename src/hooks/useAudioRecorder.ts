@@ -4,6 +4,7 @@
  */
 
 import { useState, useRef, useCallback } from 'react'
+import { convertToMp3 } from '../utils/audioConverter'
 
 interface UseAudioRecorderReturn {
   isRecording: boolean
@@ -40,10 +41,16 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
 
+      // Intentar usar MP3 si está disponible, sino usar webm
+      let mimeType = 'audio/webm;codecs=opus'
+      if (MediaRecorder.isTypeSupported('audio/mpeg')) {
+        mimeType = 'audio/mpeg'
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4'
+      }
+
       // Crear MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus',
-      })
+      const mediaRecorder = new MediaRecorder(stream, { mimeType })
       mediaRecorderRef.current = mediaRecorder
       chunksRef.current = []
 
@@ -55,10 +62,15 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       }
 
       // Manejar fin de grabación
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
-        setAudioBlob(blob)
-        setAudioUrl(URL.createObjectURL(blob))
+      mediaRecorder.onstop = async () => {
+        // Crear el blob con el formato grabado
+        const originalBlob = new Blob(chunksRef.current, { type: mimeType })
+        
+        // Convertir a MP3
+        const mp3Blob = await convertToMp3(originalBlob)
+        
+        setAudioBlob(mp3Blob)
+        setAudioUrl(URL.createObjectURL(mp3Blob))
         
         // Detener el stream
         if (streamRef.current) {
@@ -90,14 +102,20 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           timerRef.current = null
         }
 
-        // Guardar el handler original
+        // Guardar el handler original y el mimeType
         const originalOnStop = mediaRecorderRef.current.onstop
+        const mimeType = mediaRecorderRef.current.mimeType
         
         // Sobrescribir onstop para resolver la Promise con el blob
-        mediaRecorderRef.current.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
-          setAudioBlob(blob)
-          setAudioUrl(URL.createObjectURL(blob))
+        mediaRecorderRef.current.onstop = async () => {
+          // Crear el blob con el formato grabado
+          const originalBlob = new Blob(chunksRef.current, { type: mimeType })
+          
+          // Convertir a MP3
+          const mp3Blob = await convertToMp3(originalBlob)
+          
+          setAudioBlob(mp3Blob)
+          setAudioUrl(URL.createObjectURL(mp3Blob))
           
           // Detener el stream
           if (streamRef.current) {
@@ -109,7 +127,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             originalOnStop.call(mediaRecorderRef.current, new Event('stop'))
           }
           
-          resolve(blob)
+          resolve(mp3Blob)
         }
 
         mediaRecorderRef.current.stop()

@@ -6,6 +6,8 @@
 import { useState, useEffect } from 'react'
 import { Sidebar } from '../components'
 import { apiService } from '../services/api.service'
+import { notificationService } from '../services/notification.service'
+import { MESSAGES } from '../constants'
 import '../styles/Dashboard.scss'
 
 interface ReportFilters {
@@ -90,7 +92,7 @@ export default function ReportsGenerate() {
           }))
       )
     } catch (err) {
-      console.error('Error loading socializers:', err)
+      notificationService.handleApiError(err, 'Error al cargar socializadores')
       setError('Error al cargar socializadores')
     } finally {
       setIsLoading(false)
@@ -103,6 +105,7 @@ export default function ReportsGenerate() {
 
   const generateReport = async () => {
     if (!filters.startDate || !filters.endDate) {
+      notificationService.warning('Por favor seleccione un rango de fechas')
       setError('Por favor seleccione un rango de fechas')
       return
     }
@@ -119,9 +122,10 @@ export default function ReportsGenerate() {
       
       setReportResponse(response)
       setReportData(response.data.report)
+      notificationService.success('Reporte generado exitosamente')
       
     } catch (err) {
-      console.error('Error generating report:', err)
+      notificationService.handleApiError(err, 'Error al generar el reporte')
       setError('Error al generar el reporte')
     } finally {
       setIsGenerating(false)
@@ -130,6 +134,7 @@ export default function ReportsGenerate() {
 
   const exportToCSV = () => {
     if (reportData.length === 0) {
+      notificationService.warning('No hay datos para exportar')
       setError('No hay datos para exportar')
       return
     }

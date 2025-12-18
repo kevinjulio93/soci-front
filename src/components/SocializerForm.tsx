@@ -65,7 +65,7 @@ export function SocializerForm({
       const response = await apiService.getCoordinators()
       setCoordinators(response)
     } catch (err) {
-      console.error('Error loading coordinators:', err)
+      // Error silencioso
     } finally {
       setLoadingCoordinators(false)
     }
@@ -97,7 +97,7 @@ export function SocializerForm({
         status: role.status
       })))
     } catch (err) {
-      console.error('Error loading roles:', err)
+      // Error silencioso
     } finally {
       setLoadingRoles(false)
     }
@@ -106,7 +106,6 @@ export function SocializerForm({
   // Submit wrapper para transformar coordinatorId si corresponde
   const handleFormSubmit = (formData: any) => {
     let payload = { ...formData }
-    console.log('[SocializerForm] Form data before transform:', payload)
     
     // Si el rol es socializer/socializador, enviar coordinatorId
     if (
@@ -119,10 +118,8 @@ export function SocializerForm({
     ) {
       payload.coordinatorId = payload.coordinator
       delete payload.coordinator
-      console.log('[SocializerForm] Transformed to coordinatorId:', payload.coordinatorId)
     }
     
-    console.log('[SocializerForm] Final payload:', payload)
     onSubmit(payload)
   }
 

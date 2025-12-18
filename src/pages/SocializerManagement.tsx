@@ -7,7 +7,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Sidebar, SocializerForm, DataTable, LocationModal, ConfirmModal, BatchAssignCoordinatorModal } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
-import { ROUTES, getSocializersTableColumns } from '../constants'
+import { ROUTES, getSocializersTableColumns, MESSAGES } from '../constants'
 import type { Socializer, SocializerFormData } from '../types'
 import '../styles/Dashboard.scss'
 
@@ -52,7 +52,6 @@ export function SocializerManagement() {
       setTotalItems(response.totalItems)
       setCurrentPage(response.currentPage)
     } catch (err) {
-      console.error('Error loading socializers:', err)
       setError('Error al cargar los socializadores')
     } finally {
       setIsLoading(false)
@@ -67,7 +66,6 @@ export function SocializerManagement() {
       const response = await apiService.getSocializer(socializerId)
       setEditingSocializer(response.data)
     } catch (err) {
-      console.error('Error loading socializer:', err)
       setFormError('Error al cargar los datos del socializador')
     } finally {
       setFormLoading(false)
@@ -84,17 +82,12 @@ export function SocializerManagement() {
 
   // Cargar socializador cuando estamos en modo edición
   useEffect(() => {
-    console.log('[SocializerManagement] useEffect triggered:', { id, isEditMode, isNewMode, pathname: location.pathname })
-    
     if (isEditMode && id) {
-      console.log('[SocializerManagement] Loading socializer for edit:', id)
       loadSocializerForEdit(id)
     } else if (isNewMode) {
-      console.log('[SocializerManagement] New mode - clearing editing socializer')
       setEditingSocializer(null)
       setFormError(null)
     } else if (!showForm) {
-      console.log('[SocializerManagement] List mode - clearing editing socializer')
       setEditingSocializer(null)
       setFormError(null)
     }
@@ -116,21 +109,21 @@ export function SocializerManagement() {
           delete finalData.password
         }
         await apiService.updateSocializer(editingSocializer._id, finalData)
-        notificationService.success('Usuario actualizado correctamente')
+        notificationService.success(MESSAGES.USER_UPDATE_SUCCESS)
       } else {
         // Crear
         await apiService.createSocializer(data)
-        notificationService.success('Usuario creado correctamente')
+        notificationService.success(MESSAGES.USER_CREATE_SUCCESS)
       }
 
       // Navegar de vuelta a la lista
       navigate(ROUTES.ADMIN_SOCIALIZERS)
     } catch (err) {
-      notificationService.handleApiError(err, 'Error al guardar el usuario')
+      notificationService.handleApiError(err, MESSAGES.USER_SAVE_ERROR)
       const error = err as { response?: { data?: { message?: string } } }
       setFormError(
         error?.response?.data?.message || 
-        'Error al guardar el socializador'
+        MESSAGES.USER_SAVE_ERROR
       )
     } finally {
       setFormLoading(false)
@@ -150,12 +143,12 @@ export function SocializerManagement() {
     try {
       setIsDeleting(true)
       await apiService.deleteSocializer(socializerToDelete.id)
-      notificationService.success('Usuario eliminado correctamente')
+      notificationService.success(MESSAGES.USER_DELETE_SUCCESS)
       await loadSocializers(currentPage)
       setDeleteModalOpen(false)
       setSocializerToDelete(null)
     } catch (err) {
-      notificationService.handleApiError(err, 'Error al eliminar el usuario')
+      notificationService.handleApiError(err, MESSAGES.USER_DELETE_ERROR)
     } finally {
       setIsDeleting(false)
     }
@@ -178,7 +171,7 @@ export function SocializerManagement() {
       setSelectedSocializer(socializer)
       setLocationModalOpen(true)
     } else {
-      alert('No se puede obtener la ubicación de este socializador')
+      notificationService.error(MESSAGES.LOCATION_UNAVAILABLE)
     }
   }
 

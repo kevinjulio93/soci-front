@@ -34,7 +34,6 @@ class GeolocationService {
       }
 
       if (this.isTracking) {
-        console.log('[Geolocation] Ya está en tracking')
         resolve()
         return
       }
@@ -51,7 +50,6 @@ class GeolocationService {
       // Obtener posición inicial
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('[Geolocation] Posición inicial obtenida')
           this.lastPosition = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
@@ -62,7 +60,6 @@ class GeolocationService {
           resolve()
         },
         (error) => {
-          console.error('[Geolocation] Error obteniendo posición inicial:', error)
           this.isTracking = false
           reject(this.mapGeolocationError(error))
         },
@@ -78,7 +75,6 @@ class GeolocationService {
             accuracy: position.coords.accuracy,
             timestamp: position.timestamp,
           }
-          console.log('[Geolocation] Posición actualizada:', this.lastPosition)
         },
         (error) => this.handlePositionError(error),
         options
@@ -87,12 +83,9 @@ class GeolocationService {
       // Configurar intervalo para enviar ubicación periódicamente
       this.intervalId = window.setInterval(() => {
         if (this.lastPosition) {
-          console.log('[Geolocation] Enviando ubicación periódica')
           this.sendLocationToServer(this.lastPosition)
         }
       }, intervalMs)
-
-      console.log('[Geolocation] Tracking iniciado con intervalo de', intervalMs, 'ms')
     })
   }
 
@@ -110,7 +103,6 @@ class GeolocationService {
     }
     this.isTracking = false
     this.lastPosition = null
-    console.log('[Geolocation] Tracking detenido')
   }
 
   /**
@@ -126,8 +118,6 @@ class GeolocationService {
    * Manejar error de geolocalización
    */
   private handlePositionError(error: GeolocationPositionError): void {
-    console.error('[Geolocation] Error en tracking:', error)
-    
     const mappedError = this.mapGeolocationError(error)
     
     // Emitir evento personalizado para que la UI pueda manejarlo
@@ -174,13 +164,11 @@ class GeolocationService {
       // Obtener userId del localStorage
       const userString = localStorage.getItem('soci_user')
       if (!userString) {
-        console.error('[Geolocation] No se encontró información del usuario')
         return
       }
 
       const user = JSON.parse(userString)
       if (!user || !user.id) {
-        console.error('[Geolocation] ID de usuario no disponible')
         return
       }
 
@@ -191,7 +179,6 @@ class GeolocationService {
         accuracy: location.accuracy,
       })
     } catch (error) {
-      console.error('[Geolocation] Error al enviar ubicación al servidor:', error)
       throw error
     }
   }
@@ -239,7 +226,6 @@ class GeolocationService {
       const permission = await navigator.permissions.query({ name: 'geolocation' })
       return permission.state
     } catch (error) {
-      console.warn('[Geolocation] No se pudo verificar permisos:', error)
       return 'prompt'
     }
   }

@@ -6,7 +6,8 @@
 import { useState, useEffect } from 'react'
 import { Sidebar, DataTable, ConfirmModal, SurveyDetailModal } from '../components'
 import { apiService } from '../services/api.service'
-import { getSurveysTableColumns } from '../constants'
+import { notificationService } from '../services/notification.service'
+import { getSurveysTableColumns, MESSAGES } from '../constants'
 import type { RespondentData } from '../models/ApiResponses'
 import '../styles/Dashboard.scss'
 
@@ -32,7 +33,7 @@ export default function SurveysList() {
       setTotalRecords(response.totalItems || 0)
       setCurrentPage(page)
     } catch (error) {
-      console.error('Error loading surveys:', error)
+      notificationService.handleApiError(error, MESSAGES.LOAD_ERROR)
     } finally {
       setIsLoading(false)
     }
@@ -71,6 +72,7 @@ export default function SurveysList() {
     try {
       setIsDeleting(true)
       await apiService.deleteRespondent(respondentToDelete.id)
+      notificationService.success(MESSAGES.RESPONDENT_DELETE_SUCCESS)
       
       // Recargar la lista
       await loadSurveys(currentPage)
@@ -78,7 +80,7 @@ export default function SurveysList() {
       setShowDeleteModal(false)
       setRespondentToDelete(null)
     } catch (error) {
-      console.error('Error al eliminar encuestado:', error)
+      notificationService.handleApiError(error, MESSAGES.DELETE_ERROR)
       alert('Error al eliminar el encuestado. Por favor, intenta de nuevo.')
     } finally {
       setIsDeleting(false)

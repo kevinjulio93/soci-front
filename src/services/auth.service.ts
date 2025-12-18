@@ -68,17 +68,13 @@ class AuthService {
     if (!user) return '/login'
     
     const roleType = user.role?.role?.toLowerCase()
-    console.log('🔍 getDashboardRoute - user:', user)
-    console.log('🔍 getDashboardRoute - roleType:', roleType)
     
     // Si es root, admin o coordinador, mostrar admin dashboard
     if (roleType === 'root' || roleType === 'admin' || roleType === 'coordinador' || roleType === 'coordinator') {
-      console.log('✅ Redirigiendo a /admin/dashboard')
       return '/admin/dashboard'
     }
     
     // Por defecto (socializer y otros), mostrar sociologist dashboard
-    console.log('✅ Redirigiendo a /sociologist/dashboard')
     return '/sociologist/dashboard'
   }
 
@@ -89,7 +85,6 @@ class AuthService {
     if (!user) return false
     const roleType = user.role?.role?.toLowerCase()
     const isAdmin = roleType === 'root' || roleType === 'admin' || roleType === 'coordinador' || roleType === 'coordinator'
-    console.log('🔍 isAdminOrRoot - roleType:', roleType, 'isAdmin:', isAdmin)
     return isAdmin
   }
 

@@ -35,7 +35,7 @@ export function useGeolocationTracking(options: UseGeolocationTrackingOptions = 
         const permission = await geolocationService.checkPermissions()
         setState((prev) => ({ ...prev, permissionState: permission }))
       } catch (error) {
-        console.error('[useGeolocationTracking] Error verificando permisos:', error)
+        // Error verificando permisos
       }
     }
 
@@ -72,8 +72,6 @@ export function useGeolocationTracking(options: UseGeolocationTrackingOptions = 
     )
 
     if (shouldTrack) {
-      console.log('[useGeolocationTracking] Iniciando tracking de ubicación')
-      
       geolocationService
         .startTracking(intervalMs)
         .then(() => {
@@ -84,7 +82,6 @@ export function useGeolocationTracking(options: UseGeolocationTrackingOptions = 
           }))
         })
         .catch((error) => {
-          console.error('[useGeolocationTracking] Error iniciando tracking:', error)
           setState((prev) => ({
             ...prev,
             isTracking: false,
@@ -94,7 +91,6 @@ export function useGeolocationTracking(options: UseGeolocationTrackingOptions = 
     } else {
       // Detener tracking si las condiciones ya no se cumplen
       if (geolocationService.getTrackingStatus()) {
-        console.log('[useGeolocationTracking] Deteniendo tracking de ubicación')
         geolocationService.stopTracking()
         setState((prev) => ({
           ...prev,
@@ -106,7 +102,6 @@ export function useGeolocationTracking(options: UseGeolocationTrackingOptions = 
     // Cleanup al desmontar
     return () => {
       if (geolocationService.getTrackingStatus()) {
-        console.log('[useGeolocationTracking] Limpieza: deteniendo tracking')
         geolocationService.stopTracking()
       }
     }

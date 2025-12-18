@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Icon } from 'leaflet'
 import { apiService } from '../services/api.service'
+import { EXTERNAL_URLS, MAP_CONFIG, MESSAGES, LOCALE_CONFIG } from '../constants'
 import 'leaflet/dist/leaflet.css'
 import '../styles/Modal.scss'
 
@@ -26,13 +27,13 @@ interface LocationModalProps {
 
 // Fix para los iconos de Leaflet en Vite/Webpack
 const defaultIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  iconUrl: EXTERNAL_URLS.LEAFLET_MARKER_ICON,
+  iconRetinaUrl: EXTERNAL_URLS.LEAFLET_MARKER_ICON_2X,
+  shadowUrl: EXTERNAL_URLS.LEAFLET_MARKER_SHADOW,
+  iconSize: MAP_CONFIG.MARKER_SIZE,
+  iconAnchor: MAP_CONFIG.MARKER_ANCHOR,
+  popupAnchor: MAP_CONFIG.POPUP_ANCHOR,
+  shadowSize: MAP_CONFIG.SHADOW_SIZE
 })
 
 export function LocationModal({ isOpen, onClose, userId, socializerName }: LocationModalProps) {
@@ -52,8 +53,7 @@ export function LocationModal({ isOpen, onClose, userId, socializerName }: Locat
         accuracy: response.accuracy,
       })
     } catch (err) {
-      console.error('Error loading location:', err)
-      setError('No se pudo cargar la ubicación')
+      setError(MESSAGES.LOCATION_LOAD_ERROR)
     } finally {
       setIsLoading(false)
     }
@@ -71,14 +71,8 @@ export function LocationModal({ isOpen, onClose, userId, socializerName }: Locat
   }
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleString('es-CO', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    if (!dateString) return MESSAGES.NO_DATA
+    return new Date(dateString).toLocaleString(LOCALE_CONFIG.DEFAULT_LOCALE, LOCALE_CONFIG.DATE_FORMAT)
   }
 
   if (!isOpen) return null
@@ -126,21 +120,21 @@ export function LocationModal({ isOpen, onClose, userId, socializerName }: Locat
             <>
               <div className="location-info">
                 <div className="location-info__item">
-                  <span className="location-info__label">Latitud:</span>
+                  <span className="location-info__label">{MESSAGES.LABEL_LATITUDE}:</span>
                   <span className="location-info__value">{location.lat.toFixed(6)}</span>
                 </div>
                 <div className="location-info__item">
-                  <span className="location-info__label">Longitud:</span>
+                  <span className="location-info__label">{MESSAGES.LABEL_LONGITUDE}:</span>
                   <span className="location-info__value">{location.long.toFixed(6)}</span>
                 </div>
                 {location.accuracy && (
                   <div className="location-info__item">
-                    <span className="location-info__label">Precisión:</span>
+                    <span className="location-info__label">{MESSAGES.LABEL_ACCURACY}:</span>
                     <span className="location-info__value">{location.accuracy}m</span>
                   </div>
                 )}
                 <div className="location-info__item">
-                  <span className="location-info__label">Última actualización:</span>
+                  <span className="location-info__label">{MESSAGES.LABEL_LAST_UPDATE}:</span>
                   <span className="location-info__value">{formatDate(location.timestamp)}</span>
                 </div>
               </div>
@@ -148,12 +142,12 @@ export function LocationModal({ isOpen, onClose, userId, socializerName }: Locat
               <div className="location-map">
                 <MapContainer
                   center={[location.lat, location.long]}
-                  zoom={15}
-                  style={{ height: '400px', width: '100%' }}
+                  zoom={MAP_CONFIG.DEFAULT_ZOOM}
+                  style={{ height: MAP_CONFIG.MAP_HEIGHT, width: '100%' }}
                 >
                   <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution={EXTERNAL_URLS.LEAFLET_ATTRIBUTION}
+                    url={EXTERNAL_URLS.LEAFLET_TILE_URL}
                   />
                   <Marker position={[location.lat, location.long]} icon={defaultIcon}>
                     <Popup>
@@ -167,7 +161,7 @@ export function LocationModal({ isOpen, onClose, userId, socializerName }: Locat
 
               <div className="location-actions">
                 <a
-                  href={`https://www.google.com/maps?q=${location.lat},${location.long}`}
+                  href={EXTERNAL_URLS.GOOGLE_MAPS_QUERY(location.lat, location.long)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn--secondary"
@@ -177,7 +171,7 @@ export function LocationModal({ isOpen, onClose, userId, socializerName }: Locat
                     <polyline points="15 3 21 3 21 9" />
                     <line x1="10" y1="14" x2="21" y2="3" />
                   </svg>
-                  Abrir en Google Maps
+                  {MESSAGES.TOOLTIP_OPEN_MAPS}
                 </a>
               </div>
             </>

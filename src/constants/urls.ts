@@ -6,9 +6,24 @@
 export const EXTERNAL_URLS = {
   // Videos
   VIDEO_TUTORIAL: import.meta.env.VITE_VIDEO_TUTORIAL_URL || 'https://www.youtube.com/embed/Y5M2EsGqJbI?si=BBTaXX0lPCn_TW9O',
+  VIDEO_INTRO: 'https://storage.googleapis.com/soci_example_video/video/video_intro.mp4',
   
   // API
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://82f60cf02a72.ngrok-free.app/api/v1',
+  
+  // API Externa - Colombia
+  COLOMBIA_API_BASE_URL: 'https://api-colombia.com/api/v1',
+  
+  // Mapas - Leaflet
+  LEAFLET_TILE_URL: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  LEAFLET_ATTRIBUTION: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  LEAFLET_MARKER_ICON: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  LEAFLET_MARKER_ICON_2X: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  LEAFLET_MARKER_SHADOW: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  
+  // Google Maps
+  GOOGLE_MAPS_BASE: 'https://www.google.com/maps',
+  GOOGLE_MAPS_QUERY: (lat: number, lng: number) => `${EXTERNAL_URLS.GOOGLE_MAPS_BASE}?q=${lat},${lng}`,
 } as const
 
 /**

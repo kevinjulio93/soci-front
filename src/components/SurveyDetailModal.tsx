@@ -63,7 +63,6 @@ export function SurveyDetailModal({
         setAudioError(false)
       }
     } catch (error) {
-      console.error('Error playing audio:', error)
       setAudioError(true)
       setIsPlaying(false)
     }

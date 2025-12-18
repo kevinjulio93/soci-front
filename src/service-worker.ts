@@ -68,28 +68,22 @@ function isImageRequest(url: URL): boolean {
 
 // Install event - Cachear recursos críticos
 self.addEventListener('install', (event) => {
-  console.log('[SW] Instalando Service Worker...')
-  
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_CONFIG.static)
       
       try {
-        console.log('[SW] Cacheando archivos críticos')
         await cache.addAll(CRITICAL_URLS)
       } catch (err) {
-        console.warn('[SW] Error cacheando algunos archivos:', err)
         // Intentar cachear uno por uno si falla el batch
         for (const url of CRITICAL_URLS) {
           try {
             await cache.add(url)
           } catch (e) {
-            console.warn(`[SW] No se pudo cachear: ${url}`, e)
+            // Error silencioso
           }
         }
       }
-      
-      console.log('[SW] Instalación completada')
       return self.skipWaiting()
     })()
   )
@@ -97,8 +91,6 @@ self.addEventListener('install', (event) => {
 
 // Activate event - Limpiar cachés antiguas
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activando Service Worker...')
-  
   event.waitUntil(
     caches
       .keys()
@@ -112,7 +104,6 @@ self.addEventListener('activate', (event) => {
               )
             })
             .map((cacheName) => {
-              console.log('[SW] Eliminando caché antiguo:', cacheName)
               return caches.delete(cacheName)
             })
         )
@@ -158,7 +149,7 @@ self.addEventListener('fetch', (event) => {
     // Otros recursos: Network First con fallback
     event.respondWith(handleOtherResourceRequest(request))
   } catch (error) {
-    console.error('[SW] Error en fetch event:', error)
+    // Error silencioso
   }
 })
 
@@ -174,11 +165,8 @@ async function handleApiRequest(request: Request): Promise<Response> {
     
     return response
   } catch (error) {
-    console.log('[SW] API request falló, buscando en caché:', request.url)
-    
     const cachedResponse = await caches.match(request)
     if (cachedResponse) {
-      console.log('[SW] Respuesta de caché:', request.url)
       return cachedResponse
     }
     
@@ -213,8 +201,6 @@ async function handleNavigationRequest(request: Request): Promise<Response> {
     
     return response
   } catch (error) {
-    console.log('[SW] Offline - Sirviendo última versión desde caché')
-    
     // Intentar primero con la URL específica, luego con la raíz
     let cachedResponse = await caches.match(request)
     if (cachedResponse) {
@@ -279,7 +265,6 @@ async function handleOtherResourceRequest(request: Request): Promise<Response> {
     // Intentar servir desde caché
     const cachedResponse = await caches.match(request)
     if (cachedResponse) {
-      console.log('[SW] Sirviendo recurso desde caché:', request.url)
       return cachedResponse
     }
     
@@ -319,26 +304,20 @@ self.addEventListener('message', (event) => {
         const cache = await caches.open(CACHE_CONFIG.runtime)
         const urlsToCache = data.urls || []
         
-        console.log('[SW] Cacheando recursos de la página actual:', urlsToCache)
-        
         for (const url of urlsToCache) {
           try {
             const response = await fetch(url)
             if (response && response.ok) {
               await cache.put(url, response)
-              console.log('[SW] Cacheado:', url)
             }
           } catch (error) {
-            console.warn('[SW] Error cacheando:', url, error)
+            // Error silencioso
           }
         }
       })()
     )
   }
 })
-
-console.log('[SW] ✅ Service Worker cargado correctamente - v5')
-console.log('[SW] Caché configurado:', CACHE_CONFIG)
 
 // Export vacio para que TypeScript lo trate como módulo
 export {}

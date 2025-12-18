@@ -3,6 +3,8 @@
  * Maneja respuestas del backend y muestra notificaciones apropiadas
  */
 
+import { MESSAGES } from '../constants'
+
 type ToastCallback = (message: string, duration?: number) => void
 
 interface NotificationService {
@@ -22,41 +24,31 @@ export const notificationService = {
   success: (message: string, duration?: number) => {
     if (notificationInstance) {
       notificationInstance.success(message, duration)
-    } else {
-      console.log('[Success]:', message)
     }
   },
 
   error: (message: string, duration?: number) => {
     if (notificationInstance) {
       notificationInstance.error(message, duration)
-    } else {
-      console.error('[Error]:', message)
     }
   },
 
   warning: (message: string, duration?: number) => {
     if (notificationInstance) {
       notificationInstance.warning(message, duration)
-    } else {
-      console.warn('[Warning]:', message)
     }
   },
 
   info: (message: string, duration?: number) => {
     if (notificationInstance) {
       notificationInstance.info(message, duration)
-    } else {
-      console.info('[Info]:', message)
     }
   },
 
   /**
    * Maneja errores de API y muestra notificaciones apropiadas
    */
-  handleApiError: (error: any, defaultMessage = 'Ha ocurrido un error') => {
-    console.error('[API Error]:', error)
-    
+  handleApiError: (error: any, defaultMessage = MESSAGES.GENERIC_ERROR) => {
     const message = 
       error?.response?.data?.message || 
       error?.response?.data?.error ||

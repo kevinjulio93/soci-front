@@ -4,15 +4,18 @@
  * Utiliza React Hook Form para validaciones y manejo de estado
  */
 
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import {
   ID_TYPE_OPTIONS,
   GENDER_OPTIONS,
   AGE_RANGE_OPTIONS,
   STRATUM_OPTIONS,
-} from '../constants/formOptions'
+  EXTERNAL_URLS,
+} from '../constants'
 import { Respondent } from '../models/Respondent'
 import type { SurveyFormData, SurveyFormProps } from './types'
+import { colombiaApiService, type Region, type Department, type City } from '../services/colombia-api.service'
 import '../styles/SurveyForm.scss'
 
 export function SurveyForm({
@@ -22,14 +25,94 @@ export function SurveyForm({
   error,
   initialData,
 }: SurveyFormProps) {
+  const [regions, setRegions] = useState<Region[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [cities, setCities] = useState<City[]>([])
+  const [selectedRegion, setSelectedRegion] = useState<number | null>(null)
+  const [selectedDepartment, setSelectedDepartment] = useState<number | null>(null)
+  const [loadingRegions, setLoadingRegions] = useState(false)
+  const [loadingDepartments, setLoadingDepartments] = useState(false)
+  const [loadingCities, setLoadingCities] = useState(false)
+
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
+    setValue,
   } = useForm<SurveyFormData>({
     mode: 'onBlur',
     values: initialData || new Respondent().toFormData(),
   })
+
+  // Cargar regiones al montar el componente (solo Caribe)
+  useEffect(() => {
+    const loadRegions = async () => {
+      setLoadingRegions(true)
+      const data = await colombiaApiService.getRegions()
+      // Filtrar solo la región Caribe
+      const filteredRegions = data.filter(region => region.name.toLowerCase() === 'caribe')
+      setRegions(filteredRegions)
+      setLoadingRegions(false)
+    }
+    loadRegions()
+  }, [])
+
+  // Cargar departamentos cuando se selecciona una región (solo Atlántico)
+  useEffect(() => {
+    if (selectedRegion) {
+      const loadDepartments = async () => {
+        setLoadingDepartments(true)
+        const data = await colombiaApiService.getDepartmentsByRegion(selectedRegion)
+        // Filtrar solo el departamento de Atlántico
+        const filteredDepartments = data.filter(dept => 
+          dept.name.toLowerCase() === 'atlántico' || dept.name.toLowerCase() === 'atlantico'
+        )
+        setDepartments(filteredDepartments)
+        setLoadingDepartments(false)
+        setCities([]) // Limpiar ciudades
+        setSelectedDepartment(null)
+      }
+      loadDepartments()
+    } else {
+      setDepartments([])
+      setCities([])
+    }
+  }, [selectedRegion])
+
+  // Cargar ciudades cuando se selecciona un departamento (solo Barranquilla y Soledad)
+  useEffect(() => {
+    if (selectedDepartment) {
+      const loadCities = async () => {
+        setLoadingCities(true)
+        const data = await colombiaApiService.getCitiesByDepartment(selectedDepartment)
+        // Filtrar solo Barranquilla y Soledad
+        const filteredCities = data.filter(city => 
+          city.name.toLowerCase() === 'barranquilla' || city.name.toLowerCase() === 'soledad'
+        )
+        setCities(filteredCities)
+        setLoadingCities(false)
+      }
+      loadCities()
+    } else {
+      setCities([])
+    }
+  }, [selectedDepartment])
+
+  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    const region = regions.find(r => r.name === value)
+    setSelectedRegion(region ? region.id : null)
+    setValue('department', '')
+    setValue('city', '')
+  }
+
+  const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    const department = departments.find(d => d.name === value)
+    setSelectedDepartment(department ? department.id : null)
+    setValue('city', '')
+  }
 
   return (
     <div className="survey-form">
@@ -37,9 +120,9 @@ export function SurveyForm({
         {/* Video Section */}
         {videoUrl && (
           <div className="survey-form__video-section">
-            <video
+              <video
               className="survey-form__video"
-              src="https://storage.googleapis.com/soci_example_video/video/video_intro.mp4"
+              src={EXTERNAL_URLS.VIDEO_INTRO}
               controls
             />
           </div>
@@ -268,14 +351,20 @@ export function SurveyForm({
               <label htmlFor="region" className="form-group__label">
                 Región
               </label>
-              <input
+              <select
                 id="region"
-                type="text"
-                className={`form-group__input ${errors.region ? 'form-group__input--error' : ''}`}
-                placeholder="Región geográfica"
-                disabled={isLoading}
+                className={`form-group__select ${errors.region ? 'form-group__select--error' : ''}`}
+                disabled={isLoading || loadingRegions}
                 {...register('region')}
-              />
+                onChange={handleRegionChange}
+              >
+                <option value="">Seleccione región</option>
+                {regions.map((region) => (
+                  <option key={region.id} value={region.name}>
+                    {region.name}
+                  </option>
+                ))}
+              </select>
               {errors.region && (
                 <span className="form-group__error-text">{errors.region.message}</span>
               )}
@@ -285,14 +374,20 @@ export function SurveyForm({
               <label htmlFor="department" className="form-group__label">
                 Departamento
               </label>
-              <input
+              <select
                 id="department"
-                type="text"
-                className={`form-group__input ${errors.department ? 'form-group__input--error' : ''}`}
-                placeholder="Departamento"
-                disabled={isLoading}
+                className={`form-group__select ${errors.department ? 'form-group__select--error' : ''}`}
+                disabled={isLoading || loadingDepartments || !selectedRegion}
                 {...register('department')}
-              />
+                onChange={handleDepartmentChange}
+              >
+                <option value="">Seleccione departamento</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.name}>
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
               {errors.department && (
                 <span className="form-group__error-text">{errors.department.message}</span>
               )}
@@ -305,14 +400,19 @@ export function SurveyForm({
               <label htmlFor="city" className="form-group__label">
                 Ciudad
               </label>
-              <input
+              <select
                 id="city"
-                type="text"
-                className={`form-group__input ${errors.city ? 'form-group__input--error' : ''}`}
-                placeholder="Barranquilla"
-                disabled={isLoading}
+                className={`form-group__select ${errors.city ? 'form-group__select--error' : ''}`}
+                disabled={isLoading || loadingCities || !selectedDepartment}
                 {...register('city')}
-              />
+              >
+                <option value="">Seleccione ciudad</option>
+                {cities.map((city) => (
+                  <option key={city.id} value={city.name}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
               {errors.city && (
                 <span className="form-group__error-text">{errors.city.message}</span>
               )}
