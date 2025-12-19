@@ -106,28 +106,33 @@ export default function ReportsRealtime() {
     })
   }
 
-  const socializersWithLocation = socializers.filter(s => s.latestLocation)
+  const socializersWithLocation = socializers.filter(s => 
+    s.latestLocation && 
+    s.latestLocation.latitude != null && 
+    s.latestLocation.longitude != null &&
+    s.latestLocation.latitude !== 0 &&
+    s.latestLocation.longitude !== 0
+  )
   const socializersWithoutLocation = socializers.filter(s => !s.latestLocation)
 
-  // Calcular el centro del mapa basado en las ubicaciones
+  // Calcular el centro del mapa basado en las ubicaciones actuales
   const getMapCenter = (): [number, number] => {
     if (socializersWithLocation.length === 0) {
       return [4.6097, -74.0817] // Bogotá por defecto
     }
 
-    // Filtrar solo los que tienen coordenadas válidas
-    const validLocations = socializersWithLocation.filter(
-      s => s.latestLocation?.latitude != null && s.latestLocation?.longitude != null
-    )
-
-    if (validLocations.length === 0) {
-      return [4.6097, -74.0817] // Bogotá por defecto
-    }
-
-    const avgLat = validLocations.reduce((sum, s) => sum + s.latestLocation!.latitude, 0) / validLocations.length
-    const avgLong = validLocations.reduce((sum, s) => sum + s.latestLocation!.longitude, 0) / validLocations.length
+    const avgLat = socializersWithLocation.reduce((sum, s) => sum + s.latestLocation!.latitude, 0) / socializersWithLocation.length
+    const avgLong = socializersWithLocation.reduce((sum, s) => sum + s.latestLocation!.longitude, 0) / socializersWithLocation.length
     
     return [avgLat, avgLong]
+  }
+
+  // Generar un key único basado en todas las posiciones para forzar actualización del mapa
+  const getMapKey = (): string => {
+    const positionsHash = socializersWithLocation
+      .map(s => `${s._id}-${s.latestLocation?.latitude}-${s.latestLocation?.longitude}-${s.latestLocation?.timestamp}`)
+      .join('|')
+    return `map-${positionsHash}`
   }
 
   return (
@@ -213,7 +218,7 @@ export default function ReportsRealtime() {
                     Mapa de Ubicaciones ({socializersWithLocation.length} {socializersWithLocation.length === 1 ? 'socializador' : 'socializadores'})
                   </h3>
                   <MapContainer
-                    key={`map-${socializersWithLocation.length}-${socializersWithLocation[0]?._id}`}
+                    key={getMapKey()}
                     center={getMapCenter()}
                     zoom={socializersWithLocation.length === 1 ? 15 : 11}
                     style={{ height: '500px', width: '100%', borderRadius: '8px' }}
@@ -223,11 +228,9 @@ export default function ReportsRealtime() {
                       attribution={EXTERNAL_URLS.LEAFLET_ATTRIBUTION}
                       url={EXTERNAL_URLS.LEAFLET_TILE_URL}
                     />
-                    {socializersWithLocation
-                      .filter(s => s.latestLocation?.latitude != null && s.latestLocation?.longitude != null)
-                      .map((socializer) => (
+                    {socializersWithLocation.map((socializer) => (
                           <Marker
-                            key={socializer._id}
+                            key={`${socializer._id}-${socializer.latestLocation!.timestamp}`}
                             position={[socializer.latestLocation!.latitude, socializer.latestLocation!.longitude]}
                             icon={defaultIcon}
                           >

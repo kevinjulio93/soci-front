@@ -30,7 +30,7 @@ import {
   SocializerData,
   RoleData,
 } from '../models/ApiResponses'
-import { EXTERNAL_URLS, API_ENDPOINTS, FILE_CONFIG, MESSAGES } from '../constants'
+import { EXTERNAL_URLS, API_ENDPOINTS, FILE_CONFIG } from '../constants'
 
 const API_BASE_URL = EXTERNAL_URLS.API_BASE_URL
 
@@ -205,7 +205,7 @@ class ApiService {
     const formData = new FormData()
     
     // Determinar la extensión del archivo basado en el tipo MIME
-    let extension = FILE_CONFIG.AUDIO_EXTENSIONS.MP3
+    let extension: string = FILE_CONFIG.AUDIO_EXTENSIONS.MP3
     if (audioBlob.type.includes('webm')) {
       extension = FILE_CONFIG.AUDIO_EXTENSIONS.WEBM
     } else if (audioBlob.type.includes('mp4')) {

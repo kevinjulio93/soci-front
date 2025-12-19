@@ -23,6 +23,9 @@ export interface RespondentDTO {
   city?: string
   stratum?: number
   neighborhood?: string
+  latitude?: number
+  longitude?: number
+  defendorDePatria?: boolean
   status?: string
   createdAt?: string
   updatedAt?: string
@@ -42,6 +45,9 @@ export class Respondent {
   private _city: string
   private _stratum: Stratum
   private _neighborhood: string
+  private _latitude: number
+  private _longitude: number
+  private _defendorDePatria: boolean
 
   constructor(
     fullName: string = '',
@@ -56,7 +62,10 @@ export class Respondent {
     department: string = '',
     city: string = '',
     stratum: Stratum = '',
-    neighborhood: string = ''
+    neighborhood: string = '',
+    latitude: number = 0,
+    longitude: number = 0,
+    defendorDePatria: boolean = false
   ) {
     this._fullName = fullName
     this._idType = idType
@@ -71,6 +80,9 @@ export class Respondent {
     this._city = city
     this._stratum = stratum
     this._neighborhood = neighborhood
+    this._latitude = latitude
+    this._longitude = longitude
+    this._defendorDePatria = defendorDePatria
   }
 
   // Getters
@@ -87,6 +99,9 @@ export class Respondent {
   get city(): string { return this._city }
   get stratum(): Stratum { return this._stratum }
   get neighborhood(): string { return this._neighborhood }
+  get latitude(): number { return this._latitude }
+  get longitude(): number { return this._longitude }
+  get defendorDePatria(): boolean { return this._defendorDePatria }
 
   // Método estático para crear desde DTO del backend
   static fromDTO(dto: RespondentDTO): Respondent {
@@ -103,7 +118,10 @@ export class Respondent {
       dto.department || '',
       dto.city || '',
       (dto.stratum?.toString() || '') as Stratum,
-      dto.neighborhood || ''
+      dto.neighborhood || '',
+      dto.latitude || 0,
+      dto.longitude || 0,
+      dto.defendorDePatria || false
     )
   }
 
@@ -122,6 +140,9 @@ export class Respondent {
     city: string
     stratum: Stratum
     neighborhood: string
+    latitude: number
+    longitude: number
+    defendorDePatria: boolean
   } {
     return {
       fullName: this._fullName,
@@ -137,6 +158,9 @@ export class Respondent {
       city: this._city,
       stratum: this._stratum,
       neighborhood: this._neighborhood,
+      latitude: this._latitude,
+      longitude: this._longitude,
+      defendorDePatria: this._defendorDePatria,
     }
   }
 
@@ -155,6 +179,9 @@ export class Respondent {
     city?: string
     stratum?: string
     neighborhood?: string
+    latitude?: number
+    longitude?: number
+    defendorDePatria?: boolean
   } {
     return {
       fullName: this._fullName,
@@ -170,6 +197,9 @@ export class Respondent {
       city: this._city || undefined,
       stratum: this._stratum || undefined,
       neighborhood: this._neighborhood || undefined,
+      latitude: this._latitude || undefined,
+      longitude: this._longitude || undefined,
+      defendorDePatria: this._defendorDePatria,
     }
   }
 
@@ -197,6 +227,9 @@ export class Respondent {
     city: string
     stratum: Stratum
     neighborhood: string
+    latitude: number
+    longitude: number
+    defendorDePatria: boolean
   }): Respondent {
     return new Respondent(
       data.fullName,
@@ -211,7 +244,10 @@ export class Respondent {
       data.department,
       data.city,
       data.stratum,
-      data.neighborhood
+      data.neighborhood,
+      data.latitude,
+      data.longitude,
+      data.defendorDePatria
     )
   }
 }

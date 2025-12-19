@@ -118,6 +118,7 @@ export interface SocializerFormData {
 export interface RoleOption {
   _id: string
   role: string
+  originalRole?: string
   status: string
 }
 

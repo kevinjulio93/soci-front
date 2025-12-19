@@ -4,6 +4,8 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 import '../styles/Modal.scss'
 import { RespondentData } from '../models/ApiResponses'
 
@@ -22,6 +24,7 @@ export function SurveyDetailModal({
 }: SurveyDetailModalProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioError, setAudioError] = useState(false)
+  const [audioDuration, setAudioDuration] = useState<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   // Limpiar y resetear estado cuando cambia la encuesta o se cierra el modal
@@ -51,10 +54,28 @@ export function SurveyDetailModal({
       // Resetear estados para la nueva encuesta
       setIsPlaying(false)
       setAudioError(false)
+      setAudioDuration(null)
+      
+      // Cargar metadata del audio para obtener la duración
+      if (survey.audioUrl) {
+        const audio = new Audio(survey.audioUrl)
+        audio.addEventListener('loadedmetadata', () => {
+          setAudioDuration(audio.duration)
+        })
+        audio.addEventListener('error', () => {
+          setAudioError(true)
+        })
+      }
     }
   }, [survey, isOpen])
 
   if (!isOpen || !survey) return null
+
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
 
   const handlePlayAudio = async () => {
     if (!survey.audioUrl) {
@@ -75,6 +96,11 @@ export function SurveyDetailModal({
           audioRef.current.addEventListener('error', () => {
             setAudioError(true)
             setIsPlaying(false)
+          })
+          audioRef.current.addEventListener('loadedmetadata', () => {
+            if (audioRef.current) {
+              setAudioDuration(audioRef.current.duration)
+            }
           })
         }
         await audioRef.current.play()
@@ -174,6 +200,46 @@ export function SurveyDetailModal({
             </div>
           </section>
 
+          {/* Ubicación Geográfica */}
+          {survey.location && survey.location.coordinates && survey.location.coordinates[0] !== 0 && survey.location.coordinates[1] !== 0 && (
+            <section className="detail-section">
+              <h3 className="detail-section__title">Ubicación Geográfica</h3>
+              <div className="detail-grid">
+                <div className="detail-item">
+                  <span className="detail-item__label">Longitud:</span>
+                  <span className="detail-item__value">{survey.location.coordinates[0].toFixed(6)}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-item__label">Latitud:</span>
+                  <span className="detail-item__value">{survey.location.coordinates[1].toFixed(6)}</span>
+                </div>
+                <div className="detail-item detail-item--full">
+                  <span className="detail-item__label">Mapa de Ubicación:</span>
+                  <div className="map-container">
+                    <MapContainer
+                      center={[survey.location.coordinates[1], survey.location.coordinates[0]]}
+                      zoom={15}
+                      style={{ height: '300px', width: '100%', borderRadius: '8px' }}
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      />
+                      <Marker position={[survey.location.coordinates[1], survey.location.coordinates[0]]}>
+                        <Popup>
+                          <strong>{survey.fullName}</strong>
+                          <br />
+                          {survey.neighborhood && `${survey.neighborhood}, `}
+                          {survey.city}
+                        </Popup>
+                      </Marker>
+                    </MapContainer>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Audio e Información Adicional */}
           <section className="detail-section">
             <h3 className="detail-section__title">Información Adicional</h3>
@@ -209,6 +275,11 @@ export function SurveyDetailModal({
                         </svg>
                       )}
                     </button>
+                    {audioDuration !== null && (
+                      <span className="audio-control__duration">
+                        Duración: {formatDuration(audioDuration)}
+                      </span>
+                    )}
                     {audioError && (
                       <span className="audio-control__error">Error al cargar audio</span>
                     )}

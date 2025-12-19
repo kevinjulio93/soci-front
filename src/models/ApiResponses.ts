@@ -74,6 +74,12 @@ export class RespondentData {
   public city?: string
   public stratum?: number
   public neighborhood?: string
+  public latitude?: number
+  public longitude?: number
+  public location?: {
+    type: string
+    coordinates: [number, number]
+  }
   public audioPath?: string
   public audioUrl?: string | null
   public audioFile?: string
@@ -98,6 +104,9 @@ export class RespondentData {
     this.city = data.city
     this.stratum = data.stratum
     this.neighborhood = data.neighborhood
+    this.latitude = data.latitude
+    this.longitude = data.longitude
+    this.location = data.location
     this.audioPath = data.audioPath
     this.audioUrl = data.audioUrl
     this.audioFile = data.audioFile

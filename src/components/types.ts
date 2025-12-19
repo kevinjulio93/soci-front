@@ -27,6 +27,7 @@ export interface SurveyFormData {
   city: string
   stratum: '1' | '2' | '3' | '4' | '5' | '6' | ''
   neighborhood: string
+  defendorDePatria: boolean
 }
 
 export interface SurveyFormProps {

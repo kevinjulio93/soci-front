@@ -8,6 +8,19 @@ import type { RespondentData } from '../models/ApiResponses'
 import type { Survey, Socializer } from '../types'
 import { getAvatarColor, getInitials, getFirstName } from '../utils'
 
+// Helper para traducir roles al español
+const translateRole = (role: string): string => {
+  const roleMap: Record<string, string> = {
+    'admin': 'Administrador',
+    'coordinator': 'Coordinador',
+    'coordinador': 'Coordinador',
+    'socializer': 'Socializador',
+    'socializador': 'Socializador',
+    'root': 'Root'
+  }
+  return roleMap[role.toLowerCase()] || role
+}
+
 export const getSurveysTableColumns = (
   formatDate: (dateString: string) => string,
   handleViewDetails: (id: string) => void,
@@ -198,11 +211,11 @@ export const getSocializersTableColumns = (
       header: 'ROL',
       render: (socializer) => {
         const role = typeof socializer.user?.role === 'object' ? socializer.user.role.role : 'N/A'
-        const roleClass = role === 'admin' ? 'badge-purple' : 
-                          role === 'socializer' ? 'badge-blue' : 'badge-gray'
+        const roleClass = role.toLowerCase() === 'admin' ? 'badge-purple' : 
+                          role.toLowerCase() === 'socializer' || role.toLowerCase() === 'socializador' ? 'badge-blue' : 'badge-gray'
         return (
           <span className={`badge ${roleClass}`}>
-            {role}
+            {translateRole(role)}
           </span>
         )
       }

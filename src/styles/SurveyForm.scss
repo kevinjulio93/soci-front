@@ -244,6 +244,34 @@
   padding-right: $spacing-3xl;
 }
 
+.form-group__checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md 0;
+}
+
+.form-group__checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: $color-primary;
+  
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.form-group__checkbox-label {
+  font-size: $font-size-base;
+  color: $color-text;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+}
+
 .form-group__error-text {
   display: block;
   font-size: $font-size-xs;

@@ -32,6 +32,7 @@ interface SurveyParticipantData {
   city: string
   stratum: '1' | '2' | '3' | '4' | '5' | '6' | ''
   neighborhood: string
+  defendorDePatria: boolean
 }
 
 export default function SurveyParticipant() {
@@ -132,8 +133,29 @@ export default function SurveyParticipant() {
         recordedBlob = await stopRecording()
       }
 
-      // Crear instancia de Respondent usando POO
-      const respondent = Respondent.fromFormData(data)
+      // Obtener ubicación actual
+      let latitude = 0
+      let longitude = 0
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          })
+        })
+        latitude = position.coords.latitude
+        longitude = position.coords.longitude
+      } catch (geoError) {
+        // Si falla la geolocalización, continuar con 0,0
+      }
+
+      // Crear instancia de Respondent usando POO con ubicación
+      const respondent = Respondent.fromFormData({
+        ...data,
+        latitude,
+        longitude
+      })
       
       // Validar datos básicos
       if (!respondent.isValid()) {

@@ -2,7 +2,8 @@
  * ToastContainer - Contenedor para mostrar múltiples toasts
  */
 
-import { Toast, ToastProps } from './Toast'
+import { Toast } from './Toast'
+import type { ToastProps } from './Toast'
 import '../styles/Toast.scss'
 
 interface ToastContainerProps {

@@ -30,7 +30,7 @@ export async function convertToMp3(audioBlob: Blob): Promise<Blob> {
     
     // Convertir a mono si es estéreo (MP3 encoder trabaja mejor con mono para voz)
     let leftChannel: Float32Array
-    let rightChannel: Float32Array | null = null
+    // let rightChannel: Float32Array | null = null
     
     if (channels === 1) {
       leftChannel = audioBuffer.getChannelData(0)
@@ -69,8 +69,9 @@ export async function convertToMp3(audioBlob: Blob): Promise<Blob> {
       mp3Data.push(mp3buf)
     }
     
-    // Crear el Blob MP3
-    const mp3Blob = new Blob(mp3Data, { type: FILE_CONFIG.AUDIO_MIME_TYPES.MP3 })
+    // Crear el Blob MP3 (convertir Int8Array a Uint8Array para compatibilidad)
+    const mp3BlobParts = mp3Data.map(data => new Uint8Array(data.buffer) as BlobPart)
+    const mp3Blob = new Blob(mp3BlobParts, { type: FILE_CONFIG.AUDIO_MIME_TYPES.MP3 })
     
     return mp3Blob
   } catch (error) {

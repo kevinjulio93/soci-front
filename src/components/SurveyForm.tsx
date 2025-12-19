@@ -38,7 +38,7 @@ export function SurveyForm({
     register,
     handleSubmit,
     formState: { errors },
-    watch,
+    // watch,
     setValue,
   } = useForm<SurveyFormData>({
     mode: 'onBlur',
@@ -309,7 +309,7 @@ export function SurveyForm({
                 disabled={isLoading}
                 {...register('stratum')}
               >
-                <option value="">1 - 6</option>
+                <option value="">Seleccione estrato</option>
                 {STRATUM_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -433,6 +433,22 @@ export function SurveyForm({
               {errors.neighborhood && (
                 <span className="form-group__error-text">{errors.neighborhood.message}</span>
               )}
+            </div>
+          </div>
+
+          {/* Defensor de la Patria - Checkbox */}
+          <div className="form-group">
+            <div className="form-group__checkbox-wrapper">
+              <input
+                id="defendorDePatria"
+                type="checkbox"
+                className="form-group__checkbox"
+                disabled={isLoading}
+                {...register('defendorDePatria')}
+              />
+              <label htmlFor="defendorDePatria" className="form-group__checkbox-label">
+                Defensor de la Patria
+              </label>
             </div>
           </div>
 

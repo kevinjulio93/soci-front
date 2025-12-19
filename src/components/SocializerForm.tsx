@@ -50,7 +50,7 @@ export function SocializerForm({
   useEffect(() => {
     if (watchedRoleId) {
       const role = roles.find(r => r._id === watchedRoleId)
-      setSelectedRole(role?.role || '')
+      setSelectedRole(role?.originalRole || role?.role || '')
     }
   }, [watchedRoleId, roles])
 
@@ -89,13 +89,48 @@ export function SocializerForm({
           role.role === 'socializador'
         )
       }
-      // admin y root pueden ver todos los roles (no filtrar)
       
-      setRoles(activeRoles.map(role => ({
+      // Función para traducir roles al español
+      const translateRole = (role: string): string => {
+        const roleMap: Record<string, string> = {
+          'admin': 'Administrador',
+          'coordinator': 'Coordinador',
+          'coordinador': 'Coordinador',
+          'socializer': 'Socializador',
+          'socializador': 'Socializador',
+          'root': 'Root'
+        }
+        return roleMap[role.toLowerCase()] || role
+      }
+      
+      // Normalizar nombres de roles y eliminar duplicados
+      const normalizeRole = (role: string): string => {
+        const normalized = role.toLowerCase()
+        if (normalized === 'coordinador') return 'coordinator'
+        if (normalized === 'socializador') return 'socializer'
+        return normalized
+      }
+      
+      // Filtrar roles únicos basados en el nombre normalizado y tomar solo los primeros 3
+      const seenRoles = new Set<string>()
+      const uniqueRoles: typeof activeRoles = []
+      
+      for (const role of activeRoles) {
+        const normalizedRoleName = normalizeRole(role.role)
+        if (!seenRoles.has(normalizedRoleName) && uniqueRoles.length < 3) {
+          seenRoles.add(normalizedRoleName)
+          uniqueRoles.push(role)
+        }
+      }
+      
+      const translatedRoles = uniqueRoles.map(role => ({
         _id: role._id,
-        role: role.role,
+        role: translateRole(role.role),
+        originalRole: role.role,
         status: role.status
-      })))
+      }))
+      
+      setRoles(translatedRoles)
     } catch (err) {
       // Error silencioso
     } finally {
@@ -108,16 +143,17 @@ export function SocializerForm({
     let payload = { ...formData }
     
     // Si el rol es socializer/socializador, enviar coordinatorId
-    if (
-      payload.roleId &&
-      payload.coordinator &&
-      (
-        roles.find(r => r._id === payload.roleId)?.role === 'socializer' ||
-        roles.find(r => r._id === payload.roleId)?.role === 'socializador'
-      )
-    ) {
-      payload.coordinatorId = payload.coordinator
-      delete payload.coordinator
+    if (payload.roleId && payload.coordinator) {
+      const selectedRoleObj = roles.find(r => r._id === payload.roleId)
+      const roleToCheck = selectedRoleObj?.originalRole || selectedRoleObj?.role || ''
+      
+      if (
+        roleToCheck.toLowerCase() === 'socializer' ||
+        roleToCheck.toLowerCase() === 'socializador'
+      ) {
+        payload.coordinatorId = payload.coordinator
+        delete payload.coordinator
+      }
     }
     
     onSubmit(payload)

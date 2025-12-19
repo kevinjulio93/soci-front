@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react'
 import { Sidebar } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
-import { MESSAGES } from '../constants'
 import '../styles/Dashboard.scss'
 
 interface ReportFilters {

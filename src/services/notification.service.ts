@@ -48,7 +48,7 @@ export const notificationService = {
   /**
    * Maneja errores de API y muestra notificaciones apropiadas
    */
-  handleApiError: (error: any, defaultMessage = MESSAGES.GENERIC_ERROR) => {
+  handleApiError: (error: any, defaultMessage: string = MESSAGES.GENERIC_ERROR) => {
     const message = 
       error?.response?.data?.message || 
       error?.response?.data?.error ||
