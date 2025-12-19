@@ -5,9 +5,11 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import '../styles/Modal.scss'
 import { RespondentData } from '../models/ApiResponses'
+import { EXTERNAL_URLS, MAP_CONFIG } from '../constants'
 
 interface SurveyDetailModalProps {
   isOpen: boolean
@@ -15,6 +17,17 @@ interface SurveyDetailModalProps {
   survey: RespondentData | null
   formatDate: (date: string) => string
 }
+
+// Fix para los iconos de Leaflet en Vite/Webpack
+const defaultIcon = new Icon({
+  iconUrl: EXTERNAL_URLS.LEAFLET_MARKER_ICON,
+  iconRetinaUrl: EXTERNAL_URLS.LEAFLET_MARKER_ICON_2X,
+  shadowUrl: EXTERNAL_URLS.LEAFLET_MARKER_SHADOW,
+  iconSize: MAP_CONFIG.MARKER_SIZE,
+  iconAnchor: MAP_CONFIG.MARKER_ANCHOR,
+  popupAnchor: MAP_CONFIG.POPUP_ANCHOR,
+  shadowSize: MAP_CONFIG.SHADOW_SIZE
+})
 
 export function SurveyDetailModal({
   isOpen,
@@ -225,7 +238,10 @@ export function SurveyDetailModal({
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       />
-                      <Marker position={[survey.location.coordinates[1], survey.location.coordinates[0]]}>
+                      <Marker 
+                        position={[survey.location.coordinates[1], survey.location.coordinates[0]]}
+                        icon={defaultIcon}
+                      >
                         <Popup>
                           <strong>{survey.fullName}</strong>
                           <br />
