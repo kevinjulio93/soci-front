@@ -34,6 +34,7 @@ export const API_ENDPOINTS = {
   // Auth
   AUTH_LOGIN: '/auth/login',
   AUTH_LOGOUT: '/auth/logout',
+  USER_PROFILE: '/users/profile',
   
   // Respondents
   RESPONDENTS: '/respondents',

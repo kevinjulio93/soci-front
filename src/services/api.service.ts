@@ -12,6 +12,7 @@ import type {
   UpdateRespondentRequest,
   CreateSocializerRequest,
   UpdateSocializerRequest,
+  User,
 } from '../types'
 import {
   CreateRespondentResponse,
@@ -65,8 +66,19 @@ class ApiService {
       const response = await fetch(url, { ...options, headers })
 
       if (!response.ok) {
+        // Intentar obtener el mensaje de error del backend
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        try {
+          const errorData = await response.json()
+          if (errorData.message) {
+            errorMessage = errorData.message
+          }
+        } catch {
+          // Si no se puede parsear el JSON, usar el mensaje por defecto
+        }
+
         const error: ApiError = {
-          message: `HTTP ${response.status}: ${response.statusText}`,
+          message: errorMessage,
           code: response.status.toString(),
         }
         throw error
@@ -88,6 +100,12 @@ class ApiService {
     return this.request<LoginResponse>(API_ENDPOINTS.AUTH_LOGIN, {
       method: 'POST',
       body: JSON.stringify(credentials),
+    })
+  }
+
+  async getUserProfile(): Promise<{ user: User }> {
+    return this.request<{ user: User }>(API_ENDPOINTS.USER_PROFILE, {
+      method: 'GET',
     })
   }
 

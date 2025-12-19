@@ -50,6 +50,36 @@ class AuthService {
     return user
   }
 
+  async validateUserStatus(): Promise<{ isValid: boolean; user?: User }> {
+    try {
+      const response = await apiService.getUserProfile()
+      const user = response.user
+
+      // Si el usuario está deshabilitado, limpiar sesión
+      if (user.status === 'disabled') {
+        storageService.clear()
+        return { isValid: false }
+      }
+
+      // Actualizar usuario en storage con datos frescos del backend
+      storageService.setUser(user)
+      return { isValid: true, user }
+    } catch (error) {
+      // Solo limpiar sesión si es un error de autenticación (401, 403)
+      if (error && typeof error === 'object' && 'code' in error) {
+        const apiError = error as { code: string }
+        if (apiError.code === '401' || apiError.code === '403') {
+          storageService.clear()
+          return { isValid: false }
+        }
+      }
+      
+      // Para otros errores (red, servidor caído, etc), mantener la sesión
+      // y asumir que el usuario sigue siendo válido
+      return { isValid: true }
+    }
+  }
+
   isSessionValid(): boolean {
     return !!storageService.getToken() && !!storageService.getUser()
   }

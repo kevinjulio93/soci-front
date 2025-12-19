@@ -45,6 +45,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restoreSession()
   }, [])
 
+  // Validar estatus del usuario periódicamente
+  useEffect(() => {
+    if (!authState.isAuthenticated || !authState.user) {
+      return
+    }
+
+    const validateStatus = async () => {
+      const result = await authService.validateUserStatus()
+      
+      if (!result.isValid) {
+        // Usuario deshabilitado o sesión inválida - hacer logout
+        setAuthState({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+        })
+        setError('Su cuenta ha sido deshabilitada. Por favor contacte al administrador.')
+      } else if (result.user) {
+        // Actualizar usuario con datos frescos
+        setAuthState(prev => ({
+          ...prev,
+          user: result.user!,
+        }))
+      }
+    }
+
+    // Validar inmediatamente al montar
+    validateStatus()
+
+    // Validar cada 5 minutos
+    const interval = setInterval(validateStatus, 5 * 60 * 1000)
+
+    return () => clearInterval(interval)
+  }, [authState.isAuthenticated, authState.user?.id])
+
   const login = useCallback(async (email: string, password: string): Promise<User> => {
     setIsLoading(true)
     setError(null)
