@@ -12,10 +12,12 @@ import { getAvatarColor, getInitials, getFirstName } from '../utils'
 const translateRole = (role: string): string => {
   const roleMap: Record<string, string> = {
     'admin': 'Administrador',
-    'coordinator': 'Coordinador',
-    'coordinador': 'Coordinador',
+    'coordinator': 'Supervisor',
+    'coordinador': 'Supervisor',
+    'supervisor': 'Supervisor',
     'socializer': 'Socializador',
     'socializador': 'Socializador',
+    'readonly': 'Solo Lectura',
     'root': 'Root'
   }
   return roleMap[role.toLowerCase()] || role
@@ -145,7 +147,7 @@ export const getSurveysTableColumns = (
         {onDelete && (
           <span
             className="action-icon action-icon--delete"
-            onClick={() => onDelete(survey._id, survey.fullName)}
+            onClick={() => onDelete(survey._id, survey.fullName || 'N/A')}
             title="Eliminar encuestado"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
@@ -162,7 +164,8 @@ export const getSocializersTableColumns = (
   onEdit: (socializer: Socializer) => void,
   onDelete: (id: string, name: string) => void,
   onViewLocation: (socializer: Socializer) => void,
-  isLoading: boolean
+  isLoading: boolean,
+  isReadOnly: boolean = false
 ): TableColumn<Socializer>[] => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A'
@@ -248,6 +251,26 @@ export const getSocializersTableColumns = (
         const isCoordinator = roleStr === 'coordinador' || roleStr === 'coordinator'
         const cannotDelete = isAdmin || isCoordinator
         const cannotViewLocation = isAdmin || isCoordinator
+        
+        // Si es readOnly, solo mostrar ubicación
+        if (isReadOnly) {
+          return (
+            <div className="action-buttons">
+              {!cannotViewLocation && (
+                <span
+                  className="action-icon action-icon--location"
+                  onClick={() => !isLoading && onViewLocation(socializer)}
+                  title="Ver ubicación en tiempo real"
+                  style={{ opacity: isLoading ? 0.5 : 1, cursor: isLoading ? 'not-allowed' : 'pointer' }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                </span>
+              )}
+            </div>
+          )
+        }
         
         return (
           <div className="action-buttons">

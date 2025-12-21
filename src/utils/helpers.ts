@@ -10,8 +10,11 @@ import { AVATAR_COLORS } from '../constants/formOptions'
  * @param name - Nombre del usuario
  * @returns Color hexadecimal del avatar
  */
-export function getAvatarColor(name: string): string {
-  const hash = name.charCodeAt(0) + name.charCodeAt(1)
+export function getAvatarColor(name: string | undefined | null): string {
+  if (!name || typeof name !== 'string' || name.length === 0) {
+    return AVATAR_COLORS[0]
+  }
+  const hash = name.charCodeAt(0) + (name.length > 1 ? name.charCodeAt(1) : 0)
   return AVATAR_COLORS[hash % AVATAR_COLORS.length]
 }
 
@@ -20,13 +23,17 @@ export function getAvatarColor(name: string): string {
  * @param name - Nombre completo del usuario
  * @returns Iniciales en mayúsculas
  */
-export function getInitials(name: string): string {
+export function getInitials(name: string | undefined | null): string {
+  if (!name || typeof name !== 'string' || name.length === 0) {
+    return 'N/A'
+  }
   return name
     .split(' ')
+    .filter(word => word.length > 0)
     .map((word) => word[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2) || 'N/A'
 }
 
 /**
@@ -35,6 +42,9 @@ export function getInitials(name: string): string {
  * @returns Número hash
  */
 export function simpleHash(str: string): number {
+  if (!str || typeof str !== 'string') {
+    return 0
+  }
   let hash = 0
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash)
@@ -58,6 +68,9 @@ export function selectFromArrayByHash<T>(str: string, array: T[]): T {
  * @param fullName - Nombre completo
  * @returns Primer nombre en mayúsculas
  */
-export function getFirstName(fullName: string): string {
+export function getFirstName(fullName: string | undefined | null): string {
+  if (!fullName || typeof fullName !== 'string' || fullName.length === 0) {
+    return 'N/A'
+  }
   return fullName.split(' ')[0].toUpperCase()
 }

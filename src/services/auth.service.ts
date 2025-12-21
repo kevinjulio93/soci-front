@@ -90,7 +90,7 @@ class AuthService {
 
   /**
    * Determina el dashboard a mostrar basado en el rol del usuario
-   * 'root', 'admin' o 'coordinador' → /admin/dashboard
+   * 'root', 'admin', 'coordinador' o 'readonly' → /admin/dashboard
    * 'socializer' → /sociologist/dashboard
    * Otros roles → /sociologist/dashboard (por defecto)
    */
@@ -99,8 +99,8 @@ class AuthService {
     
     const roleType = user.role?.role?.toLowerCase()
     
-    // Si es root, admin o coordinador, mostrar admin dashboard
-    if (roleType === 'root' || roleType === 'admin' || roleType === 'coordinador' || roleType === 'coordinator') {
+    // Si es root, admin, coordinador o readonly, mostrar admin dashboard
+    if (roleType === 'root' || roleType === 'admin' || roleType === 'coordinador' || roleType === 'coordinator' || roleType === 'readonly') {
       return '/admin/dashboard'
     }
     
@@ -109,12 +109,12 @@ class AuthService {
   }
 
   /**
-   * Verifica si el usuario es admin, root o coordinador
+   * Verifica si el usuario es admin, root, coordinador o readonly
    */
   isAdminOrRoot(user: User | null): boolean {
     if (!user) return false
     const roleType = user.role?.role?.toLowerCase()
-    const isAdmin = roleType === 'root' || roleType === 'admin' || roleType === 'coordinador' || roleType === 'coordinator'
+    const isAdmin = roleType === 'root' || roleType === 'admin' || roleType === 'coordinador' || roleType === 'coordinator' || roleType === 'readonly'
     return isAdmin
   }
 

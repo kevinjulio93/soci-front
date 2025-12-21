@@ -13,6 +13,7 @@ import SurveysList from '../pages/SurveysList'
 import Reports from '../pages/Reports'
 import ReportsRealtime from '../pages/ReportsRealtime'
 import ReportsGenerate from '../pages/ReportsGenerate'
+import ReportsMap from '../pages/ReportsMap'
 import { ProtectedRoute } from '../components'
 import { ROUTES } from '../constants'
 
@@ -94,6 +95,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
         <ReportsGenerate />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.ADMIN_REPORTS_MAP,
+    element: (
+      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+        <ReportsMap />
       </ProtectedRoute>
     ),
   },

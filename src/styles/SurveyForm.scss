@@ -171,6 +171,34 @@
 // FORM GROUP - BEM (Reused from Login)
 // =============================================
 
+.form-section {
+  margin-bottom: $spacing-2xl;
+  padding-bottom: $spacing-xl;
+  border-bottom: 1px solid $color-border;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  @media (max-width: 640px) {
+    margin-bottom: $spacing-xl;
+    padding-bottom: $spacing-lg;
+  }
+}
+
+.form-section__title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-dark-text;
+  margin: 0 0 $spacing-lg;
+  font-family: 'Montserrat', sans-serif;
+
+  @media (max-width: 640px) {
+    font-size: $font-size-base;
+    margin-bottom: $spacing-md;
+  }
+}
+
 .form-group {
   margin-bottom: $spacing-lg;
 

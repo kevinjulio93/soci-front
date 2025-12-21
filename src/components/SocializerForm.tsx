@@ -94,36 +94,19 @@ export function SocializerForm({
       const translateRole = (role: string): string => {
         const roleMap: Record<string, string> = {
           'admin': 'Administrador',
-          'coordinator': 'Coordinador',
-          'coordinador': 'Coordinador',
+          'coordinator': 'Supervisor',
+          'coordinador': 'Supervisor',
+          'supervisor': 'Supervisor',
           'socializer': 'Socializador',
           'socializador': 'Socializador',
+          'readonly': 'Solo Lectura',
           'root': 'Root'
         }
         return roleMap[role.toLowerCase()] || role
       }
       
-      // Normalizar nombres de roles y eliminar duplicados
-      const normalizeRole = (role: string): string => {
-        const normalized = role.toLowerCase()
-        if (normalized === 'coordinador') return 'coordinator'
-        if (normalized === 'socializador') return 'socializer'
-        return normalized
-      }
-      
-      // Filtrar roles únicos basados en el nombre normalizado y tomar solo los primeros 3
-      const seenRoles = new Set<string>()
-      const uniqueRoles: typeof activeRoles = []
-      
-      for (const role of activeRoles) {
-        const normalizedRoleName = normalizeRole(role.role)
-        if (!seenRoles.has(normalizedRoleName) && uniqueRoles.length < 3) {
-          seenRoles.add(normalizedRoleName)
-          uniqueRoles.push(role)
-        }
-      }
-      
-      const translatedRoles = uniqueRoles.map(role => ({
+      // Traducir roles sin filtrar ni limitar la cantidad
+      const translatedRoles = activeRoles.map(role => ({
         _id: role._id,
         role: translateRole(role.role),
         originalRole: role.role,
@@ -321,17 +304,17 @@ export function SocializerForm({
             )}
           </div>
 
-          {/* Coordinador - Solo visible cuando el rol es "socializer" */}
+          {/* Supervisor - Solo visible cuando el rol es "socializer" */}
           {(selectedRole === 'socializer' || selectedRole === 'socializador') && (
             <div className="form-group">
               <label htmlFor="coordinator" className="form-group__label">
-                Coordinador *
+                Supervisor *
               </label>
               <select
                 id="coordinator"
                 className={`form-group__input ${errors.coordinator ? 'form-group__input--error' : ''}`}
                 {...register('coordinator', {
-                  required: (selectedRole === 'socializer' || selectedRole === 'socializador') ? 'Debe seleccionar un coordinador' : false,
+                  required: (selectedRole === 'socializer' || selectedRole === 'socializador') ? 'Debe seleccionar un supervisor' : false,
                 })}
                 disabled={isLoading || loadingCoordinators}
               >

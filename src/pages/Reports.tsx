@@ -57,6 +57,27 @@ export default function Reports() {
               </Link>
 
               <Link 
+                to={ROUTES.ADMIN_REPORTS_MAP}
+                className={`reports-menu__card ${isActive(ROUTES.ADMIN_REPORTS_MAP) ? 'reports-menu__card--active' : ''}`}
+              >
+                <div className="reports-menu__icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 013.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                </div>
+                <h3 className="reports-menu__title">Mapa de Encuestas</h3>
+                <p className="reports-menu__description">
+                  Visualiza todas las encuestas en un mapa, diferenciando exitosas (azul) de rechazadas (rojo)
+                </p>
+                <div className="reports-menu__badge reports-menu__badge--info">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 013.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  Geográfico
+                </div>
+              </Link>
+
+              <Link 
                 to={ROUTES.ADMIN_REPORTS_GENERATE}
                 className={`reports-menu__card ${isActive(ROUTES.ADMIN_REPORTS_GENERATE) ? 'reports-menu__card--active' : ''}`}
               >

@@ -58,9 +58,9 @@ export class PaginatedResponse<T> {
 
 export class RespondentData {
   public _id: string
-  public fullName: string
-  public idType: string
-  public identification: string
+  public fullName?: string
+  public idType?: string
+  public identification?: string
   public status: string
   public createdAt: string
   public updatedAt: string
@@ -85,6 +85,12 @@ export class RespondentData {
   public audioFile?: string
   public audioFileKey?: string
   public autor?: any
+  public willingToRespond?: boolean
+  public rejectionReason?: string
+  public noResponseReason?: string
+  public visitAddress?: string
+  public surveyStatus?: string
+  public isPatriaDefender?: boolean
 
   constructor(data: any) {
     this._id = data._id
@@ -112,6 +118,12 @@ export class RespondentData {
     this.audioFile = data.audioFile
     this.audioFileKey = data.audioFileKey
     this.autor = data.autor
+    this.willingToRespond = data.willingToRespond
+    this.rejectionReason = data.rejectionReason
+    this.noResponseReason = data.noResponseReason
+    this.visitAddress = data.visitAddress
+    this.surveyStatus = data.surveyStatus
+    this.isPatriaDefender = data.isPatriaDefender
   }
 }
 

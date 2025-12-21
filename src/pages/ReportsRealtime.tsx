@@ -245,7 +245,7 @@ export default function ReportsRealtime() {
                               </p>
                               {socializer.coordinator && (
                                 <p className="map-popup__info">
-                                  <strong>Coordinador:</strong> {socializer.coordinator.fullName}
+                                  <strong>Supervisor:</strong> {socializer.coordinator.fullName}
                                 </p>
                               )}
                               <p className="map-popup__info">

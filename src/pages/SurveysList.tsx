@@ -9,9 +9,11 @@ import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { getSurveysTableColumns, MESSAGES } from '../constants'
 import type { RespondentData } from '../models/ApiResponses'
+import { useAuth } from '../contexts/AuthContext'
 import '../styles/Dashboard.scss'
 
 export default function SurveysList() {
+  const { user } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [surveys, setSurveys] = useState<RespondentData[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -133,7 +135,7 @@ export default function SurveysList() {
           </div>
 
           <DataTable
-            columns={getSurveysTableColumns(formatDate, handleViewDetails, handleDeleteClick)}
+            columns={getSurveysTableColumns(formatDate, handleViewDetails, user?.role?.role?.toLowerCase() === 'readonly' ? undefined : handleDeleteClick)}
             data={surveys}
             currentPage={currentPage}
             totalPages={totalPages}

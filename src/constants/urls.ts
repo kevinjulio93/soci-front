@@ -24,6 +24,10 @@ export const EXTERNAL_URLS = {
   // Google Maps
   GOOGLE_MAPS_BASE: 'https://www.google.com/maps',
   GOOGLE_MAPS_QUERY: (lat: number, lng: number) => `${EXTERNAL_URLS.GOOGLE_MAPS_BASE}?q=${lat},${lng}`,
+  
+  // WhatsApp
+  WHATSAPP_GROUP_LINK: 'https://chat.whatsapp.com/Dgpes5oRjI9DEowXrx0G0w',
+  WHATSAPP_QR_CODE: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://chat.whatsapp.com/Dgpes5oRjI9DEowXrx0G0w',
 } as const
 
 /**

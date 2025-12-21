@@ -9,9 +9,11 @@ import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { ROUTES, getSocializersTableColumns, MESSAGES } from '../constants'
 import type { Socializer, SocializerFormData } from '../types'
+import { useAuth } from '../contexts/AuthContext'
 import '../styles/Dashboard.scss'
 
 export function SocializerManagement() {
+  const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
@@ -287,7 +289,7 @@ export function SocializerManagement() {
             </div>
           )}
 
-          {!showForm && (
+          {!showForm && user?.role?.role?.toLowerCase() !== 'readonly' && (
             <div className="dashboard-layout__actions">
               {selectedItems.size > 0 && (
                 <div className="selection-info">
@@ -301,7 +303,7 @@ export function SocializerManagement() {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '0.5rem' }}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    Asignar Coordinador
+                    Asignar Supervisor
                   </button>
                   <button
                     className="btn btn--text"
@@ -342,7 +344,7 @@ export function SocializerManagement() {
 
           {!showForm && (
             <DataTable<Socializer>
-              columns={getSocializersTableColumns(handleEdit, handleDelete, handleViewLocation, isLoading)}
+              columns={getSocializersTableColumns(handleEdit, handleDelete, handleViewLocation, isLoading, user?.role?.role?.toLowerCase() === 'readonly')}
               data={socializers}
               currentPage={currentPage}
               totalPages={totalPages}
@@ -357,7 +359,7 @@ export function SocializerManagement() {
               emptyStateTitle="No hay socializadores registrados"
               emptyStateDescription="Comienza creando el primer socializador para tu equipo"
               getRowKey={(socializer) => socializer._id}
-              selectable={true}
+              selectable={user?.role?.role?.toLowerCase() !== 'readonly'}
               selectedItems={selectedItems}
               onSelectionChange={setSelectedItems}
             />

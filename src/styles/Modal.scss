@@ -495,3 +495,81 @@
     font-weight: $font-weight-medium;
   }
 }
+
+// =============================================
+// SUCCESS MODAL - WhatsApp QR
+// =============================================
+
+.modal-content--success {
+  max-width: 500px;
+  text-align: center;
+
+  .modal-content__header {
+    padding: $spacing-xl;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .modal-content__title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $color-success;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-sm;
+  }
+
+  .modal-content__body {
+    padding: $spacing-2xl $spacing-xl;
+  }
+
+  .modal-content__footer {
+    padding: $spacing-lg $spacing-xl;
+    border-top: 1px solid #e5e7eb;
+  }
+}
+
+// Block: .whatsapp-qr
+.whatsapp-qr {
+  &__message {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-dark-text;
+    margin: 0 0 $spacing-xl;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  &__image-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-lg;
+  }
+
+  &__image {
+    max-width: 280px;
+    width: 100%;
+    height: auto;
+    border: 2px solid #e5e7eb;
+    border-radius: $border-radius-md;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &__instruction {
+    font-size: $font-size-sm;
+    color: $color-light-text;
+    margin: 0;
+  }
+
+  &__placeholder {
+    padding: $spacing-2xl;
+    background: #f3f4f6;
+    border-radius: $border-radius-md;
+    color: $color-light-text;
+    
+    p {
+      margin: 0;
+    }
+  }
+}

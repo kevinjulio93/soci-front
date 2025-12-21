@@ -14,6 +14,10 @@ export interface LoginFormProps {
 
 // SurveyForm types
 export interface SurveyFormData {
+  willingToRespond: boolean
+  visitAddress: string
+  surveyStatus: 'successful' | 'unsuccessful' | ''
+  noResponseReason: 'no_interest' | 'no_time' | 'not_home' | 'privacy_concerns' | 'other' | ''
   fullName: string
   idType: 'CC' | 'TI' | 'CE' | 'PA' | 'RC' | 'NIT' | ''
   identification: string
@@ -36,6 +40,7 @@ export interface SurveyFormProps {
   isLoading?: boolean
   error?: string | null
   initialData?: SurveyFormData | null
+  onWillingToRespondChange?: (willing: boolean) => void
 }
 
 // SocializerForm types

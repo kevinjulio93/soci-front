@@ -344,7 +344,7 @@ class ApiService {
     
     return {
       success: response.success ?? true,
-      message: response.message ?? 'Coordinador asignado correctamente',
+      message: response.message ?? 'Supervisor asignado correctamente',
       data: response.data,
     }
   }
@@ -361,7 +361,7 @@ class ApiService {
     
     return {
       success: response.success ?? true,
-      message: response.message ?? 'Coordinador desasignado correctamente',
+      message: response.message ?? 'Supervisor desasignado correctamente',
     }
   }
 

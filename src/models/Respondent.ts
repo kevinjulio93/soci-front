@@ -7,12 +7,19 @@ export type IdType = 'CC' | 'TI' | 'CE' | 'PA' | 'RC' | 'NIT' | ''
 export type Gender = 'Masculino' | 'Femenino' | 'Otro' | 'Prefiero no decir' | ''
 export type AgeRange = '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65+' | ''
 export type Stratum = '1' | '2' | '3' | '4' | '5' | '6' | ''
+export type SurveyStatus = 'successful' | 'unsuccessful' | ''
+export type NoResponseReason = 'no_interest' | 'no_time' | 'not_home' | 'privacy_concerns' | 'other' | ''
 
 export interface RespondentDTO {
   _id?: string
-  fullName: string
-  idType: string
-  identification: string
+  willingToRespond?: boolean
+  visitAddress?: string
+  surveyStatus?: string
+  noResponseReason?: string
+  rejectionReason?: string
+  fullName?: string
+  idType?: string
+  identification?: string
   email?: string
   phone?: string
   address?: string
@@ -26,12 +33,17 @@ export interface RespondentDTO {
   latitude?: number
   longitude?: number
   defendorDePatria?: boolean
+  isPatriaDefender?: boolean
   status?: string
   createdAt?: string
   updatedAt?: string
 }
 
 export class Respondent {
+  private _willingToRespond: boolean
+  private _visitAddress: string
+  private _surveyStatus: SurveyStatus
+  private _noResponseReason: NoResponseReason
   private _fullName: string
   private _idType: IdType
   private _identification: string
@@ -50,6 +62,10 @@ export class Respondent {
   private _defendorDePatria: boolean
 
   constructor(
+    willingToRespond: boolean = false,
+    visitAddress: string = '',
+    surveyStatus: SurveyStatus = '',
+    noResponseReason: NoResponseReason = '',
     fullName: string = '',
     idType: IdType = '',
     identification: string = '',
@@ -67,6 +83,10 @@ export class Respondent {
     longitude: number = 0,
     defendorDePatria: boolean = false
   ) {
+    this._willingToRespond = willingToRespond
+    this._visitAddress = visitAddress
+    this._surveyStatus = surveyStatus
+    this._noResponseReason = noResponseReason
     this._fullName = fullName
     this._idType = idType
     this._identification = identification
@@ -86,6 +106,10 @@ export class Respondent {
   }
 
   // Getters
+  get willingToRespond(): boolean { return this._willingToRespond }
+  get visitAddress(): string { return this._visitAddress }
+  get surveyStatus(): SurveyStatus { return this._surveyStatus }
+  get noResponseReason(): NoResponseReason { return this._noResponseReason }
   get fullName(): string { return this._fullName }
   get idType(): IdType { return this._idType }
   get identification(): string { return this._identification }
@@ -105,10 +129,16 @@ export class Respondent {
 
   // Método estático para crear desde DTO del backend
   static fromDTO(dto: RespondentDTO): Respondent {
+    const noResponseReason = ((dto.noResponseReason || dto.rejectionReason) || '') as NoResponseReason
+    
     return new Respondent(
-      dto.fullName,
-      dto.idType as IdType,
-      dto.identification,
+      dto.willingToRespond || false,
+      dto.visitAddress || '',
+      (dto.surveyStatus || '') as SurveyStatus,
+      noResponseReason,
+      dto.fullName || '',
+      (dto.idType || '') as IdType,
+      dto.identification || '',
       dto.email || '',
       dto.phone || '',
       dto.address || '',
@@ -121,12 +151,16 @@ export class Respondent {
       dto.neighborhood || '',
       dto.latitude || 0,
       dto.longitude || 0,
-      dto.defendorDePatria || false
+      dto.defendorDePatria || dto.isPatriaDefender || false
     )
   }
 
   // Método para convertir a formato de formulario
   toFormData(): {
+    willingToRespond: boolean
+    visitAddress: string
+    surveyStatus: SurveyStatus
+    noResponseReason: NoResponseReason
     fullName: string
     idType: IdType
     identification: string
@@ -145,6 +179,10 @@ export class Respondent {
     defendorDePatria: boolean
   } {
     return {
+      willingToRespond: this._willingToRespond,
+      visitAddress: this._visitAddress,
+      surveyStatus: this._surveyStatus,
+      noResponseReason: this._noResponseReason,
       fullName: this._fullName,
       idType: this._idType,
       identification: this._identification,
@@ -166,6 +204,10 @@ export class Respondent {
 
   // Método para convertir a DTO para enviar al backend
   toDTO(): {
+    willingToRespond: boolean
+    visitAddress: string
+    surveyStatus: string
+    noResponseReason?: string
     fullName: string
     idType: string
     identification: string
@@ -182,8 +224,15 @@ export class Respondent {
     latitude?: number
     longitude?: number
     defendorDePatria?: boolean
+    isPatriaDefender?: boolean
+    rejectionReason?: string
   } {
     return {
+      willingToRespond: this._willingToRespond,
+      visitAddress: this._visitAddress,
+      surveyStatus: this._surveyStatus,
+      noResponseReason: this._noResponseReason || undefined,
+      rejectionReason: this._noResponseReason || undefined,
       fullName: this._fullName,
       idType: this._idType,
       identification: this._identification,
@@ -200,6 +249,7 @@ export class Respondent {
       latitude: this._latitude || undefined,
       longitude: this._longitude || undefined,
       defendorDePatria: this._defendorDePatria,
+      isPatriaDefender: this._defendorDePatria,
     }
   }
 
@@ -214,6 +264,10 @@ export class Respondent {
 
   // Método estático para crear desde datos de formulario
   static fromFormData(data: {
+    willingToRespond: boolean
+    visitAddress: string
+    surveyStatus: SurveyStatus
+    noResponseReason: NoResponseReason
     fullName: string
     idType: IdType
     identification: string
@@ -232,6 +286,10 @@ export class Respondent {
     defendorDePatria: boolean
   }): Respondent {
     return new Respondent(
+      data.willingToRespond,
+      data.visitAddress,
+      data.surveyStatus,
+      data.noResponseReason,
       data.fullName,
       data.idType,
       data.identification,

@@ -47,7 +47,7 @@ export interface AuthState {
 
 export interface Survey {
   id: string
-  title: string
+  title?: string
   status: 'pending' | 'in_progress' | 'completed'
   participants: number
   date: string

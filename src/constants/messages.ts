@@ -89,7 +89,7 @@ export const MESSAGES = {
   LABEL_EMAIL: 'Correo Electrónico',
   LABEL_PASSWORD: 'Contraseña',
   LABEL_ROLE: 'Rol',
-  LABEL_COORDINATOR: 'Coordinador',
+  LABEL_COORDINATOR: 'Supervisor',
   LABEL_LATITUDE: 'Latitud',
   LABEL_LONGITUDE: 'Longitud',
   LABEL_ACCURACY: 'Precisión',

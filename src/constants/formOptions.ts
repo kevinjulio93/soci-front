@@ -41,6 +41,15 @@ export const STRATUM_OPTIONS = [
   { value: '6', label: '6 - Muy Alto' },
 ] as const
 
+// Razones de no respuesta
+export const NO_RESPONSE_REASONS = [
+  { value: 'no_interest', label: 'No está interesado' },
+  { value: 'no_time', label: 'No tiene tiempo' },
+  { value: 'not_home', label: 'No se encuentra en casa' },
+  { value: 'privacy_concerns', label: 'Preocupaciones de privacidad' },
+  { value: 'other', label: 'Otra razón' },
+] as const
+
 // Colores para avatares (basados en hash del nombre)
 export const AVATAR_COLORS = [
   '#FFB3BA', // Rosa

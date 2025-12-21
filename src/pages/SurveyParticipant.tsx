@@ -6,7 +6,7 @@
 
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { SurveyForm, DashboardHeader, PageHeader } from '../components'
+import { SurveyForm, DashboardHeader, PageHeader, SuccessModal } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { useAudioRecorderContext } from '../contexts/AudioRecorderContext'
 import { apiService } from '../services/api.service'
@@ -19,6 +19,10 @@ import '../styles/SurveyForm.scss'
 import '../styles/Dashboard.scss'
 
 interface SurveyParticipantData {
+  willingToRespond: boolean
+  visitAddress: string
+  surveyStatus: 'successful' | 'unsuccessful' | ''
+  noResponseReason: 'no_interest' | 'no_time' | 'not_home' | 'privacy_concerns' | 'other' | ''
   fullName: string
   idType: 'CC' | 'TI' | 'CE' | 'PA' | 'RC' | 'NIT' | ''
   identification: string
@@ -43,6 +47,8 @@ export default function SurveyParticipant() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [initialData, setInitialData] = useState<SurveyParticipantData | null>(null)
   const [isLoadingData, setIsLoadingData] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showWhatsAppQR, setShowWhatsAppQR] = useState(false)
 
   const editMode = location.state?.editMode || false
   const respondentId = location.state?.respondentId
@@ -73,7 +79,7 @@ export default function SurveyParticipant() {
       setIsLoadingData(true)
       const response = await apiService.getRespondentById(respondentId)
       
-      // Usar clase Respondent para transformar datos
+      // Usar directamente response.data (debería tener todas las propiedades)
       const respondent = Respondent.fromDTO(response.data)
       setInitialData(respondent.toFormData())
     } catch (err) {
@@ -88,20 +94,23 @@ export default function SurveyParticipant() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, respondentId])
 
-  // Iniciar grabación cuando se llega desde "Nueva Encuesta"
-  useEffect(() => {
-    const shouldStartRecording = location.state?.startRecording
-    if (shouldStartRecording && !editMode) {
+  // Iniciar grabación solo si viene desde "Nueva Encuesta" y se marca como dispuesto
+  const handleWillingToRespondChange = (willing: boolean) => {
+    if (willing && !editMode && !isRecording) {
       startRecording()
+    } else if (!willing && isRecording) {
+      stopRecording()
     }
+  }
 
-    // Cleanup: detener grabación y liberar micrófono cuando se desmonte el componente
+  // Cleanup: detener grabación y liberar micrófono cuando se desmonte el componente
+  useEffect(() => {
     return () => {
       if (isRecording) {
         stopRecording()
       }
     }
-  }, [location.state, startRecording, editMode, isRecording, stopRecording])
+  }, [isRecording, stopRecording])
 
   const handleLogout = async () => {
     try {
@@ -154,11 +163,30 @@ export default function SurveyParticipant() {
       const respondent = Respondent.fromFormData({
         ...data,
         latitude,
-        longitude
+        longitude,
+        // Si no está dispuesto, establecer valores predeterminados para campos no capturados
+        ...(data.willingToRespond ? {} : {
+          visitAddress: `Ubicación GPS: ${latitude}, ${longitude}`,
+          surveyStatus: 'unsuccessful' as const,
+          fullName: 'No proporcionado',
+          identification: 'N/A',
+          idType: '' as const,
+          email: '',
+          phone: '',
+          address: '',
+          gender: '' as const,
+          ageRange: '' as const,
+          region: '',
+          department: '',
+          city: '',
+          stratum: '' as const,
+          neighborhood: '',
+          defendorDePatria: false,
+        })
       })
       
-      // Validar datos básicos
-      if (!respondent.isValid()) {
+      // Validar datos básicos solo si está dispuesto a responder
+      if (data.willingToRespond && !respondent.isValid()) {
         return
       }
 
@@ -206,8 +234,14 @@ export default function SurveyParticipant() {
         }
       }
 
-      // Retornar al dashboard después de guardar exitosamente
-      navigate(ROUTES.DASHBOARD)
+      // Mostrar modal de éxito y QR si es defensor de la patria
+      if (data.defendorDePatria && !editMode) {
+        setShowWhatsAppQR(true)
+        setShowSuccessModal(true)
+      } else {
+        // Retornar al dashboard si no es defensor de la patria
+        navigate(ROUTES.DASHBOARD)
+      }
     } catch (err) {
       notificationService.handleApiError(err, MESSAGES.RESPONDENT_SAVE_ERROR)
     } finally {
@@ -228,11 +262,6 @@ export default function SurveyParticipant() {
           title={editMode ? TITLES.EDIT_RESPONDENT : TITLES.NEW_SURVEY}
           description={editMode ? DESCRIPTIONS.EDIT_MODE : DESCRIPTIONS.CREATE_MODE}
         >
-          {isRecording && (
-            <div className="recording-indicator">
-              <span className="recording-indicator__dot"></span>
-            </div>
-          )}
           <button className="btn btn--secondary" onClick={handleBackToDashboard}>
             {TITLES.BACK_TO_DASHBOARD}
           </button>
@@ -259,10 +288,22 @@ export default function SurveyParticipant() {
               onSubmit={handleSubmit}
               isLoading={isSubmitting}
               initialData={initialData}
+              onWillingToRespondChange={handleWillingToRespondChange}
             />
           )}
         </section>
       </main>
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false)
+          setShowWhatsAppQR(false)
+          navigate(ROUTES.DASHBOARD)
+        }}
+        showQR={showWhatsAppQR}
+        qrImageUrl={EXTERNAL_URLS.WHATSAPP_QR_CODE}
+      />
     </div>
   )
 }
