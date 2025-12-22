@@ -134,7 +134,6 @@ export default function SurveyParticipant() {
 
   const handleSubmit = async (data: SurveyParticipantData) => {
     try {
-      console.log('🚀 SurveyParticipant handleSubmit:', data)
       setIsSubmitting(true)
 
       // Detener grabación si está activa y no está en modo edición, y obtener el blob
@@ -156,14 +155,11 @@ export default function SurveyParticipant() {
         })
         latitude = position.coords.latitude
         longitude = position.coords.longitude
-        console.log('📍 Location obtained:', { latitude, longitude })
       } catch {
-        console.log('⚠️ Geolocation failed, using 0,0')
       }
 
       // Convertir willingToRespond de string a boolean si es necesario
       const willingToRespond = String(data.willingToRespond) === 'true'
-      console.log('🔄 Converting willingToRespond:', data.willingToRespond, '→', willingToRespond)
 
       // Crear instancia de Respondent usando POO con ubicación
       const respondent = Respondent.fromFormData({
@@ -192,15 +188,10 @@ export default function SurveyParticipant() {
         } : {})
       })
       
-      console.log('📋 Respondent created:', respondent)
-      
       // Validar datos básicos solo si está dispuesto a responder
       if (willingToRespond && !respondent.isValid()) {
-        console.log('❌ Validation failed for willing respondent')
         return
       }
-
-      console.log('✅ Validation passed, proceeding...')
 
       // Convertir a DTO para enviar al backend
       const respondentDTO = respondent.toDTO()

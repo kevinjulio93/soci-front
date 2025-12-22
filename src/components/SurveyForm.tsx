@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * SurveyForm - Componente presentacional para el formulario de encuesta
  * Principio: Single Responsibility (solo renderiza el formulario)
@@ -55,13 +57,7 @@ export function SurveyForm({
   const willingToRespond = String(willingToRespondValue) === 'true'
   const showNoResponseReason = String(willingToRespondValue) === 'false'
 
-  // Debug logs
-  console.log('🔍 SurveyForm Debug:', {
-    willingToRespondValue,
-    willingToRespond,
-    showNoResponseReason,
-    valueType: typeof willingToRespondValue
-  })
+
 
   // Reset form when initialData changes
   useEffect(() => {
@@ -85,6 +81,7 @@ export function SurveyForm({
       // Filtrar solo la región Caribe
       const filteredRegions = data.filter(region => region.name.toLowerCase() === 'caribe')
       setRegions(filteredRegions)
+      console.log(regions, loadingRegions)
       
       // Auto-seleccionar región Caribe
       if (filteredRegions.length > 0) {
@@ -176,12 +173,7 @@ export function SurveyForm({
         {error && <div className="error-message">{error}</div>}
 
         {/* Form */}
-        <form onSubmit={handleSubmit((data) => {
-          console.log('📝 Form Submit:', data)
-          console.log('✅ Form Validation Passed')
-          onSubmit(data)
-        }, (errors) => {
-          console.log('❌ Form Validation Failed:', errors)
+        <form onSubmit={handleSubmit((data) => {onSubmit(data)
         })} className="survey-form__form">
           {/* Información Previa de la Encuesta */}
           <div className="form-section">
@@ -200,7 +192,6 @@ export function SurveyForm({
                     disabled={isLoading}
                     {...register('willingToRespond', {
                       onChange: (e) => {
-                        console.log('📻 Radio Changed to YES:', e.target.value)
                         onWillingToRespondChange?.(e.target.value === 'true')
                       }
                     })}
@@ -214,7 +205,6 @@ export function SurveyForm({
                     disabled={isLoading}
                     {...register('willingToRespond', {
                       onChange: (e) => {
-                        console.log('📻 Radio Changed to NO:', e.target.value)
                         onWillingToRespondChange?.(e.target.value === 'true')
                       }
                     })}

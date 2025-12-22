@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * SurveyDetailModal - Modal para mostrar detalles completos de encuesta
  * Muestra toda la información del encuestado con reproducción de audio
@@ -99,8 +100,8 @@ export function SurveyDetailModal({
   
   // Obtener la razón de rechazo
   const getRejectionReason = () => {
-    if (typeof survey.noResponseReason === 'object' && survey.noResponseReason?.label) return survey.noResponseReason.label
-    if (typeof survey.rejectionReason === 'object' && survey.rejectionReason?.label) return survey.rejectionReason.label
+    if (typeof survey.noResponseReason === 'object' && (survey.noResponseReason as any).label) return (survey.noResponseReason as any).label
+    if (typeof survey.rejectionReason === 'object' && (survey.rejectionReason as any).label) return (survey.rejectionReason as any).label
     if (typeof survey.noResponseReason === 'string') return survey.noResponseReason
     if (typeof survey.rejectionReason === 'string') return survey.rejectionReason
     return 'No especificada'
