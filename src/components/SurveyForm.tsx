@@ -52,8 +52,8 @@ export function SurveyForm({
   // Watch willingToRespond to show/hide noResponseReason field
   const willingToRespondValue = watch('willingToRespond')
   // Convert string to boolean for conditional rendering
-  const willingToRespond = willingToRespondValue === 'true' || willingToRespondValue === true
-  const showNoResponseReason = willingToRespondValue === 'false'
+  const willingToRespond = String(willingToRespondValue) === 'true'
+  const showNoResponseReason = String(willingToRespondValue) === 'false'
 
   // Debug logs
   console.log('🔍 SurveyForm Debug:', {
@@ -144,14 +144,6 @@ export function SurveyForm({
       setCities([])
     }
   }, [selectedDepartment])
-
-  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value
-    const region = regions.find(r => r.name === value)
-    setSelectedRegion(region ? region.id : null)
-    setValue('department', '')
-    setValue('city', '')
-  }
 
   const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value

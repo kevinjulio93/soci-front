@@ -309,10 +309,15 @@ export default function ReportsMap() {
                   const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
                   const [latitude, longitude] = extractCoordinates(respondent)
                   
-                  // Get label from noResponseReason/rejectionReason object
-                  const reasonLabel = respondent.noResponseReason?.label || 
-                                     respondent.rejectionReason?.label || 
-                                     'No especificada'
+                  // Get label from noResponseReason/rejectionReason
+                  const getReasonLabel = () => {
+                    const noResponse = respondent.noResponseReason as unknown as { label?: string }
+                    const rejection = respondent.rejectionReason as unknown as { label?: string }
+                    if (noResponse?.label) return noResponse.label
+                    if (rejection?.label) return rejection.label
+                    return 'No especificada'
+                  }
+                  const reasonLabel = getReasonLabel()
                   
                   // Tooltip text - show label for unsuccessful surveys
                   const tooltipText = isSuccessful 

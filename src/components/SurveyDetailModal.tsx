@@ -99,8 +99,8 @@ export function SurveyDetailModal({
   
   // Obtener la razón de rechazo
   const getRejectionReason = () => {
-    if (survey.noResponseReason?.label) return survey.noResponseReason.label
-    if (survey.rejectionReason?.label) return survey.rejectionReason.label
+    if (typeof survey.noResponseReason === 'object' && survey.noResponseReason?.label) return survey.noResponseReason.label
+    if (typeof survey.rejectionReason === 'object' && survey.rejectionReason?.label) return survey.rejectionReason.label
     if (typeof survey.noResponseReason === 'string') return survey.noResponseReason
     if (typeof survey.rejectionReason === 'string') return survey.rejectionReason
     return 'No especificada'

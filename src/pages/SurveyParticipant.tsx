@@ -157,12 +157,12 @@ export default function SurveyParticipant() {
         latitude = position.coords.latitude
         longitude = position.coords.longitude
         console.log('📍 Location obtained:', { latitude, longitude })
-      } catch (geoError) {
+      } catch {
         console.log('⚠️ Geolocation failed, using 0,0')
       }
 
       // Convertir willingToRespond de string a boolean si es necesario
-      const willingToRespond = data.willingToRespond === 'true' || data.willingToRespond === true
+      const willingToRespond = String(data.willingToRespond) === 'true'
       console.log('🔄 Converting willingToRespond:', data.willingToRespond, '→', willingToRespond)
 
       // Crear instancia de Respondent usando POO con ubicación
@@ -238,7 +238,7 @@ export default function SurveyParticipant() {
       if (recordedBlob && !editMode && createdRespondentId) {
         try {
           await apiService.uploadAudio(createdRespondentId, recordedBlob)
-        } catch (audioErr) {
+        } catch {
           // Error silencioso en la subida de audio
         } finally {
           // Limpiar audio de memoria después de intentar subirlo
