@@ -7,10 +7,17 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { Icon, LatLngBounds } from 'leaflet'
-import { Sidebar } from '../components'
+import { Sidebar, DateInput } from '../components'
 import { apiService } from '../services/api.service'
 import { ROUTES, EXTERNAL_URLS, MESSAGES, MAP_CONFIG } from '../constants'
 import { notificationService } from '../services/notification.service'
+import { 
+  filterRespondentsWithLocation, 
+  calculateMapCenter, 
+  calculateSurveyStats,
+  extractCoordinates,
+  formatDateES 
+} from '../utils'
 import type { RespondentData } from '../models/ApiResponses'
 import 'leaflet/dist/leaflet.css'
 import '../styles/Dashboard.scss'
@@ -84,33 +91,11 @@ export default function ReportsMap() {
   const loadAllRespondents = async () => {
     try {
       setIsLoading(true)
-      // Cargar todas las encuestas (paginación grande para obtener todas)
       const response = await apiService.getRespondents(1, 10000)
       
-      // Filtrar solo las que tienen ubicación válida
-      const respondentsWithLocation = response.data.filter(
-        r => r.location && 
-             r.location.coordinates && 
-             r.location.coordinates.length === 2 &&
-             r.location.coordinates[0] !== 0 && 
-             r.location.coordinates[1] !== 0
-      )
-      
+      const respondentsWithLocation = filterRespondentsWithLocation(response.data)
       setAllRespondents(respondentsWithLocation)
-      
-      // Calcular estadísticas
-      const successful = respondentsWithLocation.filter(
-        r => r.willingToRespond === true
-      ).length
-      const unsuccessful = respondentsWithLocation.filter(
-        r => r.willingToRespond === false
-      ).length
-      
-      setStats({
-        total: respondentsWithLocation.length,
-        successful,
-        unsuccessful,
-      })
+      setStats(calculateSurveyStats(respondentsWithLocation))
     } catch (error) {
       notificationService.handleApiError(error, MESSAGES.RESPONDENT_LOAD_ERROR)
     } finally {
@@ -127,43 +112,18 @@ export default function ReportsMap() {
 
     try {
       setIsLoading(true)
-      const response = await apiService.getReportsBySocializerAndDate(
-        startDate,
-        endDate
-      )
+      const response = await apiService.getReportsBySocializerAndDate(startDate, endDate)
 
-      // Extraer todas las encuestas de todos los socializadores
       const allSurveys: RespondentData[] = []
       response.data.report.forEach((socializerReport: SocializerReport) => {
         allSurveys.push(...socializerReport.allSurveys)
       })
 
-      // Filtrar solo las que tienen ubicación válida
-      const respondentsWithLocation = allSurveys.filter(
-        r => r.location && 
-             r.location.coordinates && 
-             r.location.coordinates.length === 2 &&
-             r.location.coordinates[0] !== 0 && 
-             r.location.coordinates[1] !== 0
-      )
-
+      const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)
       setAllRespondents(respondentsWithLocation)
-
-      // Calcular estadísticas
-      const successful = respondentsWithLocation.filter(
-        r => r.willingToRespond === true
-      ).length
-      const unsuccessful = respondentsWithLocation.filter(
-        r => r.willingToRespond === false
-      ).length
-
-      setStats({
-        total: respondentsWithLocation.length,
-        successful,
-        unsuccessful,
-      })
-
+      setStats(calculateSurveyStats(respondentsWithLocation))
       setUseFilters(true)
+      
       notificationService.success('Encuestas filtradas correctamente')
     } catch (error) {
       notificationService.handleApiError(error, 'Error al filtrar encuestas')
@@ -172,7 +132,6 @@ export default function ReportsMap() {
     }
   }
 
-  // Cargar todas las encuestas al inicio
   useEffect(() => {
     loadAllRespondents()
   }, [])
@@ -192,7 +151,6 @@ export default function ReportsMap() {
     loadFilteredRespondents()
   }
 
-  // Filtrar encuestas según el filtro activo
   const filteredRespondents = allRespondents.filter(r => {
     if (filter === 'all') return true
     if (filter === 'successful') return r.willingToRespond === true
@@ -200,13 +158,7 @@ export default function ReportsMap() {
     return true
   })
 
-  // Calcular el centro del mapa basado en todas las ubicaciones
-  const mapCenter: [number, number] = allRespondents.length > 0
-    ? [
-        allRespondents.reduce((sum, r) => sum + (r.location?.coordinates[1] || 0), 0) / allRespondents.length,
-        allRespondents.reduce((sum, r) => sum + (r.location?.coordinates[0] || 0), 0) / allRespondents.length,
-      ]
-    : [10.9685, -74.7813] // Barranquilla por defecto
+  const mapCenter = calculateMapCenter(allRespondents)
 
   return (
     <div className="dashboard-layout">
@@ -222,98 +174,61 @@ export default function ReportsMap() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
+          <button className="btn-back" onClick={handleBackToReports}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
           <h1 className="dashboard-layout__title">Mapa de Encuestas</h1>
-          <div className="dashboard-layout__actions">
-            <button className="btn btn--secondary" onClick={handleBackToReports}>
-              ← Volver a Reportes
-            </button>
-          </div>
         </div>
 
         <div className="dashboard-layout__body">
           {/* Filtros de fecha */}
-          <div className="filters-container" style={{ 
-            background: 'white', 
-            padding: '1.5rem', 
-            borderRadius: '8px', 
-            marginBottom: '1.5rem',
-            border: '1px solid #e5e7eb'
-          }}>
-            <h3 style={{ margin: '0 0 1rem 0', fontSize: '16px', fontWeight: '600' }}>
+          <div className="filter-card">
+            <h3 className="filter-card__title">
               Filtrar por Rango de Fechas
             </h3>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1', minWidth: '200px' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '14px', fontWeight: '500' }}>
-                  Fecha Inicio
-                </label>
-                <input
-                  type="date"
+            <div className="filter-card__grid">
+              <div className="filter-card__field">
+                <DateInput
+                  label="Fecha Inicio"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="date-input"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '9999px',
-                    fontSize: '14px',
-                    color: '#1f2937',
-                    cursor: 'pointer'
-                  }}
+                  disabled={isLoading}
+                  required
                 />
               </div>
-              <div style={{ flex: '1', minWidth: '200px' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '14px', fontWeight: '500' }}>
-                  Fecha Fin
-                </label>
-                <input
-                  type="date"
+              <div className="filter-card__field">
+                <DateInput
+                  label="Fecha Fin"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="date-input"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '9999px',
-                    fontSize: '14px',
-                    color: '#1f2937',
-                    cursor: 'pointer'
-                  }}
+                  disabled={isLoading}
+                  required
                 />
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button 
-                  className="btn btn--primary"
-                  onClick={handleApplyFilters}
-                  disabled={!startDate || !endDate || isLoading}
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  Aplicar Filtros
-                </button>
-                {useFilters && (
-                  <button 
-                    className="btn btn--secondary"
-                    onClick={handleClearFilters}
-                    disabled={isLoading}
-                    style={{ whiteSpace: 'nowrap' }}
-                  >
-                    Limpiar Filtros
-                  </button>
-                )}
-              </div>
             </div>
+            
+            <div className="filter-card__actions">
+              <button 
+                className="btn btn--primary"
+                onClick={handleApplyFilters}
+                disabled={!startDate || !endDate || isLoading}
+              >
+                📊 Generar Reporte
+              </button>
+              <button 
+                className="btn btn--secondary"
+                onClick={handleClearFilters}
+                disabled={isLoading || !useFilters}
+              >
+                🔄 Limpiar Filtros
+              </button>
+            </div>
+            
             {useFilters && (
-              <div style={{ 
-                marginTop: '1rem', 
-                padding: '0.75rem', 
-                background: '#f0f9ff', 
-                borderRadius: '4px',
-                fontSize: '14px',
-                color: '#0369a1'
-              }}>
-                📅 Mostrando encuestas del {new Date(startDate).toLocaleDateString('es-ES')} al {new Date(endDate).toLocaleDateString('es-ES')}
+              <div className="filter-card__info">
+                📅 Mostrando encuestas del {formatDateES(startDate)} al {formatDateES(endDate)}
               </div>
             )}
           </div>
@@ -392,11 +307,7 @@ export default function ReportsMap() {
                 {filteredRespondents.map((respondent) => {
                   const isSuccessful = respondent.willingToRespond === true
                   const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
-                  
-                  // Extraer coordenadas del objeto location
-                  // MongoDB GeoJSON: coordinates = [longitude, latitude]
-                  const longitude = respondent.location?.coordinates[0] || 0
-                  const latitude = respondent.location?.coordinates[1] || 0
+                  const [latitude, longitude] = extractCoordinates(respondent)
                   
                   return (
                     <Marker
@@ -426,8 +337,7 @@ export default function ReportsMap() {
                             </div>
                           )}
                           <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                            <strong>Fecha:</strong>{' '}
-                            {new Date(respondent.createdAt).toLocaleDateString('es-ES')}
+                            <strong>Fecha:</strong> {formatDateES(respondent.createdAt)}
                           </div>
                         </div>
                       </Popup>

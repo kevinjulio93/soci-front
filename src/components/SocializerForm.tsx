@@ -9,6 +9,7 @@ import { SocializerFormData } from '../models/FormData'
 import { apiService } from '../services/api.service'
 import { useAuth } from '../contexts/AuthContext'
 import type { SocializerFormProps } from './types'
+import { Input, Select } from './index'
 import '../styles/SurveyForm.scss'
 
 export function SocializerForm({
@@ -159,198 +160,150 @@ export function SocializerForm({
 
         <form className="survey-form__form" onSubmit={handleSubmit(handleFormSubmit)}>
           {/* Nombre completo */}
-          <div className="form-group">
-            <label htmlFor="fullName" className="form-group__label">
-              Nombre Completo *
-            </label>
-            <input
-              type="text"
-              id="fullName"
-              className={`form-group__input ${errors.fullName ? 'form-group__input--error' : ''}`}
-              {...register('fullName', {
-                required: 'El nombre es obligatorio',
-                minLength: {
-                  value: 3,
-                  message: 'El nombre debe tener al menos 3 caracteres',
-                },
-                setValueAs: (value) => value?.toUpperCase() || '',
-              })}
-              placeholder="Ingrese el nombre completo"
-              disabled={isLoading}
-            />
-            {errors.fullName && (
-              <span className="form-group__error-text">{errors.fullName.message}</span>
-            )}
-          </div>
+          <Input
+            id="fullName"
+            type="text"
+            label="Nombre Completo"
+            placeholder="Ingrese el nombre completo"
+            disabled={isLoading}
+            required
+            error={errors.fullName?.message}
+            {...register('fullName', {
+              required: 'El nombre es obligatorio',
+              minLength: {
+                value: 3,
+                message: 'El nombre debe tener al menos 3 caracteres',
+              },
+              setValueAs: (value) => value?.toUpperCase() || '',
+            })}
+          />
 
           {/* Número de identificación */}
-          <div className="form-group">
-            <label htmlFor="idNumber" className="form-group__label">
-              Número de Identificación *
-            </label>
-            <input
-              type="text"
-              id="idNumber"
-              className={`form-group__input ${errors.idNumber ? 'form-group__input--error' : ''}`}
-              {...register('idNumber', {
-                required: 'El número de identificación es obligatorio',
-                pattern: {
-                  value: /^[0-9]+$/,
-                  message: 'Solo se permiten números',
-                },
-              })}
-              placeholder="1234567890"
-              disabled={isLoading}
-            />
-            {errors.idNumber && (
-              <span className="form-group__error-text">{errors.idNumber.message}</span>
-            )}
-          </div>
+          <Input
+            id="idNumber"
+            type="text"
+            label="Número de Identificación"
+            placeholder="1234567890"
+            disabled={isLoading}
+            required
+            error={errors.idNumber?.message}
+            {...register('idNumber', {
+              required: 'El número de identificación es obligatorio',
+              pattern: {
+                value: /^[0-9]+$/,
+                message: 'Solo se permiten números',
+              },
+            })}
+          />
 
           {/* Teléfono */}
-          <div className="form-group">
-            <label htmlFor="phone" className="form-group__label">
-              Teléfono *
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              className={`form-group__input ${errors.phone ? 'form-group__input--error' : ''}`}
-              {...register('phone', {
-                required: 'El teléfono es obligatorio',
-                pattern: {
-                  value: /^[0-9]{10}$/,
-                  message: 'El teléfono debe tener 10 dígitos',
-                },
-              })}
-              placeholder="3001234567"
-              disabled={isLoading}
-            />
-            {errors.phone && (
-              <span className="form-group__error-text">{errors.phone.message}</span>
-            )}
-          </div>
+          <Input
+            id="phone"
+            type="tel"
+            label="Teléfono"
+            placeholder="3001234567"
+            disabled={isLoading}
+            required
+            error={errors.phone?.message}
+            {...register('phone', {
+              required: 'El teléfono es obligatorio',
+              pattern: {
+                value: /^[0-9]{10}$/,
+                message: 'El teléfono debe tener 10 dígitos',
+              },
+            })}
+          />
 
           {/* Email */}
-          <div className="form-group">
-            <label htmlFor="email" className="form-group__label">
-              Email *
-            </label>
-            <input
-              type="email"
-              id="email"
-              className={`form-group__input ${errors.email ? 'form-group__input--error' : ''}`}
-              {...register('email', {
-                required: 'El email es obligatorio',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Email inválido',
-                },
-              })}
-              placeholder="correo@ejemplo.com"
-              disabled={isLoading}
-            />
-            {errors.email && (
-              <span className="form-group__error-text">{errors.email.message}</span>
-            )}
-          </div>
+          <Input
+            id="email"
+            type="email"
+            label="Email"
+            placeholder="correo@ejemplo.com"
+            disabled={isLoading}
+            required
+            error={errors.email?.message}
+            {...register('email', {
+              required: 'El email es obligatorio',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Email inválido',
+              },
+            })}
+          />
 
           {/* Contraseña */}
-          <div className="form-group">
-            <label htmlFor="password" className="form-group__label">
-              Contraseña {isEditMode ? '(dejar vacío para no cambiar)' : '*'}
-            </label>
-            <input
-              type="password"
-              id="password"
-              className={`form-group__input ${errors.password ? 'form-group__input--error' : ''}`}
-              {...register('password', {
-                required: isEditMode ? false : 'La contraseña es obligatoria',
-                minLength: {
-                  value: 6,
-                  message: 'La contraseña debe tener al menos 6 caracteres',
-                },
-              })}
-              placeholder="Ingrese contraseña"
-              disabled={isLoading}
-            />
-            {errors.password && (
-              <span className="form-group__error-text">{errors.password.message}</span>
-            )}
-          </div>
+          <Input
+            id="password"
+            type="password"
+            label={`Contraseña ${isEditMode ? '(dejar vacío para no cambiar)' : ''}`}
+            placeholder="Ingrese contraseña"
+            disabled={isLoading}
+            required={!isEditMode}
+            error={errors.password?.message}
+            {...register('password', {
+              required: isEditMode ? false : 'La contraseña es obligatoria',
+              minLength: {
+                value: 6,
+                message: 'La contraseña debe tener al menos 6 caracteres',
+              },
+            })}
+          />
 
           {/* Rol */}
-          <div className="form-group">
-            <label htmlFor="roleId" className="form-group__label">
-              Rol *
-            </label>
-            <select
-              id="roleId"
-              className={`form-group__input ${errors.roleId ? 'form-group__input--error' : ''}`}
-              {...register('roleId', {
-                required: 'Debe seleccionar un rol',
-              })}
-              disabled={isLoading || loadingRoles}
-            >
-              <option value="">Seleccione un rol</option>
-              {roles.map((role) => (
-                <option key={role._id} value={role._id}>
-                  {role.role}
-                </option>
-              ))}
-            </select>
-            {errors.roleId && (
-              <span className="form-group__error-text">{errors.roleId.message}</span>
-            )}
-          </div>
+          <Select
+            id="roleId"
+            label="Rol"
+            placeholder="Seleccione un rol"
+            options={roles.map((role) => ({
+              value: role._id,
+              label: role.role,
+            }))}
+            disabled={isLoading || loadingRoles}
+            required
+            error={errors.roleId?.message}
+            {...register('roleId', {
+              required: 'Debe seleccionar un rol',
+            })}
+          />
 
           {/* Supervisor - Solo visible cuando el rol es "socializer" */}
           {(selectedRole === 'socializer' || selectedRole === 'socializador') && (
-            <div className="form-group">
-              <label htmlFor="coordinator" className="form-group__label">
-                Supervisor *
-              </label>
-              <select
+            <>
+              <Select
                 id="coordinator"
-                className={`form-group__input ${errors.coordinator ? 'form-group__input--error' : ''}`}
+                label="Supervisor"
+                placeholder="Seleccione un coordinador"
+                options={coordinators.map((coordinator) => ({
+                  value: coordinator._id,
+                  label: `${coordinator.fullName} - ${coordinator.email}`,
+                }))}
+                disabled={isLoading || loadingCoordinators}
+                required
+                error={errors.coordinator?.message}
                 {...register('coordinator', {
                   required: (selectedRole === 'socializer' || selectedRole === 'socializador') ? 'Debe seleccionar un supervisor' : false,
                 })}
-                disabled={isLoading || loadingCoordinators}
-              >
-                <option value="">Seleccione un coordinador</option>
-                {coordinators.map((coordinator) => (
-                  <option key={coordinator._id} value={coordinator._id}>
-                    {coordinator.fullName} - {coordinator.email}
-                  </option>
-                ))}
-              </select>
-              {errors.coordinator && (
-                <span className="form-group__error-text">{errors.coordinator.message}</span>
-              )}
+              />
               {coordinators.length === 0 && !loadingCoordinators && (
                 <span className="form-group__hint">
                   No hay coordinadores disponibles. Por favor, cree un coordinador primero.
                 </span>
               )}
-            </div>
+            </>
           )}
 
           {/* Estado */}
-          <div className="form-group">
-            <label htmlFor="status" className="form-group__label">
-              Estado
-            </label>
-            <select
-              id="status"
-              className="form-group__input"
-              {...register('status')}
-              disabled={isLoading}
-            >
-              <option value="enabled">Habilitado</option>
-              <option value="disabled">Deshabilitado</option>
-            </select>
-          </div>
+          <Select
+            id="status"
+            label="Estado"
+            options={[
+              { value: 'enabled', label: 'Habilitado' },
+              { value: 'disabled', label: 'Deshabilitado' },
+            ]}
+            disabled={isLoading}
+            {...register('status')}
+          />
 
           {/* Botones */}
           <div className="form-group form-group--actions">

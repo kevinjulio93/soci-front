@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { Sidebar, SocializerForm, DataTable, LocationModal, ConfirmModal, BatchAssignCoordinatorModal } from '../components'
+import { Sidebar, SocializerForm, DataTable, LocationModal, ConfirmModal } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { ROUTES, getSocializersTableColumns, MESSAGES } from '../constants'
@@ -33,8 +33,6 @@ export function SocializerManagement() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [socializerToDelete, setSocializerToDelete] = useState<{ id: string; name: string } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
-  const [batchAssignModalOpen, setBatchAssignModalOpen] = useState(false)
   
   // Determinar si estamos en modo formulario
   const isNewMode = location.pathname === ROUTES.ADMIN_SOCIALIZERS_NEW
@@ -197,39 +195,6 @@ export function SocializerManagement() {
     navigate(ROUTES.ADMIN_SOCIALIZERS)
   }
 
-  // Manejar apertura de modal de asignación en lote
-  const handleOpenBatchAssign = () => {
-    if (selectedItems.size === 0) {
-      alert('Debe seleccionar al menos un socializador')
-      return
-    }
-    setBatchAssignModalOpen(true)
-  }
-
-  // Manejar éxito de asignación en lote
-  const handleBatchAssignSuccess = async () => {
-    setSelectedItems(new Set())
-    await loadSocializers(currentPage)
-  }
-
-  // Obtener socializadores seleccionados con información completa
-  const getSelectedSocializers = () => {
-    return socializers
-      .filter(s => selectedItems.has(s._id))
-      .map(s => {
-        const roleString = typeof s.user?.role === 'string' 
-          ? s.user.role 
-          : s.user?.role?.role || ''
-        return {
-          _id: s._id,
-          fullName: s.fullName,
-          role: roleString
-        }
-      })
-      // Filtrar usuarios admin (no pueden ser asignados a coordinador)
-      .filter(s => s.role !== 'admin' && s.role !== 'root')
-  }
-
   // Obtener datos iniciales del formulario
   const getInitialFormData = () => {
     if (!editingSocializer) return undefined
@@ -291,28 +256,6 @@ export function SocializerManagement() {
 
           {!showForm && user?.role?.role?.toLowerCase() !== 'readonly' && (
             <div className="dashboard-layout__actions">
-              {selectedItems.size > 0 && (
-                <div className="selection-info">
-                  <span className="selection-info__text">
-                    {selectedItems.size} seleccionado(s)
-                  </span>
-                  <button
-                    className="btn btn--secondary"
-                    onClick={handleOpenBatchAssign}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '0.5rem' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Asignar Supervisor
-                  </button>
-                  <button
-                    className="btn btn--text"
-                    onClick={() => setSelectedItems(new Set())}
-                  >
-                    Limpiar selección
-                  </button>
-                </div>
-              )}
               <button
                 className="btn btn--primary"
                 onClick={handleNewSocializer}
@@ -359,9 +302,6 @@ export function SocializerManagement() {
               emptyStateTitle="No hay socializadores registrados"
               emptyStateDescription="Comienza creando el primer socializador para tu equipo"
               getRowKey={(socializer) => socializer._id}
-              selectable={user?.role?.role?.toLowerCase() !== 'readonly'}
-              selectedItems={selectedItems}
-              onSelectionChange={setSelectedItems}
             />
           )}
         </div>
@@ -390,13 +330,16 @@ export function SocializerManagement() {
         variant="danger"
       />
 
-      {/* Modal de asignación en lote */}
-      <BatchAssignCoordinatorModal
-        isOpen={batchAssignModalOpen}
-        onClose={() => setBatchAssignModalOpen(false)}
-        onSuccess={handleBatchAssignSuccess}
-        selectedSocializers={getSelectedSocializers()}
-      />
+      {/* Floating Action Button - Mobile Only */}
+      {!showForm && user?.role?.role?.toLowerCase() !== 'readonly' && (
+        <button 
+          className="fab" 
+          onClick={handleNewSocializer}
+          title="Nuevo Usuario"
+        >
+          <span>+</span>
+        </button>
+      )}
     </div>
   )
 }

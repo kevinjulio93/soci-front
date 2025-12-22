@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiService } from '../services/api.service'
+import { Select, Textarea } from './index'
 import '../styles/Modal.scss'
 
 interface BatchAssignCoordinatorModalProps {
@@ -178,46 +179,32 @@ export function BatchAssignCoordinatorModal({
             </div>
 
             {/* Coordinador */}
-            <div className="form-group">
-              <label htmlFor="coordinator" className="form-group__label">
-                Coordinador *
-              </label>
-              <select
-                id="coordinator"
-                className="form-group__input"
-                value={selectedCoordinatorId}
-                onChange={(e) => setSelectedCoordinatorId(e.target.value)}
-                disabled={isLoading}
-                required
-              >
-                <option value="">
-                  {action === 'assign' ? 'Seleccione un coordinador' : 'Seleccione coordinador a desasignar'}
-                </option>
-                {coordinators.map((coordinator) => (
-                  <option key={coordinator._id} value={coordinator._id}>
-                    {coordinator.fullName} - {coordinator.email}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              id="coordinator"
+              label="Coordinador"
+              placeholder={action === 'assign' ? 'Seleccione un coordinador' : 'Seleccione coordinador a desasignar'}
+              options={coordinators.map((coordinator) => ({
+                value: coordinator._id,
+                label: `${coordinator.fullName} - ${coordinator.email}`,
+              }))}
+              value={selectedCoordinatorId}
+              onChange={(e) => setSelectedCoordinatorId(e.target.value)}
+              disabled={isLoading}
+              required
+            />
 
             {/* Opciones para Asignar */}
             {action === 'assign' && (
               <>
-                <div className="form-group">
-                  <label htmlFor="notes" className="form-group__label">
-                    Notas (opcional)
-                  </label>
-                  <textarea
-                    id="notes"
-                    className="form-group__input"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    disabled={isLoading}
-                    rows={3}
-                    placeholder="Ej: Reorganización 2025"
-                  />
-                </div>
+                <Textarea
+                  id="notes"
+                  label="Notas (opcional)"
+                  placeholder="Ej: Reorganización 2025"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  disabled={isLoading}
+                  rows={3}
+                />
 
                 <div className="form-group">
                   <label className="checkbox-option">

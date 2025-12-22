@@ -204,6 +204,25 @@ export default function SociologistDashboard() {
           />
         </section>
       </main>
+
+      {/* Floating Action Buttons - Mobile Only */}
+      {pendingCount > 0 && (
+        <button 
+          className="fab fab--sync"
+          onClick={handleManualSync}
+          disabled={isSyncing || !isOnline}
+          title={isSyncing ? 'Sincronizando...' : `Sincronizar (${pendingCount})`}
+        >
+          <span>{isSyncing ? '🔄' : '🔁'}</span>
+        </button>
+      )}
+      <button 
+        className="fab" 
+        onClick={handleNewSurvey}
+        title="Nueva Encuesta"
+      >
+        <span>+</span>
+      </button>
     </div>
   )
 }

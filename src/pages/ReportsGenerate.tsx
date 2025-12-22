@@ -4,9 +4,11 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Sidebar } from '../components'
+import { useNavigate } from 'react-router-dom'
+import { Sidebar, DateInput, Select } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
+import { ROUTES } from '../constants'
 import '../styles/Dashboard.scss'
 
 interface ReportFilters {
@@ -62,6 +64,7 @@ interface ReportResponse {
 }
 
 export default function ReportsGenerate() {
+  const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [socializers, setSocializers] = useState<SocializerOption[]>([])
   const [reportData, setReportData] = useState<SocializerReport[]>([])
@@ -109,6 +112,10 @@ export default function ReportsGenerate() {
 
   const handleFilterChange = (field: keyof ReportFilters, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleBackToReports = () => {
+    navigate(ROUTES.ADMIN_REPORTS)
   }
 
   const generateReport = async () => {
@@ -207,6 +214,11 @@ export default function ReportsGenerate() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
+          <button className="btn-back" onClick={handleBackToReports}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
           <h1 className="dashboard-layout__title">Reportes - Generar Reporte Tabular</h1>
         </div>
 
@@ -223,53 +235,36 @@ export default function ReportsGenerate() {
                 <h3 className="filter-card__title">Filtros de Reporte</h3>
                 
                 <div className="filter-card__grid">
-                  <div className="form-group">
-                    <label htmlFor="startDate" className="form-group__label">
-                      Fecha inicio *
-                    </label>
-                    <input
-                      type="date"
-                      id="startDate"
-                      className="form-group__input"
-                      value={filters.startDate}
-                      onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                      disabled={isGenerating}
-                    />
-                  </div>
+                  <DateInput
+                    label="Fecha inicio"
+                    value={filters.startDate}
+                    onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                    disabled={isGenerating}
+                    required
+                  />
 
-                  <div className="form-group">
-                    <label htmlFor="endDate" className="form-group__label">
-                      Fecha fin *
-                    </label>
-                    <input
-                      type="date"
-                      id="endDate"
-                      className="form-group__input"
-                      value={filters.endDate}
-                      onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                      disabled={isGenerating}
-                    />
-                  </div>
+                  <DateInput
+                    label="Fecha fin"
+                    value={filters.endDate}
+                    onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                    disabled={isGenerating}
+                    required
+                  />
 
-                  <div className="form-group">
-                    <label htmlFor="socializerId" className="form-group__label">
-                      Socializador (opcional)
-                    </label>
-                    <select
-                      id="socializerId"
-                      className="form-group__input"
-                      value={filters.socializerId}
-                      onChange={(e) => handleFilterChange('socializerId', e.target.value)}
-                      disabled={isGenerating || isLoading}
-                    >
-                      <option value="">Todos los socializadores</option>
-                      {socializers.map((socializer) => (
-                        <option key={socializer._id} value={socializer._id}>
-                          {socializer.fullName} - {socializer.idNumber}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <Select
+                    label="Socializador (opcional)"
+                    value={filters.socializerId}
+                    onChange={(e) => handleFilterChange('socializerId', e.target.value)}
+                    disabled={isGenerating || isLoading}
+                    options={[
+                      { value: '', label: 'Todos los socializadores' },
+                      ...socializers.map((s) => ({
+                        value: s._id,
+                        label: `${s.fullName} - ${s.idNumber}`
+                      }))
+                    ]}
+                    placeholder=""
+                  />
                 </div>
 
                 <div className="filter-card__actions">
@@ -281,18 +276,30 @@ export default function ReportsGenerate() {
                     {isGenerating ? 'Generando...' : '📊 Generar Reporte'}
                   </button>
                   
-                  {reportData.length > 0 && (
-                    <button
-                      className="btn btn--secondary"
-                      onClick={exportToCSV}
-                      disabled={isGenerating}
-                    >
-                      📥 Exportar CSV
-                    </button>
-                  )}
+                  <button
+                    className="btn btn--secondary"
+                    onClick={exportToCSV}
+                    disabled={isGenerating || reportData.length === 0}
+                  >
+                    📥 Exportar CSV
+                  </button>
                 </div>
               </div>
             </div>
+
+            {reportData.length === 0 && !isGenerating && (
+              <div className="empty-state">
+                <div className="empty-state__icon">
+                  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="empty-state__title">No hay reportes generados</h3>
+                <p className="empty-state__description">
+                  Seleccione un rango de fechas y opcionalmente un socializador, luego haga clic en "Generar Reporte" para visualizar los datos.
+                </p>
+              </div>
+            )}
 
             {reportData.length > 0 && reportResponse && (
               <div className="reports-generate__results">

@@ -17,6 +17,7 @@ import {
 import { Respondent } from '../models/Respondent'
 import type { SurveyFormData, SurveyFormProps } from './types'
 import { colombiaApiService, type Region, type Department, type City } from '../services/colombia-api.service'
+import { Input, Select } from './index'
 import '../styles/SurveyForm.scss'
 
 export function SurveyForm({
@@ -185,29 +186,18 @@ export function SurveyForm({
 
             {/* No Response Reason - Mostrar solo si NO está dispuesto */}
             {!willingToRespond && (
-              <div className="form-group">
-                <label htmlFor="noResponseReason" className="form-group__label">
-                  Razón de no respuesta <span className="form-group__required">*</span>
-                </label>
-                <select
-                  id="noResponseReason"
-                  className={`form-group__select ${errors.noResponseReason ? 'form-group__select--error' : ''}`}
-                  disabled={isLoading}
-                  {...register('noResponseReason', {
-                    required: !willingToRespond ? 'Por favor selecciona una razón' : false,
-                  })}
-                >
-                  <option value="">Seleccione una razón</option>
-                  {NO_RESPONSE_REASONS.map(reason => (
-                    <option key={reason.value} value={reason.value}>
-                      {reason.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.noResponseReason && (
-                  <span className="form-group__error-text">{errors.noResponseReason.message}</span>
-                )}
-              </div>
+              <Select
+                id="noResponseReason"
+                label="Razón de no respuesta"
+                placeholder="Seleccione una razón"
+                options={NO_RESPONSE_REASONS}
+                disabled={isLoading}
+                required
+                error={errors.noResponseReason?.message}
+                {...register('noResponseReason', {
+                  required: !willingToRespond ? 'Por favor selecciona una razón' : false,
+                })}
+              />
             )}
           </div>
 
@@ -217,88 +207,67 @@ export function SurveyForm({
               <h3 className="form-section__title">Datos del Encuestado</h3>
             
               {/* Full Name */}
-              <div className="form-group">
-                <label htmlFor="fullName" className="form-group__label">
-                  Nombre completo <span className="form-group__required">*</span>
-                </label>
-                <input
-                  id="fullName"
-                  type="text"
-                  className={`form-group__input ${errors.fullName ? 'form-group__input--error' : ''}`}
-                  placeholder="Nombre y Apellido"
-                  disabled={isLoading}
-                  {...register('fullName', {
-                    required: 'El nombre completo es requerido',
-                    minLength: {
-                      value: 3,
-                      message: 'El nombre debe tener al menos 3 caracteres',
-                    },
-                    setValueAs: (value) => value?.toUpperCase() || '',
-                  })}
-                />
-                {errors.fullName && (
-                  <span className="form-group__error-text">{errors.fullName.message}</span>
-                )}
-              </div>
+              <Input
+                id="fullName"
+                type="text"
+                label="Nombre completo"
+                placeholder="Nombre y Apellido"
+                disabled={isLoading}
+                required
+                error={errors.fullName?.message}
+                {...register('fullName', {
+                  required: 'El nombre completo es requerido',
+                  minLength: {
+                    value: 3,
+                    message: 'El nombre debe tener al menos 3 caracteres',
+                  },
+                  setValueAs: (value) => value?.toUpperCase() || '',
+                })}
+              />
 
               {/* ID Type and Identification - Row */}
               <div className="survey-form__row">
-                <div className="form-group survey-form__col">
-                  <label htmlFor="idType" className="form-group__label">
-                    Tipo de identificación <span className="form-group__required">*</span>
-                  </label>
-                  <select
+                <div className="survey-form__col">
+                  <Select
                     id="idType"
-                    className={`form-group__select ${errors.idType ? 'form-group__select--error' : ''}`}
+                    label="Tipo de identificación"
+                    placeholder="Seleccione tipo"
+                    options={ID_TYPE_OPTIONS}
                     disabled={isLoading}
+                    required
+                    error={errors.idType?.message}
                     {...register('idType', {
                       required: 'Por favor selecciona un tipo de identificación',
                     })}
-                  >
-                    <option value="">Seleccione tipo</option>
-                    {ID_TYPE_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.idType && (
-                    <span className="form-group__error-text">{errors.idType.message}</span>
-                  )}
+                  />
                 </div>
 
-                <div className="form-group survey-form__col">
-                  <label htmlFor="identification" className="form-group__label">
-                    Número de identificación <span className="form-group__required">*</span>
-                  </label>
-                  <input
+                <div className="survey-form__col">
+                  <Input
                     id="identification"
                     type="text"
-                    className={`form-group__input ${errors.identification ? 'form-group__input--error' : ''}`}
+                    label="Número de identificación"
                     placeholder="Ej: 1234567890"
                     disabled={isLoading}
+                    required
+                    error={errors.identification?.message}
                     {...register('identification', {
                       required: 'El número de identificación es requerido',
                     })}
                   />
-                  {errors.identification && (
-                    <span className="form-group__error-text">{errors.identification.message}</span>
-                  )}
                 </div>
               </div>
 
               {/* Email and Phone - Row */}
               <div className="survey-form__row">
-                <div className="form-group survey-form__col">
-                  <label htmlFor="email" className="form-group__label">
-                    Correo electrónico
-                  </label>
-                  <input
+                <div className="survey-form__col">
+                  <Input
                     id="email"
                     type="email"
-                    className={`form-group__input ${errors.email ? 'form-group__input--error' : ''}`}
+                    label="Correo electrónico"
                     placeholder="correo@ejemplo.com"
                     disabled={isLoading}
+                    error={errors.email?.message}
                     {...register('email', {
                       pattern: {
                         value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -306,21 +275,16 @@ export function SurveyForm({
                       },
                     })}
                   />
-                  {errors.email && (
-                    <span className="form-group__error-text">{errors.email.message}</span>
-                  )}
                 </div>
 
-                <div className="form-group survey-form__col">
-                  <label htmlFor="phone" className="form-group__label">
-                    Teléfono
-                  </label>
-                  <input
+                <div className="survey-form__col">
+                  <Input
                     id="phone"
                     type="tel"
-                    className={`form-group__input ${errors.phone ? 'form-group__input--error' : ''}`}
+                    label="Teléfono"
                     placeholder="Ej: 300 123 4567"
                     disabled={isLoading}
+                    error={errors.phone?.message}
                     {...register('phone', {
                       pattern: {
                         value: /^[0-9\s-+()]*$/,
@@ -328,188 +292,120 @@ export function SurveyForm({
                       },
                     })}
                   />
-                  {errors.phone && (
-                    <span className="form-group__error-text">{errors.phone.message}</span>
-                  )}
                 </div>
               </div>
 
               {/* Address */}
-              <div className="form-group">
-                <label htmlFor="address" className="form-group__label">
-                  Dirección
-                </label>
-                <input
-                  id="address"
-                  type="text"
-                  className={`form-group__input ${errors.address ? 'form-group__input--error' : ''}`}
-                  placeholder="Calle # Carrera # Apartamento"
-                  disabled={isLoading}
-                  {...register('address')}
-                />
-                {errors.address && (
-                  <span className="form-group__error-text">{errors.address.message}</span>
-                )}
-              </div>
+              <Input
+                id="address"
+                type="text"
+                label="Dirección"
+                placeholder="Calle # Carrera # Apartamento"
+                disabled={isLoading}
+                error={errors.address?.message}
+                {...register('address')}
+              />
 
               {/* Gender and Stratum - Row */}
               <div className="survey-form__row">
-                <div className="form-group survey-form__col">
-                  <label htmlFor="gender" className="form-group__label">
-                    Género
-                  </label>
-                  <select
+                <div className="survey-form__col">
+                  <Select
                     id="gender"
-                    className={`form-group__select ${errors.gender ? 'form-group__select--error' : ''}`}
+                    label="Género"
+                    placeholder="Seleccione género"
+                    options={GENDER_OPTIONS}
                     disabled={isLoading}
+                    error={errors.gender?.message}
                     {...register('gender')}
-                  >
-                    <option value="">Seleccione género</option>
-                    {GENDER_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.gender && (
-                    <span className="form-group__error-text">{errors.gender.message}</span>
-                  )}
+                  />
                 </div>
 
-                <div className="form-group survey-form__col">
-                  <label htmlFor="stratum" className="form-group__label">
-                    Estrato
-                  </label>
-                  <select
+                <div className="survey-form__col">
+                  <Select
                     id="stratum"
-                    className={`form-group__select ${errors.stratum ? 'form-group__select--error' : ''}`}
+                    label="Estrato"
+                    placeholder="Seleccione estrato"
+                    options={STRATUM_OPTIONS}
                     disabled={isLoading}
+                    error={errors.stratum?.message}
                     {...register('stratum')}
-                  >
-                    <option value="">Seleccione estrato</option>
-                    {STRATUM_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.stratum && (
-                    <span className="form-group__error-text">{errors.stratum.message}</span>
-                  )}
+                  />
                 </div>
               </div>
 
               {/* Age Range */}
-              <div className="form-group">
-                <label htmlFor="ageRange" className="form-group__label">
-                  Rango de edad
-                </label>
-                <select
-                  id="ageRange"
-                  className={`form-group__select ${errors.ageRange ? 'form-group__select--error' : ''}`}
-                  disabled={isLoading}
-                  {...register('ageRange')}
-                >
-                  <option value="">Seleccione rango</option>
-                  {AGE_RANGE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.ageRange && (
-                  <span className="form-group__error-text">{errors.ageRange.message}</span>
-                )}
-              </div>
+              <Select
+                id="ageRange"
+                label="Rango de edad"
+                placeholder="Seleccione rango"
+                options={AGE_RANGE_OPTIONS}
+                disabled={isLoading}
+                error={errors.ageRange?.message}
+                {...register('ageRange')}
+              />
 
               {/* Region and Department - Row */}
               <div className="survey-form__row">
-                <div className="form-group survey-form__col">
-                  <label htmlFor="region" className="form-group__label">
-                    Región
-                  </label>
-                  <select
+                <div className="survey-form__col">
+                  <Select
                     id="region"
-                    className={`form-group__select ${errors.region ? 'form-group__select--error' : ''}`}
+                    label="Región"
+                    placeholder="Seleccione región"
+                    options={regions.map((region) => ({
+                      value: region.name,
+                      label: region.name,
+                    }))}
                     disabled={isLoading || loadingRegions}
+                    error={errors.region?.message}
                     {...register('region')}
                     onChange={handleRegionChange}
-                  >
-                    <option value="">Seleccione región</option>
-                    {regions.map((region) => (
-                      <option key={region.id} value={region.name}>
-                        {region.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.region && (
-                    <span className="form-group__error-text">{errors.region.message}</span>
-                  )}
+                  />
                 </div>
 
-                <div className="form-group survey-form__col">
-                  <label htmlFor="department" className="form-group__label">
-                    Departamento
-                  </label>
-                  <select
+                <div className="survey-form__col">
+                  <Select
                     id="department"
-                    className={`form-group__select ${errors.department ? 'form-group__select--error' : ''}`}
+                    label="Departamento"
+                    placeholder="Seleccione departamento"
+                    options={departments.map((dept) => ({
+                      value: dept.name,
+                      label: dept.name,
+                    }))}
                     disabled={isLoading || loadingDepartments || !selectedRegion}
+                    error={errors.department?.message}
                     {...register('department')}
                     onChange={handleDepartmentChange}
-                  >
-                    <option value="">Seleccione departamento</option>
-                    {departments.map((dept) => (
-                      <option key={dept.id} value={dept.name}>
-                        {dept.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.department && (
-                    <span className="form-group__error-text">{errors.department.message}</span>
-                  )}
+                  />
                 </div>
               </div>
 
               {/* City and Neighborhood - Row */}
               <div className="survey-form__row">
-                <div className="form-group survey-form__col">
-                  <label htmlFor="city" className="form-group__label">
-                    Ciudad
-                  </label>
-                  <select
+                <div className="survey-form__col">
+                  <Select
                     id="city"
-                    className={`form-group__select ${errors.city ? 'form-group__select--error' : ''}`}
+                    label="Ciudad"
+                    placeholder="Seleccione ciudad"
+                    options={cities.map((city) => ({
+                      value: city.name,
+                      label: city.name,
+                    }))}
                     disabled={isLoading || loadingCities || !selectedDepartment}
+                    error={errors.city?.message}
                     {...register('city')}
-                  >
-                    <option value="">Seleccione ciudad</option>
-                    {cities.map((city) => (
-                      <option key={city.id} value={city.name}>
-                        {city.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.city && (
-                    <span className="form-group__error-text">{errors.city.message}</span>
-                  )}
+                  />
                 </div>
 
-                <div className="form-group survey-form__col">
-                  <label htmlFor="neighborhood" className="form-group__label">
-                    Barrio
-                  </label>
-                  <input
+                <div className="survey-form__col">
+                  <Input
                     id="neighborhood"
                     type="text"
-                    className={`form-group__input ${errors.neighborhood ? 'form-group__input--error' : ''}`}
+                    label="Barrio"
                     placeholder="Ej: Prado, Villa Country"
                     disabled={isLoading}
+                    error={errors.neighborhood?.message}
                     {...register('neighborhood')}
                   />
-                  {errors.neighborhood && (
-                    <span className="form-group__error-text">{errors.neighborhood.message}</span>
-                  )}
                 </div>
               </div>
             </div>

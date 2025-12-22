@@ -107,6 +107,7 @@
 
     @media (max-width: 768px) {
       padding: $spacing-xl;
+      padding-bottom: 100px; // Espacio para FAB button
     }
   }
 
@@ -176,6 +177,8 @@
 
   // Element: .dashboard__content
   &__content {
+    width: 100%;
+    
     h2 {
       color: $color-dark-text;
       margin-bottom: $spacing-md;
@@ -247,6 +250,59 @@
     &:hover {
       background-color: $color-background;
       border-color: $color-light-text;
+    }
+  }
+
+  // Modifier: .btn--small
+  &--small {
+    padding: $spacing-xs $spacing-md;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+  }
+
+  // Modifier: .btn--refresh
+  &--refresh {
+    background-color: #0ea5e9;
+    color: $color-white;
+    padding: $spacing-sm $spacing-lg;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    white-space: nowrap;
+
+    svg {
+      transition: transform 0.6s ease;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: #0284c7;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+      
+      svg {
+        transform: rotate(180deg);
+      }
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.6;
+      
+      svg {
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: center;
     }
   }
 
@@ -474,18 +530,35 @@
 .survey-table {
   background: $color-white;
   border-radius: $border-radius-lg;
-  overflow: hidden;
   box-shadow: $shadow-md;
   margin-bottom: $spacing-2xl;
+  width: 100%; // Asegurar que ocupe todo el ancho disponible
+
+  @media (max-width: 768px) {
+    margin-bottom: 80px; // Espacio para FAB button
+    border-radius: 0;
+  }
 
   // Wrapper para scroll horizontal
   &__wrapper {
+    width: 100%;
     overflow-x: auto;
     overflow-y: visible;
+    -webkit-overflow-scrolling: touch; // Smooth scrolling en iOS
+    position: relative;
+    display: block; // Asegurar que sea un bloque
+    
+    @media (max-width: 768px) {
+      border-radius: 0;
+    }
     
     // Estilos para scrollbar webkit (Chrome, Safari, Edge)
     &::-webkit-scrollbar {
-      height: 8px;
+      height: 10px;
+
+      @media (max-width: 768px) {
+        height: 6px;
+      }
     }
     
     &::-webkit-scrollbar-track {
@@ -555,6 +628,11 @@
     width: 100%;
     min-width: 1200px; // Ancho mínimo para forzar scroll horizontal
     border-collapse: collapse;
+
+    @media (max-width: 768px) {
+      min-width: 600px; // Reducir ancho mínimo en móvil para mejor ajuste
+      font-size: 13px; // Fuente más grande en móvil
+    }
   }
 
   // Element: .survey-table__thead
@@ -573,10 +651,21 @@
     letter-spacing: 0.5px;
     border-bottom: 2px solid $color-border;
     vertical-align: middle; // ✅ Alineación vertical consistente
+    white-space: nowrap;
 
     @media (max-width: 768px) {
-      padding: $spacing-md;
+      padding: $spacing-xs $spacing-sm;
       font-size: 0.7rem;
+    }
+
+    &--checkbox {
+      width: 40px;
+      text-align: center;
+
+      @media (max-width: 768px) {
+        width: 30px;
+        padding: $spacing-xs;
+      }
     }
   }
 
@@ -600,10 +689,14 @@
     color: $color-dark-text;
     font-size: $font-size-sm;
     vertical-align: middle; // ✅ Alineación vertical consistente
+    white-space: nowrap;
 
     @media (max-width: 768px) {
-      padding: $spacing-md;
-      font-size: 0.75rem;
+      padding: $spacing-xs $spacing-sm;
+      font-size: 0.8rem;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     // Modifier: .survey-table__td--respondent
@@ -611,12 +704,28 @@
       padding: $spacing-md $spacing-lg;
       width: 180px;
       max-width: 180px;
+
+      @media (max-width: 768px) {
+        width: 120px;
+        max-width: 120px;
+        padding: $spacing-xs $spacing-sm;
+      }
     }
 
     // Modifier: .survey-table__td--date
     &--date {
       color: $color-light-text;
       font-size: $font-size-sm;
+    }
+
+    &--checkbox {
+      width: 40px;
+      text-align: center;
+
+      @media (max-width: 768px) {
+        width: 30px;
+        padding: $spacing-xs;
+      }
     }
   }
 
@@ -1338,6 +1447,7 @@
     margin-left: 260px;
     display: flex;
     flex-direction: column;
+    min-width: 0; // Permitir que el contenido se encoja y muestre scroll
 
     @media (max-width: 768px) {
       margin-left: 0;
@@ -1410,10 +1520,14 @@
 
     @media (max-width: 768px) {
       padding: $spacing-lg;
+      padding-bottom: 100px; // Espacio extra para FAB button
+      max-width: 100%; // Permitir todo el ancho en mobile
     }
 
     @media (max-width: 480px) {
       padding: $spacing-md;
+      padding-bottom: 100px;
+      max-width: 100%;
     }
   }
 
@@ -1434,6 +1548,47 @@
 
   &__form {
     margin-bottom: $spacing-xl;
+  }
+}
+
+// =============================================
+// BACK BUTTON - For dashboard headers
+// =============================================
+.btn-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: $spacing-xs;
+  color: $color-text;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-sm;
+  transition: all $transition-base;
+  margin-right: $spacing-sm;
+  flex-shrink: 0;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background-color: rgba($color-primary, 0.1);
+    color: $color-primary;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  @media (max-width: 768px) {
+    padding: $spacing-xs;
+    
+    svg {
+      width: 18px;
+      height: 18px;
+    }
   }
 }
 
@@ -2399,11 +2554,19 @@
 .filter-card {
   padding: $spacing-xl;
 
+  @media (max-width: 768px) {
+    padding: $spacing-lg;
+  }
+
   &__title {
     font-size: $font-size-xl;
     font-weight: $font-weight-bold;
     color: $color-secondary;
     margin-bottom: $spacing-lg;
+
+    @media (max-width: 768px) {
+      font-size: $font-size-lg;
+    }
   }
 
   &__grid {
@@ -2411,6 +2574,11 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: $spacing-lg;
     margin-bottom: $spacing-lg;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: $spacing-md;
+    }
   }
 
   &__actions {
@@ -2419,6 +2587,16 @@
     flex-wrap: wrap;
     padding-top: $spacing-lg;
     border-top: 1px solid $color-border;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: $spacing-sm;
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
   }
 }
 
@@ -2544,6 +2722,11 @@ input[type="date"].form-group__input {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: $spacing-lg;
   margin-bottom: $spacing-xl;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
 }
 
 .stat-card {
@@ -2554,9 +2737,17 @@ input[type="date"].form-group__input {
   text-align: center;
   transition: all 0.3s ease;
 
+  @media (max-width: 768px) {
+    padding: $spacing-md;
+  }
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    @media (max-width: 768px) {
+      transform: none;
+    }
   }
 
   &__icon {
@@ -2570,6 +2761,10 @@ input[type="date"].form-group__input {
     font-weight: $font-weight-bold;
     color: $color-secondary;
     margin-bottom: $spacing-xs;
+
+    @media (max-width: 768px) {
+      font-size: $font-size-2xl;
+    }
   }
 
   &__label {
@@ -2577,6 +2772,10 @@ input[type="date"].form-group__input {
     color: $color-light-text;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+
+    @media (max-width: 768px) {
+      font-size: $font-size-xs;
+    }
   }
 
   &--success {
@@ -2640,6 +2839,153 @@ input[type="date"].form-group__input {
     
     &:hover {
       opacity: 1;
+    }
+  }
+}
+
+// =============================================
+// FLOATING ACTION BUTTON (FAB) - Mobile Only
+// =============================================
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: $color-primary;
+  color: $color-dark-text;
+  border: none;
+  box-shadow: 0 6px 20px rgba(255, 237, 78, 0.4);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  transition: all $transition-base;
+  font-size: 24px;
+  font-weight: $font-weight-bold;
+
+  @media (max-width: 768px) {
+    display: flex !important;
+  }
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 24px rgba(255, 237, 78, 0.5);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  // Modificador para botón de sincronización
+  &--sync {
+    background-color: #4CAF50;
+    bottom: 92px; // Positioned above the main FAB
+
+    &:hover {
+      background-color: #45a049;
+      box-shadow: 0 8px 24px rgba(76, 175, 80, 0.5);
+    }
+  }
+}
+
+// Hide desktop buttons on mobile
+@media (max-width: 768px) {
+  .dashboard__header-actions-group,
+  .dashboard-layout__actions {
+    .btn--primary,
+    .btn--sync {
+      display: none !important;
+    }
+  }
+}
+
+// =============================================
+// FILTER CARD - BEM
+// =============================================
+.filter-card {
+  background: $color-white;
+  padding: $spacing-xl;
+  border-radius: $border-radius-lg;
+  margin-bottom: $spacing-xl;
+  border: 1px solid $color-border;
+  box-shadow: $shadow-sm;
+
+  @media (max-width: 768px) {
+    padding: $spacing-lg;
+  }
+
+  &__title {
+    margin: 0 0 $spacing-lg 0;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-dark-text;
+
+    @media (max-width: 768px) {
+      font-size: $font-size-base;
+      margin-bottom: $spacing-md;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $spacing-lg;
+    margin-bottom: $spacing-md;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: $spacing-md;
+    }
+  }
+
+  &__field {
+    min-width: 0; // Permitir que los campos se encojan en grid
+  }
+
+  &__actions {
+    display: flex;
+    gap: $spacing-sm;
+    align-items: center;
+    justify-content: flex-start;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .btn {
+      white-space: nowrap;
+      min-width: 100px;
+
+      @media (max-width: 768px) {
+        width: 100%;
+      }
+    }
+  }
+
+  &__info {
+    margin-top: $spacing-lg;
+    padding: $spacing-md $spacing-lg;
+    background: #f0f9ff;
+    border-radius: $border-radius-md;
+    font-size: $font-size-sm;
+    color: #0369a1;
+    border-left: 4px solid #0ea5e9;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+
+    @media (max-width: 768px) {
+      font-size: $font-size-xs;
+      padding: $spacing-sm $spacing-md;
     }
   }
 }

@@ -4,13 +4,14 @@
  */
 
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Icon } from 'leaflet'
 import { Sidebar } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { useAuth } from '../contexts/AuthContext'
-import { EXTERNAL_URLS, MAP_CONFIG, MESSAGES, LOCALE_CONFIG, SYNC_CONFIG } from '../constants'
+import { EXTERNAL_URLS, MAP_CONFIG, MESSAGES, LOCALE_CONFIG, SYNC_CONFIG, ROUTES } from '../constants'
 import 'leaflet/dist/leaflet.css'
 import '../styles/Dashboard.scss'
 
@@ -52,10 +53,15 @@ const defaultIcon = new Icon({
 
 export default function ReportsRealtime() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [socializers, setSocializers] = useState<SocializerLocation[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const handleBackToReports = () => {
+    navigate(ROUTES.ADMIN_REPORTS)
+  }
 
   useEffect(() => {
     loadSocializers()
@@ -149,6 +155,11 @@ export default function ReportsRealtime() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
+          <button className="btn-back" onClick={handleBackToReports}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
           <h1 className="dashboard-layout__title">Reportes - Ubicaciones en Tiempo Real</h1>
         </div>
 
@@ -203,11 +214,14 @@ export default function ReportsRealtime() {
                   </div>
                 </div>
                 <button 
-                  className="btn btn--secondary"
+                  className="btn btn--refresh"
                   onClick={loadSocializers}
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Actualizando...' : '🔄 Actualizar'}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {isLoading ? 'Actualizando...' : 'Actualizar'}
                 </button>
               </div>
 

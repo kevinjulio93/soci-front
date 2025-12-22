@@ -7,6 +7,7 @@
 import { useForm } from 'react-hook-form'
 import { LoginFormData } from '../models/FormData'
 import type { LoginFormProps } from './types'
+import { Input } from './Input'
 import '../styles/Login.scss'
 
 export function LoginForm({ onSubmit, isLoading = false, error }: LoginFormProps) {
@@ -27,47 +28,37 @@ export function LoginForm({ onSubmit, isLoading = false, error }: LoginFormProps
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="form-group">
-            <label htmlFor="email" className="form-group__label">Correo Electrónico</label>
-            <input
-              id="email"
-              type="email"
-              className={`form-group__input ${errors.email ? 'form-group__input--error' : ''}`}
-              placeholder="Ingresa tu correo"
-              disabled={isLoading}
-              {...register('email', {
-                required: 'El correo es requerido',
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: 'Por favor ingresa un email válido',
-                },
-              })}
-            />
-            {errors.email && (
-              <span className="form-group__error-text">{errors.email.message}</span>
-            )}
-          </div>
+          <Input
+            id="email"
+            type="email"
+            label="Correo Electrónico"
+            placeholder="Ingresa tu correo"
+            disabled={isLoading}
+            error={errors.email?.message}
+            {...register('email', {
+              required: 'El correo es requerido',
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'Por favor ingresa un email válido',
+              },
+            })}
+          />
 
-          <div className="form-group">
-            <label htmlFor="password" className="form-group__label">Contraseña</label>
-            <input
-              id="password"
-              type="password"
-              className={`form-group__input ${errors.password ? 'form-group__input--error' : ''}`}
-              placeholder="Ingresa tu contraseña"
-              disabled={isLoading}
-              {...register('password', {
-                required: 'La contraseña es requerida',
-                minLength: {
-                  value: 6,
-                  message: 'La contraseña debe tener al menos 6 caracteres',
-                },
-              })}
-            />
-            {errors.password && (
-              <span className="form-group__error-text">{errors.password.message}</span>
-            )}
-          </div>
+          <Input
+            id="password"
+            type="password"
+            label="Contraseña"
+            placeholder="Ingresa tu contraseña"
+            disabled={isLoading}
+            error={errors.password?.message}
+            {...register('password', {
+              required: 'La contraseña es requerida',
+              minLength: {
+                value: 6,
+                message: 'La contraseña debe tener al menos 6 caracteres',
+              },
+            })}
+          />
 
           <button
             type="submit"
