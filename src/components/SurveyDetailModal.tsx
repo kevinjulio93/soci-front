@@ -29,6 +29,16 @@ const defaultIcon = new Icon({
   shadowSize: MAP_CONFIG.SHADOW_SIZE
 })
 
+// Icono rojo para encuestas no exitosas
+const redIcon = new Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: EXTERNAL_URLS.LEAFLET_MARKER_SHADOW,
+  iconSize: MAP_CONFIG.MARKER_SIZE,
+  iconAnchor: MAP_CONFIG.MARKER_ANCHOR,
+  popupAnchor: MAP_CONFIG.POPUP_ANCHOR,
+  shadowSize: MAP_CONFIG.SHADOW_SIZE
+})
+
 export function SurveyDetailModal({
   isOpen,
   onClose,
@@ -83,6 +93,18 @@ export function SurveyDetailModal({
   }, [survey, isOpen])
 
   if (!isOpen || !survey) return null
+
+  // Determinar si la encuesta fue exitosa
+  const isSuccessful = survey.surveyStatus === 'successful'
+  
+  // Obtener la razón de rechazo
+  const getRejectionReason = () => {
+    if (survey.noResponseReason?.label) return survey.noResponseReason.label
+    if (survey.rejectionReason?.label) return survey.rejectionReason.label
+    if (typeof survey.noResponseReason === 'string') return survey.noResponseReason
+    if (typeof survey.rejectionReason === 'string') return survey.rejectionReason
+    return 'No especificada'
+  }
 
   const formatDuration = (seconds: number): string => {
     const mins = Math.floor(seconds / 60)
@@ -140,6 +162,77 @@ export function SurveyDetailModal({
         </div>
 
         <div className="modal-body modal-body--detail">
+          {!isSuccessful ? (
+            // Vista simplificada para encuestas no exitosas
+            <>
+              {/* Razón de No Respuesta */}
+              <section className="detail-section">
+                <h3 className="detail-section__title">Razón de No Respuesta</h3>
+                <div className="detail-grid">
+                  <div className="detail-item detail-item--full">
+                    <span className="detail-item__label">Motivo:</span>
+                    <span className="detail-item__value detail-item__value--highlight">
+                      {getRejectionReason()}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-item__label">Fecha de Registro:</span>
+                    <span className="detail-item__value">{formatDate(survey.createdAt)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-item__label">Autor:</span>
+                    <span className="detail-item__value">
+                      {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              {/* Ubicación Geográfica */}
+              {survey.location && survey.location.coordinates && survey.location.coordinates[0] !== 0 && survey.location.coordinates[1] !== 0 && (
+                <section className="detail-section">
+                  <h3 className="detail-section__title">Ubicación del Intento</h3>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <span className="detail-item__label">Longitud:</span>
+                      <span className="detail-item__value">{survey.location.coordinates[0].toFixed(6)}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-item__label">Latitud:</span>
+                      <span className="detail-item__value">{survey.location.coordinates[1].toFixed(6)}</span>
+                    </div>
+                    <div className="detail-item detail-item--full detail-item--map">
+                      <span className="detail-item__label">Mapa de Ubicación:</span>
+                      <div className="map-container">
+                        <MapContainer
+                          center={[survey.location.coordinates[1], survey.location.coordinates[0]]}
+                          zoom={15}
+                          style={{ height: '250px', width: '100%', borderRadius: '8px' }}
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          <Marker 
+                            position={[survey.location.coordinates[1], survey.location.coordinates[0]]}
+                            icon={redIcon}
+                          >
+                            <Popup>
+                              <strong>Encuesta no realizada</strong>
+                              <br />
+                              <em>{getRejectionReason()}</em>
+                            </Popup>
+                          </Marker>
+                        </MapContainer>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
+            </>
+          ) : (
+            // Vista completa para encuestas exitosas
+            <>
           {/* Información Personal */}
           <section className="detail-section">
             <h3 className="detail-section__title">Información Personal</h3>
@@ -226,13 +319,13 @@ export function SurveyDetailModal({
                   <span className="detail-item__label">Latitud:</span>
                   <span className="detail-item__value">{survey.location.coordinates[1].toFixed(6)}</span>
                 </div>
-                <div className="detail-item detail-item--full">
+                <div className="detail-item detail-item--full detail-item--map">
                   <span className="detail-item__label">Mapa de Ubicación:</span>
                   <div className="map-container">
                     <MapContainer
                       center={[survey.location.coordinates[1], survey.location.coordinates[0]]}
                       zoom={15}
-                      style={{ height: '300px', width: '100%', borderRadius: '8px' }}
+                      style={{ height: '250px', width: '100%', borderRadius: '8px' }}
                     >
                       <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -304,6 +397,8 @@ export function SurveyDetailModal({
               )}
             </div>
           </section>
+            </>
+          )}
         </div>
 
         <div className="modal-footer">

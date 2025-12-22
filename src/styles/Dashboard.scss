@@ -834,7 +834,7 @@
 
   &__description {
     font-size: $font-size-lg;
-    color: $color-light-text;
+    color: #9ca3af; // Mismo color que .text-muted para consistencia
     max-width: 500px;
     line-height: 1.6;
     margin-bottom: $spacing-2xl;
@@ -1749,7 +1749,7 @@
   
   p {
     margin-top: $spacing-lg;
-    color: $color-light-text;
+    color: #9ca3af; // Mismo color que .text-muted para consistencia
     font-size: $font-size-lg;
   }
 }
@@ -1868,6 +1868,20 @@
 .badge-gray {
   background-color: #f3f4f6;
   color: #4b5563;
+}
+
+// Empty state badge
+.badge-empty {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  border: 1px dashed #d1d5db;
+}
+
+// Text utilities
+.text-muted {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-weight: normal;
 }
 
 // Stats grid and cards
@@ -2096,7 +2110,7 @@
 .ranking-empty {
   padding: $spacing-2xl;
   text-align: center;
-  color: $color-light-text;
+  color: #9ca3af; // Mismo color que .text-muted para consistencia
   
   p {
     margin: 0;
@@ -2844,7 +2858,7 @@ input[type="date"].form-group__input {
 // =============================================
 // MAP CONTAINER
 // =============================================
-.map-container {
+.dashboard-map-container {
   height: 600px;
   border-radius: $border-radius-md;
   overflow: hidden;
@@ -2863,7 +2877,7 @@ input[type="date"].form-group__input {
   background: $color-white;
   border-radius: $border-radius-md;
   border: 1px solid $color-border;
-  color: $color-light-text;
+  color: #9ca3af; // Mismo color que .text-muted para consistencia
 }
 
 // =============================================

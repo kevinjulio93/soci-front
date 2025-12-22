@@ -51,6 +51,16 @@
     max-width: 480px;
   }
 
+  // Modifier: .modal-content--detail
+  &--detail {
+    max-width: 800px;
+    
+    // Optimizar scroll para contenido compacto
+    .modal-body {
+      padding-bottom: $spacing-md; // Reducir padding inferior
+    }
+  }
+
   @media (max-width: 768px) {
     max-width: 100%;
     max-height: 100vh;
@@ -136,6 +146,11 @@
 // Block: .modal-body
 .modal-body {
   padding: $spacing-xl;
+  
+  // Modifier para el modal de detalle - padding reducido
+  &--detail {
+    padding: $spacing-lg $spacing-xl; // Reducir padding vertical
+  }
 }
 
 // =============================================
@@ -358,11 +373,13 @@
 .modal-body--detail {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xl;
+  gap: $spacing-lg; // Reducido de $spacing-xl a $spacing-lg
 }
 
 // Detail sections
 .detail-section {
+  margin-bottom: 0; // Eliminar margen inferior adicional
+  
   &__title {
     font-size: $font-size-lg;
     font-weight: $font-weight-bold;
@@ -376,10 +393,29 @@
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: $spacing-lg;
+  gap: $spacing-md; // Reducido de $spacing-lg a $spacing-md
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
+}
+
+// Contenedor del mapa
+.map-container {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  line-height: 0;
+  font-size: 0;
+  
+  .leaflet-container {
+    display: block;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    margin: 0;
+    padding: 0;
   }
 }
 
@@ -390,6 +426,23 @@
 
   &--full {
     grid-column: 1 / -1;
+  }
+  
+  // Modifier para elementos que contienen mapas
+  &--map {
+    gap: $spacing-xs;
+    
+    .detail-item__label {
+      margin-bottom: 0;
+    }
+    
+    .detail-item__value {
+      padding: 0;
+      margin: 0;
+      background-color: transparent;
+      border: none;
+      line-height: 0;
+    }
   }
 
   &__label {
@@ -408,6 +461,15 @@
     background-color: #f9fafb;
     border-radius: $border-radius-sm;
     border: 1px solid #e5e7eb;
+    
+    // Modifier para destacar la razón de rechazo
+    &--highlight {
+      background-color: #fee2e2;
+      border-color: #fecaca;
+      color: #991b1b;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-lg;
+    }
   }
 
   &__link {

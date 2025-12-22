@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet'
 import { Icon, LatLngBounds } from 'leaflet'
 import { Sidebar, DateInput } from '../components'
 import { apiService } from '../services/api.service'
@@ -291,7 +291,7 @@ export default function ReportsMap() {
               <p>No hay encuestas con ubicación registrada</p>
             </div>
           ) : (
-            <div className="map-container">
+            <div className="dashboard-map-container">
               <MapContainer
                 center={mapCenter}
                 zoom={12}
@@ -309,16 +309,32 @@ export default function ReportsMap() {
                   const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
                   const [latitude, longitude] = extractCoordinates(respondent)
                   
+                  // Get label from noResponseReason/rejectionReason object
+                  const reasonLabel = respondent.noResponseReason?.label || 
+                                     respondent.rejectionReason?.label || 
+                                     'No especificada'
+                  
+                  // Tooltip text - show label for unsuccessful surveys
+                  const tooltipText = isSuccessful 
+                    ? respondent.fullName || 'Encuesta exitosa'
+                    : reasonLabel
+                  
                   return (
                     <Marker
                       key={respondent._id}
                       position={[latitude, longitude]}
                       icon={icon}
                     >
+                      <Tooltip direction="top" offset={[0, -10]} opacity={0.9}>
+                        {tooltipText}
+                      </Tooltip>
                       <Popup>
                         <div style={{ minWidth: '200px' }}>
                           <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600' }}>
-                            {respondent.fullName || 'No proporcionado'}
+                            {isSuccessful 
+                              ? (respondent.fullName || 'No proporcionado')
+                              : reasonLabel
+                            }
                           </h4>
                           <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
                             <strong>Estado:</strong>{' '}
@@ -326,9 +342,9 @@ export default function ReportsMap() {
                               {isSuccessful ? 'Exitosa' : 'Rechazada'}
                             </span>
                           </div>
-                          {!isSuccessful && respondent.rejectionReason && (
+                          {!isSuccessful && (respondent.noResponseReason || respondent.rejectionReason) && (
                             <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                              <strong>Razón:</strong> {respondent.rejectionReason}
+                              <strong>Razón:</strong> {reasonLabel}
                             </div>
                           )}
                           {respondent.neighborhood && (

@@ -53,6 +53,15 @@ export function SurveyForm({
   const willingToRespondValue = watch('willingToRespond')
   // Convert string to boolean for conditional rendering
   const willingToRespond = willingToRespondValue === 'true' || willingToRespondValue === true
+  const showNoResponseReason = willingToRespondValue === 'false'
+
+  // Debug logs
+  console.log('🔍 SurveyForm Debug:', {
+    willingToRespondValue,
+    willingToRespond,
+    showNoResponseReason,
+    valueType: typeof willingToRespondValue
+  })
 
   // Reset form when initialData changes
   useEffect(() => {
@@ -175,7 +184,13 @@ export function SurveyForm({
         {error && <div className="error-message">{error}</div>}
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="survey-form__form">
+        <form onSubmit={handleSubmit((data) => {
+          console.log('📝 Form Submit:', data)
+          console.log('✅ Form Validation Passed')
+          onSubmit(data)
+        }, (errors) => {
+          console.log('❌ Form Validation Failed:', errors)
+        })} className="survey-form__form">
           {/* Información Previa de la Encuesta */}
           <div className="form-section">
             <h3 className="form-section__title">Información de la Visita</h3>
@@ -193,6 +208,7 @@ export function SurveyForm({
                     disabled={isLoading}
                     {...register('willingToRespond', {
                       onChange: (e) => {
+                        console.log('📻 Radio Changed to YES:', e.target.value)
                         onWillingToRespondChange?.(e.target.value === 'true')
                       }
                     })}
@@ -206,6 +222,7 @@ export function SurveyForm({
                     disabled={isLoading}
                     {...register('willingToRespond', {
                       onChange: (e) => {
+                        console.log('📻 Radio Changed to NO:', e.target.value)
                         onWillingToRespondChange?.(e.target.value === 'true')
                       }
                     })}
@@ -216,7 +233,7 @@ export function SurveyForm({
             </div>
 
             {/* No Response Reason - Mostrar solo si NO está dispuesto */}
-            {!willingToRespond && (
+            {showNoResponseReason && (
               <Select
                 id="noResponseReason"
                 label="Razón de no respuesta"
@@ -226,7 +243,11 @@ export function SurveyForm({
                 required
                 error={errors.noResponseReason?.message}
                 {...register('noResponseReason', {
-                  required: !willingToRespond ? 'Por favor selecciona una razón' : false,
+                  required: showNoResponseReason ? 'Por favor selecciona una razón' : false,
+                  setValueAs: (value) => {
+                    const option = NO_RESPONSE_REASONS.find(opt => opt.value === value)
+                    return option ? { value: option.value, label: option.label } : value
+                  }
                 })}
               />
             )}
@@ -244,14 +265,14 @@ export function SurveyForm({
                 label="Nombre completo"
                 placeholder="Nombre y Apellido"
                 disabled={isLoading}
-                required
+                required={willingToRespond}
                 error={errors.fullName?.message}
                 {...register('fullName', {
-                  required: 'El nombre completo es requerido',
-                  minLength: {
+                  required: willingToRespond ? 'El nombre completo es requerido' : false,
+                  minLength: willingToRespond ? {
                     value: 3,
                     message: 'El nombre debe tener al menos 3 caracteres',
-                  },
+                  } : undefined,
                   setValueAs: (value) => value?.toUpperCase() || '',
                 })}
               />
@@ -265,10 +286,10 @@ export function SurveyForm({
                     placeholder="Seleccione tipo"
                     options={ID_TYPE_OPTIONS}
                     disabled={isLoading}
-                    required
+                    required={willingToRespond}
                     error={errors.idType?.message}
                     {...register('idType', {
-                      required: 'Por favor selecciona un tipo de identificación',
+                      required: willingToRespond ? 'Por favor selecciona un tipo de identificación' : false,
                     })}
                   />
                 </div>
@@ -280,10 +301,10 @@ export function SurveyForm({
                     label="Número de identificación"
                     placeholder="Ej: 1234567890"
                     disabled={isLoading}
-                    required
+                    required={willingToRespond}
                     error={errors.identification?.message}
                     {...register('identification', {
-                      required: 'El número de identificación es requerido',
+                      required: willingToRespond ? 'El número de identificación es requerido' : false,
                     })}
                   />
                 </div>

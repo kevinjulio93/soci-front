@@ -54,7 +54,7 @@ export const getSurveysTableColumns = (
       
       return (
         <div className="contact-info">
-          <span className="contact-email">{authorEmail || 'N/A'}</span>
+          <span className="contact-email">{authorEmail || <span className="text-muted">—</span>}</span>
         </div>
       )
     }
@@ -63,32 +63,33 @@ export const getSurveysTableColumns = (
     key: 'idType',
     header: 'TIPO ID',
     render: (survey) => (
-      <span className="id-type">{survey.idType || 'N/A'}</span>
+      <span className="id-type">{survey.idType || <span className="badge badge-empty">—</span>}</span>
     )
   },
   {
     key: 'identification',
     header: 'N° IDENTIFICACIÓN',
     render: (survey) => (
-      <span className="id-number">{survey.identification || 'N/A'}</span>
+      <span className="id-number">{survey.identification || <span className="badge badge-empty">—</span>}</span>
     )
   },
   {
     key: 'contact',
     header: 'TELÉFONO',
     render: (survey) => (
-      <span className="contact-phone">{survey.phone || 'N/A'}</span>
+      <span className="contact-phone">{survey.phone || <span className="badge badge-empty">—</span>}</span>
     )
   },
   {
     key: 'gender',
     header: 'GÉNERO',
     render: (survey) => {
+      if (!survey.gender) return <span className="badge badge-empty">—</span>
       const genderClass = survey.gender?.toLowerCase() === 'masculino' ? 'badge-blue' : 
                           survey.gender?.toLowerCase() === 'femenino' ? 'badge-pink' : 'badge-gray'
       return (
         <span className={`badge ${genderClass}`}>
-          {survey.gender || 'N/A'}
+          {survey.gender}
         </span>
       )
     }
@@ -97,6 +98,7 @@ export const getSurveysTableColumns = (
     key: 'age',
     header: 'EDAD',
     render: (survey) => {
+      if (!survey.ageRange) return <span className="badge badge-empty">—</span>
       const getAgeClass = (range: string) => {
         if (range?.includes('18-25')) return 'badge-green'
         if (range?.includes('26-35')) return 'badge-teal'
@@ -105,21 +107,22 @@ export const getSurveysTableColumns = (
         if (range?.includes('60')) return 'badge-brown'
         return 'badge-gray'
       }
-      return <span className={`badge ${getAgeClass(survey.ageRange || '')}`}>{survey.ageRange || 'N/A'}</span>
+      return <span className={`badge ${getAgeClass(survey.ageRange)}`}>{survey.ageRange}</span>
     }
   },
   {
     key: 'stratum',
     header: 'ESTRATO',
     render: (survey) => {
+      if (!survey.stratum) return <span className="badge badge-empty">—</span>
       const getStratumClass = (stratum: number) => {
         if (stratum <= 2) return 'badge-red'
         if (stratum <= 4) return 'badge-yellow'
         return 'badge-indigo'
       }
       return (
-        <span className={`badge ${survey.stratum ? getStratumClass(survey.stratum) : 'badge-gray'}`}>
-          {survey.stratum ? `Estrato ${survey.stratum}` : 'N/A'}
+        <span className={`badge ${getStratumClass(survey.stratum)}`}>
+          Estrato {survey.stratum}
         </span>
       )
     }
@@ -147,7 +150,7 @@ export const getSurveysTableColumns = (
         {onDelete && (
           <span
             className="action-icon action-icon--delete"
-            onClick={() => onDelete(survey._id, survey.fullName || 'N/A')}
+            onClick={() => onDelete(survey._id, survey.fullName || 'Encuestado')}
             title="Eliminar encuestado"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
@@ -168,7 +171,7 @@ export const getSocializersTableColumns = (
   isReadOnly: boolean = false
 ): TableColumn<Socializer>[] => {
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A'
+    if (!dateString) return <span className="badge badge-empty">—</span>
     return new Date(dateString).toLocaleDateString('es-CO', {
       year: 'numeric',
       month: 'short',
@@ -206,14 +209,15 @@ export const getSocializersTableColumns = (
       key: 'contact',
       header: 'CONTACTO',
       render: (socializer) => (
-        <span className="contact-phone">{socializer.user?.email || 'N/A'}</span>
+        <span className="contact-phone">{socializer.user?.email || <span className="badge badge-empty">—</span>}</span>
       )
     },
     {
       key: 'role',
       header: 'ROL',
       render: (socializer) => {
-        const role = typeof socializer.user?.role === 'object' ? socializer.user.role.role : 'N/A'
+        const role = typeof socializer.user?.role === 'object' ? socializer.user.role.role : ''
+        if (!role) return <span className="badge badge-empty">—</span>
         const roleClass = role.toLowerCase() === 'admin' ? 'badge-purple' : 
                           role.toLowerCase() === 'socializer' || role.toLowerCase() === 'socializador' ? 'badge-blue' : 'badge-gray'
         return (
@@ -340,36 +344,38 @@ export const getRespondentsTableColumns = (
     key: 'idType',
     header: 'TIPO ID',
     render: (survey) => (
-      <span className="id-type">{survey.idType || 'N/A'}</span>
+      <span className="id-type">{survey.idType || <span className="badge badge-empty">—</span>}</span>
     )
   },
   {
     key: 'identification',
     header: 'N° IDENTIFICACIÓN',
     render: (survey) => (
-      <span className="id-number">{survey.identification || 'N/A'}</span>
+      <span className="id-number">{survey.identification || <span className="badge badge-empty">—</span>}</span>
     )
   },
   {
     key: 'contact',
     header: 'TELÉFONO',
     render: (survey) => (
-      <span className="contact-phone">{survey.phone || 'N/A'}</span>
+      <span className="contact-phone">{survey.phone || <span className="badge badge-empty">—</span>}</span>
     )
   },
   {
     key: 'gender',
     header: 'GÉNERO',
     render: (survey) => {
+      if (!survey.gender) return <span className="badge badge-empty">—</span>
       const genderClass = survey.gender?.toLowerCase() === 'masculino' ? 'badge-blue' : 
                           survey.gender?.toLowerCase() === 'femenino' ? 'badge-pink' : 'badge-gray'
-      return <span className={`badge ${genderClass}`}>{survey.gender || 'N/A'}</span>
+      return <span className={`badge ${genderClass}`}>{survey.gender}</span>
     }
   },
   {
     key: 'age',
     header: 'EDAD',
     render: (survey) => {
+      if (!survey.ageRange) return <span className="badge badge-empty">—</span>
       const getAgeClass = (range: string) => {
         if (range?.includes('18-25')) return 'badge-green'
         if (range?.includes('26-35')) return 'badge-teal'
@@ -378,21 +384,22 @@ export const getRespondentsTableColumns = (
         if (range?.includes('60')) return 'badge-brown'
         return 'badge-gray'
       }
-      return <span className={`badge ${getAgeClass(survey.ageRange || '')}`}>{survey.ageRange || 'N/A'}</span>
+      return <span className={`badge ${getAgeClass(survey.ageRange)}`}>{survey.ageRange}</span>
     }
   },
   {
     key: 'stratum',
     header: 'ESTRATO',
     render: (survey) => {
+      if (!survey.stratum) return <span className="badge badge-empty">—</span>
       const getStratumClass = (stratum: number) => {
         if (stratum <= 2) return 'badge-red'
         if (stratum <= 4) return 'badge-yellow'
         return 'badge-indigo'
       }
       return (
-        <span className={`badge ${survey.stratum ? getStratumClass(survey.stratum) : 'badge-gray'}`}>
-          {survey.stratum ? `Estrato ${survey.stratum}` : 'N/A'}
+        <span className={`badge ${getStratumClass(survey.stratum)}`}>
+          Estrato {survey.stratum}
         </span>
       )
     }
