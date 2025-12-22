@@ -262,6 +262,34 @@
   }
 }
 
+// Select wrapper with icon
+.form-group__select-wrapper {
+  position: relative;
+  
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    padding-right: 3rem;
+  }
+}
+
+.form-group__select-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b7280;
+  width: 20px;
+  height: 20px;
+}
+
+.form-group__select-wrapper:hover .form-group__select-icon {
+  color: #6b7280;
+}
+
 .form-group__select {
   appearance: none;
   cursor: pointer;

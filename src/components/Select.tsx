@@ -38,18 +38,23 @@ export const Select: React.FC<SelectProps> = ({
           {required && <span className="form-group__required">*</span>}
         </label>
       )}
-      <select
-        id={selectId}
-        className={`form-group__input ${error ? 'form-group__input--error' : ''}`}
-        {...props}
-      >
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <div className="form-group__select-wrapper">
+        <select
+          id={selectId}
+          className={`form-group__input ${error ? 'form-group__input--error' : ''}`}
+          {...props}
+        >
+          {placeholder && <option value="">{placeholder}</option>}
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <svg className="form-group__select-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
       {error && <span className="form-group__error">{error}</span>}
     </div>
   )

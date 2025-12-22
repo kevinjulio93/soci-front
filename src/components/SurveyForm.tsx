@@ -50,7 +50,9 @@ export function SurveyForm({
   })
 
   // Watch willingToRespond to show/hide noResponseReason field
-  const willingToRespond = watch('willingToRespond')
+  const willingToRespondValue = watch('willingToRespond')
+  // Convert string to boolean for conditional rendering
+  const willingToRespond = willingToRespondValue === 'true' || willingToRespondValue === true
 
   // Reset form when initialData changes
   useEffect(() => {
@@ -74,6 +76,14 @@ export function SurveyForm({
       // Filtrar solo la región Caribe
       const filteredRegions = data.filter(region => region.name.toLowerCase() === 'caribe')
       setRegions(filteredRegions)
+      
+      // Auto-seleccionar región Caribe
+      if (filteredRegions.length > 0) {
+        const caribeRegion = filteredRegions[0]
+        setSelectedRegion(caribeRegion.id)
+        setValue('region', caribeRegion.name)
+      }
+      
       setLoadingRegions(false)
     }
     loadRegions()
@@ -90,9 +100,15 @@ export function SurveyForm({
           dept.name.toLowerCase() === 'atlántico' || dept.name.toLowerCase() === 'atlantico'
         )
         setDepartments(filteredDepartments)
+        
+        // Auto-seleccionar departamento de Atlántico
+        if (filteredDepartments.length > 0) {
+          const atlanticoDept = filteredDepartments[0]
+          setSelectedDepartment(atlanticoDept.id)
+          setValue('department', atlanticoDept.name)
+        }
+        
         setLoadingDepartments(false)
-        setCities([]) // Limpiar ciudades
-        setSelectedDepartment(null)
       }
       loadDepartments()
     } else {
@@ -166,20 +182,35 @@ export function SurveyForm({
             
             {/* Willing to Respond */}
             <div className="form-group">
-              <div className="form-group__checkbox-wrapper">
-                <input
-                  id="willingToRespond"
-                  type="checkbox"
-                  className="form-group__checkbox"
-                  disabled={isLoading}
-                  {...register('willingToRespond', {
-                    onChange: (e) => {
-                      onWillingToRespondChange?.(e.target.checked)
-                    }
-                  })}
-                />
-                <label htmlFor="willingToRespond" className="form-group__checkbox-label">
-                  ¿La persona está dispuesta a responder la encuesta?
+              <label className="form-group__label">
+                ¿La persona está dispuesta a responder la encuesta?
+              </label>
+              <div className="radio-group">
+                <label className="radio-option">
+                  <input
+                    type="radio"
+                    value="true"
+                    disabled={isLoading}
+                    {...register('willingToRespond', {
+                      onChange: (e) => {
+                        onWillingToRespondChange?.(e.target.value === 'true')
+                      }
+                    })}
+                  />
+                  <span>Sí</span>
+                </label>
+                <label className="radio-option">
+                  <input
+                    type="radio"
+                    value="false"
+                    disabled={isLoading}
+                    {...register('willingToRespond', {
+                      onChange: (e) => {
+                        onWillingToRespondChange?.(e.target.value === 'true')
+                      }
+                    })}
+                  />
+                  <span>No</span>
                 </label>
               </div>
             </div>
@@ -344,24 +375,10 @@ export function SurveyForm({
                 {...register('ageRange')}
               />
 
-              {/* Region and Department - Row */}
+              {/* Region (hidden) and Department */}
+              <input type="hidden" {...register('region')} />
+              
               <div className="survey-form__row">
-                <div className="survey-form__col">
-                  <Select
-                    id="region"
-                    label="Región"
-                    placeholder="Seleccione región"
-                    options={regions.map((region) => ({
-                      value: region.name,
-                      label: region.name,
-                    }))}
-                    disabled={isLoading || loadingRegions}
-                    error={errors.region?.message}
-                    {...register('region')}
-                    onChange={handleRegionChange}
-                  />
-                </div>
-
                 <div className="survey-form__col">
                   <Select
                     id="department"
@@ -377,10 +394,7 @@ export function SurveyForm({
                     onChange={handleDepartmentChange}
                   />
                 </div>
-              </div>
-
-              {/* City and Neighborhood - Row */}
-              <div className="survey-form__row">
+                
                 <div className="survey-form__col">
                   <Select
                     id="city"
@@ -395,19 +409,18 @@ export function SurveyForm({
                     {...register('city')}
                   />
                 </div>
-
-                <div className="survey-form__col">
-                  <Input
-                    id="neighborhood"
-                    type="text"
-                    label="Barrio"
-                    placeholder="Ej: Prado, Villa Country"
-                    disabled={isLoading}
-                    error={errors.neighborhood?.message}
-                    {...register('neighborhood')}
-                  />
-                </div>
               </div>
+
+              {/* Neighborhood - Full Width */}
+              <Input
+                id="neighborhood"
+                type="text"
+                label="Barrio"
+                placeholder="Ej: Prado, Villa Country"
+                disabled={isLoading}
+                error={errors.neighborhood?.message}
+                {...register('neighborhood')}
+              />
             </div>
           )}
 
@@ -435,7 +448,7 @@ export function SurveyForm({
             className="survey-form__button"
             disabled={isLoading}
           >
-            {isLoading ? 'Guardando...' : 'Guardar'}
+            {isLoading ? 'Guardando visita...' : 'Guardar visita'}
           </button>
         </form>
       </div>
