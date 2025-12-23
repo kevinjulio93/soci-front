@@ -93,6 +93,16 @@ export default function ReportsMap() {
       setIsLoading(true)
       const response = await apiService.getRespondents(1, 10000)
       
+      console.log('📊 Total encuestas recibidas:', response.data.length)
+      console.log('📊 Encuestas con location:', response.data.filter(r => r.location).length)
+      console.log('📊 Encuestas con coordenadas no [0,0]:', response.data.filter(r => 
+        r.location && 
+        r.location.coordinates && 
+        r.location.coordinates.length === 2 &&
+        r.location.coordinates[0] !== 0 && 
+        r.location.coordinates[1] !== 0
+      ).length)
+      
       const respondentsWithLocation = filterRespondentsWithLocation(response.data)
       setAllRespondents(respondentsWithLocation)
       setStats(calculateSurveyStats(respondentsWithLocation))

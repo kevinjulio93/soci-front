@@ -13,6 +13,7 @@ export type NoResponseReason = 'no_interest' | 'no_time' | 'not_home' | 'privacy
 export interface RespondentDTO {
   _id?: string
   willingToRespond?: boolean
+  recordingAuthorization?: boolean
   visitAddress?: string
   surveyStatus?: string
   noResponseReason?: string
@@ -41,6 +42,7 @@ export interface RespondentDTO {
 
 export class Respondent {
   private _willingToRespond: boolean
+  private _recordingAuthorization: boolean
   private _visitAddress: string
   private _surveyStatus: SurveyStatus
   private _noResponseReason: NoResponseReason
@@ -63,6 +65,7 @@ export class Respondent {
 
   constructor(
     willingToRespond: boolean = false,
+    recordingAuthorization: boolean = false,
     visitAddress: string = '',
     surveyStatus: SurveyStatus = '',
     noResponseReason: NoResponseReason = '',
@@ -84,6 +87,7 @@ export class Respondent {
     defendorDePatria: boolean = false
   ) {
     this._willingToRespond = willingToRespond
+    this._recordingAuthorization = recordingAuthorization
     this._visitAddress = visitAddress
     this._surveyStatus = surveyStatus
     this._noResponseReason = noResponseReason
@@ -107,6 +111,7 @@ export class Respondent {
 
   // Getters
   get willingToRespond(): boolean { return this._willingToRespond }
+  get recordingAuthorization(): boolean { return this._recordingAuthorization }
   get visitAddress(): string { return this._visitAddress }
   get surveyStatus(): SurveyStatus { return this._surveyStatus }
   get noResponseReason(): NoResponseReason { return this._noResponseReason }
@@ -133,6 +138,7 @@ export class Respondent {
     
     return new Respondent(
       dto.willingToRespond || false,
+      dto.recordingAuthorization || false,
       dto.visitAddress || '',
       (dto.surveyStatus || '') as SurveyStatus,
       noResponseReason,
@@ -157,7 +163,8 @@ export class Respondent {
 
   // Método para convertir a formato de formulario
   toFormData(): {
-    willingToRespond: boolean
+    willingToRespond: boolean | string
+    audioRecordingConsent: boolean | string
     visitAddress: string
     surveyStatus: SurveyStatus
     noResponseReason: NoResponseReason
@@ -179,7 +186,8 @@ export class Respondent {
     defendorDePatria: boolean
   } {
     return {
-      willingToRespond: this._willingToRespond,
+      willingToRespond: this._willingToRespond ? 'true' : 'false',
+      audioRecordingConsent: this._recordingAuthorization ? 'true' : 'false',
       visitAddress: this._visitAddress,
       surveyStatus: this._surveyStatus,
       noResponseReason: this._noResponseReason,
@@ -205,6 +213,7 @@ export class Respondent {
   // Método para convertir a DTO para enviar al backend
   toDTO(): {
     willingToRespond: boolean
+    recordingAuthorization: boolean
     visitAddress: string
     surveyStatus: string
     noResponseReason?: string
@@ -229,6 +238,7 @@ export class Respondent {
   } {
     return {
       willingToRespond: this._willingToRespond,
+      recordingAuthorization: this._recordingAuthorization,
       visitAddress: this._visitAddress,
       surveyStatus: this._surveyStatus,
       noResponseReason: this._noResponseReason || undefined,
@@ -265,6 +275,7 @@ export class Respondent {
   // Método estático para crear desde datos de formulario
   static fromFormData(data: {
     willingToRespond: boolean
+    audioRecordingConsent: boolean
     visitAddress: string
     surveyStatus: SurveyStatus
     noResponseReason: NoResponseReason
@@ -287,6 +298,7 @@ export class Respondent {
   }): Respondent {
     return new Respondent(
       data.willingToRespond,
+      data.audioRecordingConsent,
       data.visitAddress,
       data.surveyStatus,
       data.noResponseReason,

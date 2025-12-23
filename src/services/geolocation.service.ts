@@ -179,7 +179,7 @@ class GeolocationService {
         accuracy: location.accuracy,
       })
     } catch (error) {
-      throw error
+      // Error silencioso para no interrumpir el tracking
     }
   }
 

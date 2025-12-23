@@ -15,6 +15,7 @@ export interface LoginFormProps {
 // SurveyForm types
 export interface SurveyFormData {
   willingToRespond: boolean
+  audioRecordingConsent: boolean
   visitAddress: string
   surveyStatus: 'successful' | 'unsuccessful' | ''
   noResponseReason: 'no_interest' | 'no_time' | 'not_home' | 'privacy_concerns' | 'other' | ''

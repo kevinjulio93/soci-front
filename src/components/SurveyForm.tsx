@@ -48,14 +48,21 @@ export function SurveyForm({
     reset,
   } = useForm<SurveyFormData>({
     mode: 'onBlur',
-    defaultValues: initialData || new Respondent().toFormData(),
+    defaultValues: initialData || {
+      ...new Respondent().toFormData(),
+      willingToRespond: undefined as any, // Sin valor inicial para que el campo esté oculto
+      audioRecordingConsent: undefined as any, // Sin valor inicial para que el campo esté oculto
+    },
   })
 
   // Watch willingToRespond to show/hide noResponseReason field
   const willingToRespondValue = watch('willingToRespond')
+  const audioRecordingConsentValue = watch('audioRecordingConsent')
   // Convert string to boolean for conditional rendering
   const willingToRespond = String(willingToRespondValue) === 'true'
-  const showNoResponseReason = String(willingToRespondValue) === 'false'
+  const showAudioRecordingConsent = willingToRespondValue !== undefined && String(willingToRespondValue) === 'true'
+  // Solo mostrar noResponseReason si explícitamente se seleccionó "false"
+  const showNoResponseReason = willingToRespondValue !== undefined && String(willingToRespondValue) === 'false'
 
 
 
@@ -213,6 +220,50 @@ export function SurveyForm({
                 </label>
               </div>
             </div>
+
+            {/* Audio Recording Consent - Mostrar solo si SÍ está dispuesto */}
+            {showAudioRecordingConsent && (
+              <div className="form-group">
+                <label className="form-group__label">
+                  ¿Autoriza que grabemos el audio de esta entrevista para fines de control de calidad? *
+                </label>
+                <div className="radio-group">
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      value="true"
+                      disabled={isLoading}
+                      {...register('audioRecordingConsent', {
+                        required: showAudioRecordingConsent ? 'Por favor selecciona una opción' : false,
+                        onChange: (e) => {
+                          const consent = e.target.value === 'true'
+                          onWillingToRespondChange?.(consent)
+                        }
+                      })}
+                    />
+                    <span>Sí, autorizo</span>
+                  </label>
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      value="false"
+                      disabled={isLoading}
+                      {...register('audioRecordingConsent', {
+                        required: showAudioRecordingConsent ? 'Por favor selecciona una opción' : false,
+                        onChange: (e) => {
+                          const consent = e.target.value === 'true'
+                          onWillingToRespondChange?.(consent)
+                        }
+                      })}
+                    />
+                    <span>No, no autorizo</span>
+                  </label>
+                </div>
+                {errors.audioRecordingConsent && (
+                  <p className="form-group__error">{errors.audioRecordingConsent.message}</p>
+                )}
+              </div>
+            )}
 
             {/* No Response Reason - Mostrar solo si NO está dispuesto */}
             {showNoResponseReason && (

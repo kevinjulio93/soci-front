@@ -20,6 +20,7 @@ import '../styles/Dashboard.scss'
 
 interface SurveyParticipantData {
   willingToRespond: boolean
+  audioRecordingConsent: boolean
   visitAddress: string
   surveyStatus: 'successful' | 'unsuccessful' | ''
   noResponseReason: 'no_interest' | 'no_time' | 'not_home' | 'privacy_concerns' | 'other' | ''
@@ -94,11 +95,11 @@ export default function SurveyParticipant() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, respondentId])
 
-  // Iniciar grabación solo si viene desde "Nueva Encuesta" y se marca como dispuesto
-  const handleWillingToRespondChange = (willing: boolean) => {
-    if (willing && !editMode && !isRecording) {
+  // Iniciar/detener grabación según el consentimiento de grabación
+  const handleWillingToRespondChange = (audioConsent: boolean) => {
+    if (audioConsent && !editMode && !isRecording) {
       startRecording()
-    } else if (!willing && isRecording) {
+    } else if (!audioConsent && isRecording) {
       stopRecording()
     }
   }
@@ -138,8 +139,13 @@ export default function SurveyParticipant() {
 
       // Detener grabación si está activa y no está en modo edición, y obtener el blob
       let recordedBlob: Blob | null = null
-      if (isRecording && !editMode) {
+      const audioConsent = String(data.audioRecordingConsent) === 'true'
+      if (isRecording && !editMode && audioConsent) {
         recordedBlob = await stopRecording()
+      } else if (isRecording && !audioConsent) {
+        // Detener y descartar la grabación si no hay consentimiento
+        await stopRecording()
+        clearRecording()
       }
 
       // Obtener ubicación actual
@@ -161,6 +167,19 @@ export default function SurveyParticipant() {
       // Convertir willingToRespond de string a boolean si es necesario
       const willingToRespond = String(data.willingToRespond) === 'true'
 
+      // Obtener la razón de no respuesta para usar en los campos vacíos
+      const getNoResponseReasonLabel = () => {
+        const reason = data.noResponseReason as unknown as { label?: string, value?: string }
+        if (reason && typeof reason === 'object' && reason.label) {
+          return reason.label
+        }
+        if (typeof data.noResponseReason === 'string') {
+          return data.noResponseReason
+        }
+        return 'No proporcionado'
+      }
+      const reasonLabel = getNoResponseReasonLabel()
+
       // Crear instancia de Respondent usando POO con ubicación
       const respondent = Respondent.fromFormData({
         ...data,
@@ -171,8 +190,8 @@ export default function SurveyParticipant() {
         ...(!willingToRespond ? {
           visitAddress: `Ubicación GPS: ${latitude}, ${longitude}`,
           surveyStatus: 'unsuccessful' as const,
-          fullName: 'No proporcionado',
-          identification: 'N/A',
+          fullName: reasonLabel,
+          identification: '',
           idType: 'CC' as const,
           email: '',
           phone: '',
@@ -225,8 +244,8 @@ export default function SurveyParticipant() {
         notificationService.success(MESSAGES.RESPONDENT_CREATE_SUCCESS)
       }
 
-      // Subir audio si hay uno y es modo creación
-      if (recordedBlob && !editMode && createdRespondentId) {
+      // Subir audio solo si hay consentimiento, hay blob grabado y es modo creación
+      if (recordedBlob && !editMode && createdRespondentId && audioConsent) {
         try {
           await apiService.uploadAudio(createdRespondentId, recordedBlob)
         } catch {

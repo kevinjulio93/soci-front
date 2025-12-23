@@ -19,9 +19,13 @@ interface SocializerLocation {
   _id: string
   fullName: string
   idNumber: string
+  phone?: string
+  status: string
   user: {
     _id: string
     email: string
+    role?: string
+    status?: string
   }
   coordinator?: {
     _id: string
@@ -35,8 +39,8 @@ interface SocializerLocation {
     longitude: number
     accuracy: number
     timestamp: string
-    speed?: number
-    heading?: number
+    speed?: number | null
+    heading?: number | null
   }
 }
 

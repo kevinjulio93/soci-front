@@ -20,7 +20,7 @@ export { MESSAGES } from './messages'
 export { TITLES, DESCRIPTIONS } from './ui'
 
 // Table Columns
-export { getSurveysTableColumns, getSocializersTableColumns, getRespondentsTableColumns } from './tableColumns'
+export { getSurveysTableColumns, getSocializerSurveysTableColumns, getSocializersTableColumns, getRespondentsTableColumns } from './tableColumns'
 
 // Rutas
 export { ROUTES } from './routes'

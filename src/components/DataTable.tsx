@@ -139,8 +139,10 @@ export function DataTable<T>({
               ) : (
                 data.map((item) => {
                   const itemId = getRowKey(item)
+                  // Verificar si es una fila sin datos (unsuccessful survey)
+                  const isUnsuccessful = 'surveyStatus' in item && item.surveyStatus === 'unsuccessful'
                   return (
-                    <tr key={itemId} className="survey-table__row">
+                    <tr key={itemId} className={`survey-table__row ${isUnsuccessful ? 'survey-table__row--unsuccessful' : ''}`}>
                       {selectable && (
                         <td className="survey-table__td survey-table__td--checkbox">
                           <input

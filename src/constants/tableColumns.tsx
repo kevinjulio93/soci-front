@@ -8,6 +8,31 @@ import type { RespondentData } from '../models/ApiResponses'
 import type { Survey, Socializer } from '../types'
 import { getAvatarColor, getInitials, getFirstName } from '../utils'
 
+// Helper para obtener la razón de no respuesta
+const getNoResponseReason = (survey: RespondentData): string => {
+  // Intentar obtener de noResponseReason
+  if (survey.noResponseReason) {
+    const noResponse = survey.noResponseReason as unknown as { label?: string, value?: string }
+    if (typeof noResponse === 'object' && noResponse !== null && noResponse.label) {
+      return noResponse.label
+    }
+    if (typeof survey.noResponseReason === 'string') {
+      return survey.noResponseReason
+    }
+  }
+  // Intentar obtener de rejectionReason
+  if (survey.rejectionReason) {
+    const rejection = survey.rejectionReason as unknown as { label?: string, value?: string }
+    if (typeof rejection === 'object' && rejection !== null && rejection.label) {
+      return rejection.label
+    }
+    if (typeof survey.rejectionReason === 'string') {
+      return survey.rejectionReason
+    }
+  }
+  return 'No especificada'
+}
+
 // Helper para traducir roles al español
 const translateRole = (role: string): string => {
   const roleMap: Record<string, string> = {
@@ -31,19 +56,38 @@ export const getSurveysTableColumns = (
   {
     key: 'name',
     header: 'ENCUESTADO',
-    render: (survey) => (
-      <div className="respondent">
-        <div
-          className="respondent__avatar"
-          style={{ backgroundColor: getAvatarColor(survey.fullName) }}
-        >
-          {getInitials(survey.fullName)}
+    render: (survey) => {
+      // Determinar si es una encuesta no respondida
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      const reason = getNoResponseReason(survey)
+      const displayName = isUnsuccessful ? '' : getFirstName(survey.fullName)
+      const tooltipText = isUnsuccessful ? reason : survey.fullName
+      
+      return (
+        <div className="respondent" title={tooltipText}>
+          <div
+            className="respondent__avatar"
+            style={{ backgroundColor: getAvatarColor(survey.fullName) }}
+            title={tooltipText}
+          >
+            {getInitials(survey.fullName)}
+          </div>
+          <div className="respondent__details" title={tooltipText}>
+            {isUnsuccessful ? (
+              <span 
+                className="respondent__reason" 
+                style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 600, display: 'block' }}
+                title={reason}
+              >
+                {reason}
+              </span>
+            ) : (
+              <span className="respondent__name" title={tooltipText}>{displayName}</span>
+            )}
+          </div>
         </div>
-        <div className="respondent__details">
-          <span className="respondent__name">{getFirstName(survey.fullName)}</span>
-        </div>
-      </div>
-    ),
+      )
+    },
     className: 'survey-table__td--respondent'
   },
   {
@@ -62,29 +106,39 @@ export const getSurveysTableColumns = (
   {
     key: 'idType',
     header: 'TIPO ID',
-    render: (survey) => (
-      <span className="id-type">{survey.idType || <span className="badge badge-empty">—</span>}</span>
-    )
+    render: (survey) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      return (
+        <span className="id-type">{survey.idType || <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>}</span>
+      )
+    }
   },
-  {
-    key: 'identification',
+  {  key: 'identification',
     header: 'N° IDENTIFICACIÓN',
-    render: (survey) => (
-      <span className="id-number">{survey.identification || <span className="badge badge-empty">—</span>}</span>
-    )
+    render: (survey) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      if (!survey.identification) {
+        return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      }
+      return <span className="id-number">{survey.identification}</span>
+    }
   },
   {
     key: 'contact',
     header: 'TELÉFONO',
-    render: (survey) => (
-      <span className="contact-phone">{survey.phone || <span className="badge badge-empty">—</span>}</span>
-    )
+    render: (survey) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      return (
+        <span className="contact-phone">{survey.phone || <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>}</span>
+      )
+    }
   },
   {
     key: 'gender',
     header: 'GÉNERO',
     render: (survey) => {
-      if (!survey.gender) return <span className="badge badge-empty">—</span>
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      if (!survey.gender) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
       const genderClass = survey.gender?.toLowerCase() === 'masculino' ? 'badge-blue' : 
                           survey.gender?.toLowerCase() === 'femenino' ? 'badge-pink' : 'badge-gray'
       return (
@@ -98,7 +152,8 @@ export const getSurveysTableColumns = (
     key: 'age',
     header: 'EDAD',
     render: (survey) => {
-      if (!survey.ageRange) return <span className="badge badge-empty">—</span>
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      if (!survey.ageRange) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
       const getAgeClass = (range: string) => {
         if (range?.includes('18-25')) return 'badge-green'
         if (range?.includes('26-35')) return 'badge-teal'
@@ -114,7 +169,8 @@ export const getSurveysTableColumns = (
     key: 'stratum',
     header: 'ESTRATO',
     render: (survey) => {
-      if (!survey.stratum) return <span className="badge badge-empty">—</span>
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      if (!survey.stratum) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
       const getStratumClass = (stratum: number) => {
         if (stratum <= 2) return 'badge-red'
         if (stratum <= 4) return 'badge-yellow'
@@ -160,6 +216,175 @@ export const getSurveysTableColumns = (
         )}
       </div>
     )
+  }
+]
+
+// Columnas para tabla de encuestas en dashboard de socializador (con editar en lugar de ver detalles)
+export const getSocializerSurveysTableColumns = (
+  formatDate: (dateString: string) => string,
+  handleEditSurvey: (id: string) => void
+): TableColumn<RespondentData>[] => [
+  {
+    key: 'name',
+    header: 'ENCUESTADO',
+    render: (survey) => {
+      // Determinar si es una encuesta no respondida
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      const reason = getNoResponseReason(survey)
+      const displayName = isUnsuccessful ? '' : getFirstName(survey.fullName)
+      const tooltipText = isUnsuccessful ? reason : survey.fullName
+      
+      return (
+        <div className="respondent" title={tooltipText}>
+          <div
+            className="respondent__avatar"
+            style={{ backgroundColor: getAvatarColor(survey.fullName) }}
+            title={tooltipText}
+          >
+            {getInitials(survey.fullName)}
+          </div>
+          <div className="respondent__details" title={tooltipText}>
+            {isUnsuccessful ? (
+              <span 
+                className="respondent__reason" 
+                style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 600, display: 'block' }}
+                title={reason}
+              >
+                {reason}
+              </span>
+            ) : (
+              <span className="respondent__name" title={tooltipText}>{displayName}</span>
+            )}
+          </div>
+        </div>
+      )
+    },
+    className: 'survey-table__td--respondent'
+  },
+  {
+    key: 'author',
+    header: 'AUTOR',
+    render: (survey) => {
+      const authorEmail = survey.autor?.email
+      
+      return (
+        <div className="contact-info">
+          <span className="contact-email">{authorEmail || <span className="text-muted">—</span>}</span>
+        </div>
+      )
+    }
+  },
+  {
+    key: 'idType',
+    header: 'TIPO ID',
+    render: (survey) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      return (
+        <span className="id-type">{survey.idType || <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>}</span>
+      )
+    }
+  },
+  {  key: 'identification',
+    header: 'N° IDENTIFICACIÓN',
+    render: (survey) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      if (!survey.identification) {
+        return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      }
+      return <span className="id-number">{survey.identification}</span>
+    }
+  },
+  {
+    key: 'contact',
+    header: 'TELÉFONO',
+    render: (survey) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      return (
+        <span className="contact-phone">{survey.phone || <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>}</span>
+      )
+    }
+  },
+  {
+    key: 'gender',
+    header: 'GÉNERO',
+    render: (survey) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      if (!survey.gender) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      const genderClass = survey.gender?.toLowerCase() === 'masculino' ? 'badge-blue' : 
+                          survey.gender?.toLowerCase() === 'femenino' ? 'badge-pink' : 'badge-gray'
+      return (
+        <span className={`badge ${genderClass}`}>
+          {survey.gender}
+        </span>
+      )
+    }
+  },
+  {
+    key: 'age',
+    header: 'EDAD',
+    render: (survey) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      if (!survey.ageRange) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      const getAgeClass = (range: string) => {
+        if (range?.includes('18-25')) return 'badge-green'
+        if (range?.includes('26-35')) return 'badge-teal'
+        if (range?.includes('36-45')) return 'badge-orange'
+        if (range?.includes('46-60')) return 'badge-purple'
+        if (range?.includes('60')) return 'badge-brown'
+        return 'badge-gray'
+      }
+      return <span className={`badge ${getAgeClass(survey.ageRange)}`}>{survey.ageRange}</span>
+    }
+  },
+  {
+    key: 'stratum',
+    header: 'ESTRATO',
+    render: (survey) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      if (!survey.stratum) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      const getStratumClass = (stratum: number) => {
+        if (stratum <= 2) return 'badge-red'
+        if (stratum <= 4) return 'badge-yellow'
+        return 'badge-indigo'
+      }
+      return (
+        <span className={`badge ${getStratumClass(survey.stratum)}`}>
+          Estrato {survey.stratum}
+        </span>
+      )
+    }
+  },
+  {
+    key: 'date',
+    header: 'FECHA',
+    render: (survey) => formatDate(survey.createdAt),
+    className: 'survey-table__td--date'
+  },
+  {
+    key: 'actions' as const,
+    header: 'ACCIONES',
+    render: (survey: RespondentData) => {
+      const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+      
+      // Si es unsuccessful, no mostrar ninguna acción
+      if (isUnsuccessful) {
+        return <div className="action-buttons"></div>
+      }
+      
+      return (
+        <div className="action-buttons">
+          <span
+            className="action-icon action-icon--edit"
+            onClick={() => handleEditSurvey(survey._id)}
+            title="Editar encuesta"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            </svg>
+          </span>
+        </div>
+      )
+    }
   }
 ]
 
@@ -334,7 +559,7 @@ export const getRespondentsTableColumns = (
           {getInitials(survey.title)}
         </div>
         <div className="respondent__details">
-          <span className="respondent__name">{getFirstName(survey.title)}</span>
+          <span className="respondent__name">{ survey.title }</span>
         </div>
       </div>
     ),

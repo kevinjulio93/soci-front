@@ -699,6 +699,15 @@
     &:last-child {
       border-bottom: none;
     }
+
+    // Modifier: .survey-table__row--unsuccessful (filas sin datos)
+    &--unsuccessful {
+      background-color: #fef2f2; // Rojo muy claro para filas sin datos
+
+      &:hover {
+        background-color: #fee2e2; // Rojo ligeramente más oscuro en hover
+      }
+    }
   }
 
   // Element: .survey-table__td
@@ -720,12 +729,12 @@
     // Modifier: .survey-table__td--respondent
     &--respondent {
       padding: $spacing-md $spacing-lg;
-      width: 180px;
-      max-width: 180px;
+      width: 300px;
+      max-width: 300px;
 
       @media (max-width: 768px) {
-        width: 120px;
-        max-width: 120px;
+        width: 160px;
+        max-width: 160px;
         padding: $spacing-xs $spacing-sm;
       }
     }
@@ -981,12 +990,24 @@
     display: flex;
     flex-direction: column;
     gap: $spacing-xs;
+    min-width: 0; // Permite que los hijos se encojan
+    flex: 1;
   }
 
   // Element: .respondent__name
   &__name {
     font-weight: $font-weight-semibold;
     color: $color-dark-text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // Element: .respondent__reason
+  &__reason {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
