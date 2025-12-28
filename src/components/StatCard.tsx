@@ -6,7 +6,7 @@
 import type { ReactNode } from 'react'
 
 export interface StatCardProps {
-  icon: ReactNode
+  icon?: ReactNode
   value: number | string
   label: string
   variant?: 'default' | 'primary' | 'success' | 'danger' | 'warning'

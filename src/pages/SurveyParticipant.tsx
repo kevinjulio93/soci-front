@@ -155,13 +155,15 @@ export default function SurveyParticipant() {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             enableHighAccuracy: true,
-            timeout: 5000,
+            timeout: 10000,
             maximumAge: 0
           })
         })
         latitude = position.coords.latitude
         longitude = position.coords.longitude
-      } catch {
+      } catch (error) {
+        console.warn('No se pudo obtener la ubicación GPS:', error)
+        notificationService.warning('No se pudo obtener la ubicación GPS. La encuesta se guardará sin coordenadas.')
       }
 
       // Convertir willingToRespond de string a boolean si es necesario

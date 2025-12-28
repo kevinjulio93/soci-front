@@ -14,7 +14,6 @@ import {
   AGE_RANGE_OPTIONS,
   STRATUM_OPTIONS,
   NO_RESPONSE_REASONS,
-  EXTERNAL_URLS,
 } from '../constants'
 import { Respondent } from '../models/Respondent'
 import type { SurveyFormData, SurveyFormProps } from './types'

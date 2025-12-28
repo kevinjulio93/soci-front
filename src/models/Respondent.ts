@@ -256,8 +256,8 @@ export class Respondent {
       city: this._city || undefined,
       stratum: this._stratum || undefined,
       neighborhood: this._neighborhood || undefined,
-      latitude: this._latitude || undefined,
-      longitude: this._longitude || undefined,
+      latitude: this._latitude !== 0 ? this._latitude : undefined,
+      longitude: this._longitude !== 0 ? this._longitude : undefined,
       defendorDePatria: this._defendorDePatria,
       isPatriaDefender: this._defendorDePatria,
     }

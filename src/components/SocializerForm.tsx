@@ -10,6 +10,7 @@ import { apiService } from '../services/api.service'
 import { useAuth } from '../contexts/AuthContext'
 import type { SocializerFormProps } from './types'
 import { Input, Select } from './index'
+import { translateRole } from '../utils'
 import '../styles/SurveyForm.scss'
 
 export function SocializerForm({
@@ -89,21 +90,6 @@ export function SocializerForm({
           role.role === 'socializer' || 
           role.role === 'socializador'
         )
-      }
-      
-      // Función para traducir roles al español
-      const translateRole = (role: string): string => {
-        const roleMap: Record<string, string> = {
-          'admin': 'Administrador',
-          'coordinator': 'Supervisor',
-          'coordinador': 'Supervisor',
-          'supervisor': 'Supervisor',
-          'socializer': 'Socializador',
-          'socializador': 'Socializador',
-          'readonly': 'Solo Lectura',
-          'root': 'Root'
-        }
-        return roleMap[role.toLowerCase()] || role
       }
       
       // Traducir roles sin filtrar ni limitar la cantidad
