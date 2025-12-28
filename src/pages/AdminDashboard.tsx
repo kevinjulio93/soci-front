@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { Sidebar } from '../components'
+import { Sidebar, StatCard, LoadingState, EmptyState, MenuIcon } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { MESSAGES } from '../constants'
@@ -57,9 +57,7 @@ export default function AdminDashboard() {
             className="dashboard-layout__menu-btn"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <MenuIcon size={24} />
           </button>
           <h1 className="dashboard-layout__title">Dashboard Administrativo</h1>
         </div>
@@ -75,24 +73,20 @@ export default function AdminDashboard() {
           </div>
 
           {isLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
-              <div className="loading-spinner"></div>
-            </div>
+            <LoadingState message="Cargando estadísticas..." />
           ) : (
             <>
               <div className="stats-grid">
-                <div className="stat-card">
-                  <div className="stat-card__icon stat-card__icon--primary">
+                <StatCard 
+                  icon={(
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                  </div>
-                  <div className="stat-card__content">
-                    <h3 className="stat-card__title">Total Encuestas</h3>
-                    <p className="stat-card__value">{totalSurveys.toLocaleString()}</p>
-                    <p className="stat-card__description">Encuestas registradas en el sistema</p>
-                  </div>
-                </div>
+                  )}
+                  value={totalSurveys.toLocaleString()}
+                  label="Total Encuestas"
+                  variant="primary"
+                />
               </div>
 
               <div className="dashboard__section" style={{ marginTop: '2rem' }}>
@@ -126,9 +120,10 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                   {topSocializers.length === 0 && (
-                    <div className="ranking-empty">
-                      <p>No hay datos disponibles</p>
-                    </div>
+                    <EmptyState 
+                      title="No hay datos disponibles"
+                      description="Aún no se han registrado socializadores"
+                    />
                   )}
                 </div>
               </div>

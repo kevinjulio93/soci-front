@@ -35,7 +35,7 @@ interface DataTableProps<T> {
   onSelectionChange?: (selectedIds: Set<string>) => void
 }
 
-export function DataTable<T>({
+export function DataTable<T extends Record<string, any>>({
   columns,
   data,
   currentPage,
@@ -140,7 +140,7 @@ export function DataTable<T>({
                 data.map((item) => {
                   const itemId = getRowKey(item)
                   // Verificar si es una fila sin datos (unsuccessful survey)
-                  const isUnsuccessful = 'surveyStatus' in item && item.surveyStatus === 'unsuccessful'
+                  const isUnsuccessful = 'surveyStatus' in (item as object) && (item as any).surveyStatus === 'unsuccessful'
                   return (
                     <tr key={itemId} className={`survey-table__row ${isUnsuccessful ? 'survey-table__row--unsuccessful' : ''}`}>
                       {selectable && (

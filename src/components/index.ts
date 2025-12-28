@@ -27,5 +27,16 @@ export { DateInput } from './DateInput'
 export { Textarea } from './Textarea'
 export { FormGroup } from './FormGroup'
 
+// UI Components
+export { StatCard } from './StatCard'
+export { EmptyState } from './EmptyState'
+export { LoadingState } from './LoadingState'
+export { MapPopup } from './MapPopup'
+export * from './Icons'
+
 export type { TableColumn } from './DataTable'
 export type { ToastType, ToastProps } from './Toast'
+export type { StatCardProps } from './StatCard'
+export type { EmptyStateProps } from './EmptyState'
+export type { LoadingStateProps } from './LoadingState'
+export type { MapPopupProps, MapPopupField } from './MapPopup'

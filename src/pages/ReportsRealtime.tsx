@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Icon } from 'leaflet'
-import { Sidebar } from '../components'
+import { Sidebar, StatCard, LoadingState, EmptyState, MapPopup, MenuIcon, RefreshIcon, BackIcon } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { useAuth } from '../contexts/AuthContext'
@@ -155,14 +155,10 @@ export default function ReportsRealtime() {
             className="dashboard-layout__menu-btn"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <MenuIcon size={24} />
           </button>
           <button className="btn-back" onClick={handleBackToReports}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <BackIcon size={20} />
           </button>
           <h1 className="dashboard-layout__title">Reportes - Ubicaciones en Tiempo Real</h1>
         </div>
@@ -175,56 +171,42 @@ export default function ReportsRealtime() {
           )}
 
           {isLoading && socializers.length === 0 ? (
-            <div className="loading-state">
-              <div className="spinner"></div>
-              <p>Cargando ubicaciones de socializadores...</p>
-            </div>
+            <LoadingState message={MESSAGES.LOADING_LOCATIONS} />
           ) : socializers.length === 0 && !isLoading ? (
-            <div className="empty-state">
-              <div className="empty-state__icon">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-              </div>
-              <h2 className="empty-state__title">
-                No hay ubicaciones disponibles
-              </h2>
-              <p className="empty-state__description">
-                Los socializadores aún no han compartido su ubicación o no hay socializadores activos en este momento.
-              </p>
-              <button 
-                className="btn btn--primary"
-                onClick={loadSocializers}
-                style={{ marginTop: '1.5rem' }}
-              >
-                🔄 Intentar nuevamente
-              </button>
-            </div>
+            <EmptyState 
+              title={MESSAGES.EMPTY_LOCATIONS_TITLE}
+              description={MESSAGES.EMPTY_LOCATIONS_DESC}
+              action={{
+                label: MESSAGES.BTN_TRY_AGAIN,
+                onClick: loadSocializers
+              }}
+            />
           ) : (
             <div className="reports-realtime">
               <div className="reports-realtime__header">
                 <div className="reports-realtime__stats">
-                  <div className="stat-card">
-                    <div className="stat-card__value">{socializersWithLocation.length}</div>
-                    <div className="stat-card__label">Con ubicación</div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-card__value">{socializersWithoutLocation.length}</div>
-                    <div className="stat-card__label">Sin ubicación</div>
-                  </div>
-                  <div className="stat-card">
-                    <div className="stat-card__value">{socializers.length}</div>
-                    <div className="stat-card__label">Total socializadores</div>
-                  </div>
+                  <StatCard 
+                    value={socializersWithLocation.length.toString()}
+                    label="Con ubicación"
+                    variant="success"
+                  />
+                  <StatCard 
+                    value={socializersWithoutLocation.length.toString()}
+                    label="Sin ubicación"
+                    variant="warning"
+                  />
+                  <StatCard 
+                    value={socializers.length.toString()}
+                    label="Total socializadores"
+                    variant="primary"
+                  />
                 </div>
                 <button 
                   className="btn btn--refresh"
                   onClick={loadSocializers}
                   disabled={isLoading}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
+                  <RefreshIcon size={16} />
                   {isLoading ? 'Actualizando...' : 'Actualizar'}
                 </button>
               </div>
@@ -253,58 +235,28 @@ export default function ReportsRealtime() {
                             icon={defaultIcon}
                           >
                           <Popup>
-                            <div className="map-popup">
-                              <h4 className="map-popup__title">{socializer.fullName}</h4>
-                              <p className="map-popup__info">
-                                <strong>ID:</strong> {socializer.idNumber}
-                              </p>
-                              <p className="map-popup__info">
-                                <strong>Email:</strong> {socializer.user.email}
-                              </p>
-                              {socializer.coordinator && (
-                                <p className="map-popup__info">
-                                  <strong>Supervisor:</strong> {socializer.coordinator.fullName}
-                                </p>
-                              )}
-                              <p className="map-popup__info">
-                                <strong>Coordenadas:</strong><br />
-                                Lat: {socializer.latestLocation!.latitude?.toFixed(6) || 'N/A'}<br />
-                                Long: {socializer.latestLocation!.longitude?.toFixed(6) || 'N/A'}
-                              </p>
-                              {socializer.latestLocation!.accuracy != null && (
-                                <p className="map-popup__info">
-                                  <strong>Precisión:</strong> ±{socializer.latestLocation!.accuracy.toFixed(1)}m
-                                </p>
-                              )}
-                              {socializer.latestLocation!.speed != null && (
-                                <p className="map-popup__info">
-                                  <strong>Velocidad:</strong> {socializer.latestLocation!.speed.toFixed(1)} m/s
-                                </p>
-                              )}
-                              <p className="map-popup__info">
-                                <strong>Última actualización:</strong><br />
-                                {formatDate(socializer.latestLocation!.timestamp)}
-                              </p>
-                            </div>
+                            <MapPopup 
+                              title={socializer.fullName}
+                              fields={[
+                                { label: 'ID', value: socializer.idNumber },
+                                { label: 'Email', value: socializer.user.email },
+                                ...(socializer.coordinator ? [{ label: 'Supervisor', value: socializer.coordinator.fullName }] : []),
+                                { label: 'Coordenadas', value: `Lat: ${socializer.latestLocation!.latitude?.toFixed(6) || 'N/A'}\nLong: ${socializer.latestLocation!.longitude?.toFixed(6) || 'N/A'}` },
+                                ...(socializer.latestLocation!.accuracy != null ? [{ label: 'Precisión', value: `±${socializer.latestLocation!.accuracy.toFixed(1)}m` }] : []),
+                                ...(socializer.latestLocation!.speed != null ? [{ label: 'Velocidad', value: `${socializer.latestLocation!.speed.toFixed(1)} m/s` }] : []),
+                                { label: 'Última actualización', value: formatDate(socializer.latestLocation!.timestamp) }
+                              ]}
+                            />
                           </Popup>
                         </Marker>
                       ))}
                   </MapContainer>
                 </div>
               ) : (
-                <div className="empty-state">
-                  <div className="empty-state__icon">
-                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                    </svg>
-                  </div>
-                  <h2 className="empty-state__title">
-                    No se encontraron ubicaciones
-                  </h2>
-                  <p className="empty-state__description">
-                    Ningún socializador tiene ubicación registrada en este momento.
-                  </p>
-                </div>
+                <EmptyState 
+                  title={MESSAGES.EMPTY_NO_LOCATION_FOUND}
+                  description={MESSAGES.EMPTY_NO_LOCATION_DESC}
+                />
               )}
             </div>
           </div>

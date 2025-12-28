@@ -89,10 +89,6 @@ export default function SociologistDashboard() {
     })
   }
 
-  const handleCloseDetailModal = () => {
-    // Ya no se usa, pero mantengo la función por si acaso
-  }
-
   const handleLogout = async () => {
     try {
       // Limpiar localStorage

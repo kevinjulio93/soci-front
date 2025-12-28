@@ -57,7 +57,6 @@ export function SurveyForm({
 
   // Watch willingToRespond to show/hide noResponseReason field
   const willingToRespondValue = watch('willingToRespond')
-  const audioRecordingConsentValue = watch('audioRecordingConsent')
   // Convert string to boolean for conditional rendering
   const willingToRespond = String(willingToRespondValue) === 'true'
   const showAudioRecordingConsent = willingToRespondValue !== undefined && String(willingToRespondValue) === 'true'
@@ -164,7 +163,7 @@ export function SurveyForm({
           <div className="survey-form__video-section">
               <video
               className="survey-form__video"
-              src={EXTERNAL_URLS.VIDEO_INTRO}
+              src={videoUrl}
               controls
             />
           </div>

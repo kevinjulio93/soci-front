@@ -5,8 +5,7 @@
 
 export const EXTERNAL_URLS = {
   // Videos
-  VIDEO_TUTORIAL: import.meta.env.VITE_VIDEO_TUTORIAL_URL || 'https://www.youtube.com/embed/Y5M2EsGqJbI?si=BBTaXX0lPCn_TW9O',
-  VIDEO_INTRO: 'https://storage.googleapis.com/soci_example_video/video/video_intro.mp4',
+  VIDEO_TUTORIAL: import.meta.env.VITE_VIDEO_TUTORIAL_URL || 'https://res.cloudinary.com/dfnlxed2w/video/upload/v1766900429/video_qzcjjq.mp4',
   
   // API
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'https://82f60cf02a72.ngrok-free.app/api/v1',
@@ -26,8 +25,8 @@ export const EXTERNAL_URLS = {
   GOOGLE_MAPS_QUERY: (lat: number, lng: number) => `${EXTERNAL_URLS.GOOGLE_MAPS_BASE}?q=${lat},${lng}`,
   
   // WhatsApp
-  WHATSAPP_GROUP_LINK: 'https://chat.whatsapp.com/Dgpes5oRjI9DEowXrx0G0w',
-  WHATSAPP_QR_CODE: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://chat.whatsapp.com/Dgpes5oRjI9DEowXrx0G0w',
+  WHATSAPP_GROUP_LINK: 'https://group.wha.link/eV76Wa',
+  WHATSAPP_QR_CODE: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://group.wha.link/eV76Wa',
 } as const
 
 /**

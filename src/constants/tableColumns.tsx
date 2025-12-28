@@ -6,47 +6,7 @@
 import type { TableColumn } from '../components'
 import type { RespondentData } from '../models/ApiResponses'
 import type { Survey, Socializer } from '../types'
-import { getAvatarColor, getInitials, getFirstName } from '../utils'
-
-// Helper para obtener la razón de no respuesta
-const getNoResponseReason = (survey: RespondentData): string => {
-  // Intentar obtener de noResponseReason
-  if (survey.noResponseReason) {
-    const noResponse = survey.noResponseReason as unknown as { label?: string, value?: string }
-    if (typeof noResponse === 'object' && noResponse !== null && noResponse.label) {
-      return noResponse.label
-    }
-    if (typeof survey.noResponseReason === 'string') {
-      return survey.noResponseReason
-    }
-  }
-  // Intentar obtener de rejectionReason
-  if (survey.rejectionReason) {
-    const rejection = survey.rejectionReason as unknown as { label?: string, value?: string }
-    if (typeof rejection === 'object' && rejection !== null && rejection.label) {
-      return rejection.label
-    }
-    if (typeof survey.rejectionReason === 'string') {
-      return survey.rejectionReason
-    }
-  }
-  return 'No especificada'
-}
-
-// Helper para traducir roles al español
-const translateRole = (role: string): string => {
-  const roleMap: Record<string, string> = {
-    'admin': 'Administrador',
-    'coordinator': 'Supervisor',
-    'coordinador': 'Supervisor',
-    'supervisor': 'Supervisor',
-    'socializer': 'Socializador',
-    'socializador': 'Socializador',
-    'readonly': 'Solo Lectura',
-    'root': 'Root'
-  }
-  return roleMap[role.toLowerCase()] || role
-}
+import { getAvatarColor, getInitials, getFirstName, translateRole, getRejectionReasonLabel } from '../utils'
 
 export const getSurveysTableColumns = (
   formatDate: (dateString: string) => string,
@@ -59,7 +19,7 @@ export const getSurveysTableColumns = (
     render: (survey) => {
       // Determinar si es una encuesta no respondida
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-      const reason = getNoResponseReason(survey)
+      const reason = getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason)
       const displayName = isUnsuccessful ? '' : getFirstName(survey.fullName)
       const tooltipText = isUnsuccessful ? reason : survey.fullName
       
@@ -109,7 +69,7 @@ export const getSurveysTableColumns = (
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
       return (
-        <span className="id-type">{survey.idType || <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>}</span>
+        <span className="id-type">{survey.idType || <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>}</span>
       )
     }
   },
@@ -118,7 +78,7 @@ export const getSurveysTableColumns = (
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
       if (!survey.identification) {
-        return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+        return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
       }
       return <span className="id-number">{survey.identification}</span>
     }
@@ -129,7 +89,7 @@ export const getSurveysTableColumns = (
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
       return (
-        <span className="contact-phone">{survey.phone || <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>}</span>
+        <span className="contact-phone">{survey.phone || <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>}</span>
       )
     }
   },
@@ -138,7 +98,7 @@ export const getSurveysTableColumns = (
     header: 'GÉNERO',
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-      if (!survey.gender) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      if (!survey.gender) return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
       const genderClass = survey.gender?.toLowerCase() === 'masculino' ? 'badge-blue' : 
                           survey.gender?.toLowerCase() === 'femenino' ? 'badge-pink' : 'badge-gray'
       return (
@@ -153,7 +113,7 @@ export const getSurveysTableColumns = (
     header: 'EDAD',
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-      if (!survey.ageRange) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      if (!survey.ageRange) return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
       const getAgeClass = (range: string) => {
         if (range?.includes('18-25')) return 'badge-green'
         if (range?.includes('26-35')) return 'badge-teal'
@@ -170,7 +130,7 @@ export const getSurveysTableColumns = (
     header: 'ESTRATO',
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-      if (!survey.stratum) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      if (!survey.stratum) return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
       const getStratumClass = (stratum: number) => {
         if (stratum <= 2) return 'badge-red'
         if (stratum <= 4) return 'badge-yellow'
@@ -230,7 +190,7 @@ export const getSocializerSurveysTableColumns = (
     render: (survey) => {
       // Determinar si es una encuesta no respondida
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-      const reason = getNoResponseReason(survey)
+      const reason = getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason)
       const displayName = isUnsuccessful ? '' : getFirstName(survey.fullName)
       const tooltipText = isUnsuccessful ? reason : survey.fullName
       
@@ -280,7 +240,7 @@ export const getSocializerSurveysTableColumns = (
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
       return (
-        <span className="id-type">{survey.idType || <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>}</span>
+        <span className="id-type">{survey.idType || <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>}</span>
       )
     }
   },
@@ -289,7 +249,7 @@ export const getSocializerSurveysTableColumns = (
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
       if (!survey.identification) {
-        return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+        return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
       }
       return <span className="id-number">{survey.identification}</span>
     }
@@ -300,7 +260,7 @@ export const getSocializerSurveysTableColumns = (
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
       return (
-        <span className="contact-phone">{survey.phone || <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>}</span>
+        <span className="contact-phone">{survey.phone || <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>}</span>
       )
     }
   },
@@ -309,7 +269,7 @@ export const getSocializerSurveysTableColumns = (
     header: 'GÉNERO',
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-      if (!survey.gender) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      if (!survey.gender) return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
       const genderClass = survey.gender?.toLowerCase() === 'masculino' ? 'badge-blue' : 
                           survey.gender?.toLowerCase() === 'femenino' ? 'badge-pink' : 'badge-gray'
       return (
@@ -324,7 +284,7 @@ export const getSocializerSurveysTableColumns = (
     header: 'EDAD',
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-      if (!survey.ageRange) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      if (!survey.ageRange) return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
       const getAgeClass = (range: string) => {
         if (range?.includes('18-25')) return 'badge-green'
         if (range?.includes('26-35')) return 'badge-teal'
@@ -341,7 +301,7 @@ export const getSocializerSurveysTableColumns = (
     header: 'ESTRATO',
     render: (survey) => {
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-      if (!survey.stratum) return <span className="badge badge-empty">{isUnsuccessful ? getNoResponseReason(survey) : '—'}</span>
+      if (!survey.stratum) return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
       const getStratumClass = (stratum: number) => {
         if (stratum <= 2) return 'badge-red'
         if (stratum <= 4) return 'badge-yellow'

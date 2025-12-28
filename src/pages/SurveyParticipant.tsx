@@ -82,7 +82,7 @@ export default function SurveyParticipant() {
       
       // Usar directamente response.data (debería tener todas las propiedades)
       const respondent = Respondent.fromDTO(response.data)
-      setInitialData(respondent.toFormData())
+      setInitialData(respondent.toFormData() as unknown as SurveyParticipantData)
     } catch (err) {
       notificationService.handleApiError(err, MESSAGES.RESPONDENT_LOAD_ERROR)
     } finally {

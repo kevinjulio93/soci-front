@@ -101,6 +101,51 @@ export const MESSAGES = {
   TOOLTIP_VIEW_DETAILS: 'Ver detalles',
   TOOLTIP_VIEW_LOCATION: 'Ver ubicación',
   TOOLTIP_REFRESH: 'Actualizar ubicación',
+  
+  // Mapas
+  MAP_SUCCESSFUL_STATUS: 'Exitosa',
+  MAP_UNSUCCESSFUL_STATUS: 'Rechazada',
+  MAP_NO_PROVIDED: 'No proporcionado',
+  MAP_NO_SPECIFIED: 'No especificada',
+  MAP_STATE_LABEL: 'Estado',
+  MAP_REASON_LABEL: 'Razón',
+  MAP_NEIGHBORHOOD_LABEL: 'Barrio',
+  MAP_DATE_LABEL: 'Fecha',
+  MAP_COORDINATES_LABEL: 'Coordenadas',
+  MAP_PRECISION_LABEL: 'Precisión',
+  MAP_SPEED_LABEL: 'Velocidad',
+  MAP_LAST_UPDATE_LABEL: 'Última actualización',
+  
+  // Empty States
+  EMPTY_NO_SURVEYS: 'No hay encuestas con ubicación registrada',
+  EMPTY_NO_LOCATIONS: 'No hay ubicaciones disponibles',
+  EMPTY_LOCATIONS_TITLE: 'No hay ubicaciones disponibles',
+  EMPTY_LOCATIONS_DESC: 'Los socializadores aún no han compartido su ubicación o no hay socializadores activos en este momento.',
+  EMPTY_NO_LOCATIONS_DESC: 'Los socializadores aún no han compartido su ubicación o no hay socializadores activos en este momento.',
+  EMPTY_NO_LOCATION_FOUND: 'No se encontraron ubicaciones',
+  EMPTY_NO_LOCATION_DESC: 'Ningún socializador tiene ubicación registrada en este momento.',
+  
+  // Loading States
+  LOADING_LOCATIONS: 'Cargando ubicaciones de socializadores...',
+  
+  // Dashboard
+  DASHBOARD_WELCOME: '¡Bienvenido, {email}!',
+  DASHBOARD_SUMMARY: 'Resumen general del sistema',
+  
+  // Buttons Labels
+  BTN_RETRY: 'Intentar nuevamente',
+  BTN_TRY_AGAIN: '🔄 Intentar nuevamente',
+  BTN_REFRESH_LOCATION: 'Actualizar',
+  BTN_UPDATING: 'Actualizando...',
+  BTN_SAVING_VISIT: 'Guardando visita...',
+  BTN_SAVE_VISIT: 'Guardar visita',
+  
+  // Stats
+  STATS_WITH_LOCATION: 'Con ubicación',
+  STATS_WITHOUT_LOCATION: 'Sin ubicación',
+  STATS_TOTAL_SOCIALIZERS: 'Total socializadores',
+  STATS_SUCCESSFUL: 'Exitosas',
+  STATS_REJECTED: 'Rechazadas',
   TOOLTIP_OPEN_MAPS: 'Abrir en Google Maps',
   TOOLTIP_PLAY_AUDIO: 'Reproducir audio',
   TOOLTIP_PAUSE_AUDIO: 'Pausar audio',
