@@ -103,16 +103,19 @@ class ApiService {
     })
   }
 
-  async getUserProfile(): Promise<{ user: User }> {
-    return this.request<{ user: User }>(API_ENDPOINTS.USER_PROFILE, {
+  async getUserProfile(): Promise<{ user: User; profile?: any; fullName?: string; profileType?: string }> {
+    return this.request<{ user: User; profile?: any; fullName?: string; profileType?: string }>(API_ENDPOINTS.USER_PROFILE, {
       method: 'GET',
     })
   }
 
   async logout(): Promise<void> {
-    return this.request<void>(API_ENDPOINTS.AUTH_LOGOUT, {
+    console.log('📡 API Service: Ejecutando POST /auth/logout')
+    const result = await this.request<void>(API_ENDPOINTS.AUTH_LOGOUT, {
       method: 'POST',
     })
+    console.log('📡 API Service: Respuesta del logout:', result)
+    return result
   }
 
   async createRespondent(data: CreateRespondentRequest): Promise<CreateRespondentResponse> {

@@ -4,6 +4,7 @@
 
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useLogout } from '../hooks'
 import { ROUTES } from '../constants'
 import '../styles/Sidebar.scss'
 
@@ -14,7 +15,10 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const location = useLocation()
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
+
+  // Hook centralizado para logout
+  const handleLogout = useLogout()
 
   const isActive = (path: string) => {
     return location.pathname === path
@@ -22,14 +26,6 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
   const isReportsActive = () => {
     return location.pathname.startsWith('/admin/reports')
-  }
-
-  const handleLogout = async () => {
-    try {
-      await logout()
-    } catch (err) {
-      // Error silencioso
-    }
   }
 
   return (

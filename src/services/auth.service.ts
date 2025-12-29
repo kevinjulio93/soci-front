@@ -14,27 +14,64 @@ class AuthService {
     const response: LoginResponse = await apiService.login(credentials)
 
     // La respuesta del backend tiene la estructura: { user: { id, email, role, token, abilities } }
-    const user = response.user
+    let user = response.user
 
     // Validar si el usuario está deshabilitado
     if (user.status === 'disabled') {
       throw new Error('Su cuenta ha sido deshabilitada. No tiene permisos para acceder a la aplicación. Contacte al administrador.')
     }
 
-    // Persistir token y usuario
+    // Persistir token primero
     storageService.setToken(user.token)
+
+    // Obtener perfil completo del usuario (incluye fullName y profile)
+    try {
+      const profileResponse = await apiService.getUserProfile()
+      // La respuesta tiene estructura: { data: { user, profile, fullName, profileType } }
+      const profileData = (profileResponse as any).data || profileResponse
+      user = {
+        ...user,
+        fullName: profileData.fullName,
+        profile: profileData.profile,
+        profileType: profileData.profileType
+      }
+    } catch (error) {
+      // Si falla, continuar con los datos básicos del login
+      console.warn('No se pudo obtener el perfil completo del usuario:', error)
+    }
+
+    // Persistir usuario completo
     storageService.setUser(user)
 
     return user
   }
 
   async logout(): Promise<void> {
-    try {
-      // await apiService.logout()
-    } finally {
-      // Limpiar storage sin importar si falla la llamada al backend
-      storageService.clear()
+    console.log('=== INICIANDO LOGOUT ===')
+    
+    const token = storageService.getToken()
+    console.log('Token obtenido del storage:', token ? 'existe' : 'no existe')
+    
+    // PRIMERO: Invalidar el token en el backend (mientras aún está en storage)
+    if (token) {
+      try {
+        console.log('Llamando al endpoint de logout en el backend...')
+        await apiService.logout()
+        console.log('✅ Token invalidado en el backend correctamente')
+      } catch (error) {
+        // Si falla el logout en el backend, continuar igual
+        console.error('❌ Error al invalidar token en el backend:', error)
+      }
+    } else {
+      console.log('No hay token para invalidar en el backend')
     }
+    
+    // SEGUNDO: Limpiar el storage local después de invalidar en backend
+    console.log('Limpiando storage local...')
+    storageService.clear()
+    console.log('Storage limpiado')
+    
+    console.log('=== LOGOUT COMPLETADO ===')
   }
 
   restoreSession(): User | null {
@@ -53,7 +90,14 @@ class AuthService {
   async validateUserStatus(): Promise<{ isValid: boolean; user?: User }> {
     try {
       const response = await apiService.getUserProfile()
-      const user = response.user
+      // La respuesta tiene estructura: { data: { user, profile, fullName, profileType } }
+      const profileData = (response as any).data || response
+      const user = {
+        ...profileData.user,
+        fullName: profileData.fullName,
+        profile: profileData.profile,
+        profileType: profileData.profileType
+      }
 
       // Si el usuario está deshabilitado, limpiar sesión
       if (user.status === 'disabled') {

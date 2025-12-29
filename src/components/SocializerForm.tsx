@@ -100,6 +100,17 @@ export function SocializerForm({
         status: role.status
       }))
       
+      // Ordenar roles en el orden requerido: Administrador, Supervisor, Socializador, Solo Lectura
+      const roleOrder = ['Administrador', 'Supervisor', 'Socializador', 'Solo Lectura']
+      translatedRoles.sort((a, b) => {
+        const indexA = roleOrder.indexOf(a.role)
+        const indexB = roleOrder.indexOf(b.role)
+        // Si no está en el orden, ponerlo al final
+        if (indexA === -1) return 1
+        if (indexB === -1) return -1
+        return indexA - indexB
+      })
+      
       setRoles(translatedRoles)
     } catch (err) {
       // Error silencioso

@@ -65,7 +65,7 @@ export default function AdminDashboard() {
         <div className="dashboard-layout__body">
           <div className="dashboard__header-section">
             <div className="dashboard__header-text">
-              <h2 className="dashboard__section-title">¡Bienvenido, {user?.email}!</h2>
+              <h2 className="dashboard__section-title">¡Bienvenido, {user?.fullName || user?.profile?.fullName || user?.email}!</h2>
               <p className="dashboard__section-desc">
                 Resumen general del sistema
               </p>

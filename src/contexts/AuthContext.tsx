@@ -62,23 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isAuthenticated: false,
         })
         setError('Su cuenta ha sido deshabilitada. Por favor contacte al administrador.')
-      } else if (result.user) {
-        // Actualizar usuario con datos frescos
-        setAuthState(prev => ({
-          ...prev,
-          user: result.user!,
-        }))
       }
+      // No actualizar el estado si el usuario sigue siendo válido
+      // Los datos frescos ya están en localStorage por validateUserStatus()
     }
 
-    // Validar inmediatamente al montar
-    validateStatus()
-
-    // Validar cada 5 minutos
+    // Validar cada 5 minutos (no inmediatamente para evitar loop)
     const interval = setInterval(validateStatus, 5 * 60 * 1000)
 
     return () => clearInterval(interval)
-  }, [authState.isAuthenticated, authState.user?.id])
+  }, [authState.isAuthenticated])
 
   const login = useCallback(async (email: string, password: string): Promise<User> => {
     setIsLoading(true)
@@ -108,8 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     setIsLoading(true)
     try {
-      // Limpiar solo localStorage
-      storageService.clear()
+      console.log('AuthContext: Iniciando logout')
+      
+      // Llamar al servicio de logout (limpia storage Y llama al endpoint)
+      await authService.logout()
+      
+      console.log('AuthContext: Actualizando estado después de logout')
       
       // Actualizar estado
       setAuthState({
@@ -118,8 +115,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: false,
       })
     } catch (err) {
+      console.error('AuthContext: Error en logout:', err)
       const message = err instanceof Error ? err.message : 'Error al cerrar sesión'
       setError(message)
+      
+      // Limpiar estado incluso si hay error
+      setAuthState({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+      })
     } finally {
       setIsLoading(false)
     }

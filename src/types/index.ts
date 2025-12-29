@@ -28,6 +28,15 @@ export interface User {
   token: string
   abilities: Ability[]
   status?: 'enabled' | 'disabled'
+  profile?: {
+    _id: string
+    fullName: string
+    idNumber: string
+    phone?: string
+    coordinator?: any
+  }
+  fullName?: string
+  profileType?: 'socializer' | 'coordinator' | 'admin'
 }
 
 export interface LoginCredentials {

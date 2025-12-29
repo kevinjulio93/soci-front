@@ -13,7 +13,7 @@ import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { indexedDBService } from '../services/indexedDB.service'
 import { Respondent } from '../models/Respondent'
-import { useOnlineStatus } from '../hooks'
+import { useOnlineStatus, useLogout } from '../hooks'
 import { MESSAGES, TITLES, DESCRIPTIONS, ROUTES, EXTERNAL_URLS } from '../constants'
 import '../styles/SurveyForm.scss'
 import '../styles/Dashboard.scss'
@@ -61,6 +61,15 @@ export default function SurveyParticipant() {
     clearRecording,
     error: recordingError,
   } = useAudioRecorderContext()
+
+  // Hook centralizado para logout con limpieza de grabación
+  const handleLogout = useLogout({
+    onBeforeLogout: async () => {
+      if (isRecording) {
+        await stopRecording()
+      }
+    }
+  })
 
   // Inicializar IndexedDB
   useEffect(() => {
@@ -112,18 +121,6 @@ export default function SurveyParticipant() {
       }
     }
   }, [isRecording, stopRecording])
-
-  const handleLogout = async () => {
-    try {
-      // Detener grabación si está activa
-      if (isRecording) {
-        await stopRecording()
-      }
-      navigate(ROUTES.LOGIN)
-    } catch {
-      // Error al cerrar sesión
-    }
-  }
 
   const handleBackToDashboard = async () => {
     // Detener grabación si está activa

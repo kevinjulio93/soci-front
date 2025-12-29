@@ -10,7 +10,7 @@ import { DashboardHeader, DataTable, PageHeader } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
-import { useSyncStatus, useGeolocationTracking } from '../hooks'
+import { useSyncStatus, useGeolocationTracking, useLogout } from '../hooks'
 import { ROUTES, getSocializerSurveysTableColumns, MESSAGES } from '../constants'
 import type { RespondentData } from '../models/ApiResponses'
 import '../styles/Dashboard.scss'
@@ -31,6 +31,9 @@ export default function SociologistDashboard() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
+
+  // Hook centralizado para logout
+  const handleLogout = useLogout()
 
   const loadSurveys = async (page: number) => {
     try {
@@ -87,19 +90,6 @@ export default function SociologistDashboard() {
         respondentId: id
       } 
     })
-  }
-
-  const handleLogout = async () => {
-    try {
-      // Limpiar localStorage
-      localStorage.removeItem('soci_token')
-      localStorage.removeItem('soci_user')
-      
-      // Navegar al login
-      navigate(ROUTES.LOGIN)
-    } catch (err) {
-      // Error silencioso
-    }
   }
 
   const handleManualSync = async () => {

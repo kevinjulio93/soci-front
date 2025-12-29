@@ -353,7 +353,8 @@ export const getSocializersTableColumns = (
   onDelete: (id: string, name: string) => void,
   onViewLocation: (socializer: Socializer) => void,
   isLoading: boolean,
-  isReadOnly: boolean = false
+  isReadOnly: boolean = false,
+  currentUser?: any
 ): TableColumn<Socializer>[] => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return <span className="badge badge-empty">—</span>
@@ -436,10 +437,36 @@ export const getSocializersTableColumns = (
       header: 'ACCIONES',
       render: (socializer) => {
         const roleStr = typeof socializer.user?.role === 'object' ? socializer.user.role.role : ''
-        const isAdmin = roleStr === 'admin'
-        const isCoordinator = roleStr === 'coordinador' || roleStr === 'coordinator'
-        const cannotDelete = isAdmin || isCoordinator
-        const cannotViewLocation = isAdmin || isCoordinator
+        const isTargetAdmin = roleStr === 'admin'
+        const isTargetCoordinator = roleStr === 'coordinador' || roleStr === 'coordinator'
+        
+        // Determinar permisos del usuario actual
+        const currentUserRole = currentUser?.role?.role?.toLowerCase() || ''
+        const isCurrentUserAdmin = currentUserRole === 'admin' || currentUserRole === 'root'
+        const isCurrentUserCoordinator = currentUserRole === 'coordinador' || currentUserRole === 'coordinator'
+        
+        // Lógica de permisos para eliminar:
+        // - Admins no se pueden eliminar
+        // - Admins pueden eliminar coordinadores y socializadores
+        // - Coordinadores solo pueden eliminar sus socializadores asignados
+        let canDelete = false
+        
+        if (isTargetAdmin) {
+          // Nunca se puede eliminar un admin
+          canDelete = false
+        } else if (isCurrentUserAdmin) {
+          // Admin puede eliminar coordinadores y socializadores
+          canDelete = true
+        } else if (isCurrentUserCoordinator) {
+          // Coordinador solo puede eliminar sus socializadores asignados
+          const isAssignedToCurrentUser = socializer.coordinator && 
+            (typeof socializer.coordinator === 'object' 
+              ? socializer.coordinator.user === currentUser?.id 
+              : socializer.coordinator === currentUser?.id)
+          canDelete = !isTargetCoordinator && isAssignedToCurrentUser
+        }
+        
+        const cannotViewLocation = isTargetAdmin || isTargetCoordinator
         
         // Si es readOnly, solo mostrar ubicación
         if (isReadOnly) {
@@ -485,7 +512,7 @@ export const getSocializersTableColumns = (
                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
               </svg>
             </span>
-            {!cannotDelete && (
+            {canDelete && (
               <span
                 className="action-icon action-icon--delete"
                 onClick={() => !isLoading && onDelete(socializer._id, socializer.fullName)}
