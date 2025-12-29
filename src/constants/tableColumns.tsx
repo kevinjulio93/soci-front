@@ -441,7 +441,7 @@ export const getSocializersTableColumns = (
         const isTargetCoordinator = roleStr === 'coordinador' || roleStr === 'coordinator'
         
         // Determinar permisos del usuario actual
-        const currentUserRole = currentUser?.role?.role?.toLowerCase() || ''
+        // const currentUserRole = currentUser?.role?.role?.toLowerCase() || ''
         // Determinar roles
         // const isCurrentUserAdmin = currentUserRole === 'admin' || currentUserRole === 'root'
         // const isCurrentUserCoordinator = currentUserRole === 'coordinador' || currentUserRole === 'coordinator'
