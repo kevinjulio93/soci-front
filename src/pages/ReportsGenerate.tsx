@@ -29,6 +29,7 @@ interface Survey {
   identification: string
   status: 'enabled' | 'disabled'
   createdAt: string
+  defendorDePatria?: boolean
 }
 
 interface DailyStat {
@@ -47,6 +48,7 @@ interface SocializerReport {
   totalSurveys: number
   totalEnabled: number
   totalDisabled: number
+  totalDefensores: number
   dailyStats: DailyStat[]
   allSurveys: Survey[]
 }
@@ -338,7 +340,8 @@ export default function ReportsGenerate() {
                             <div style={{ fontSize: '0.75rem', color: '#666' }}>Total Encuestas</div>
                             <div style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>
                               <span style={{ color: '#28a745', marginRight: '0.5rem' }}>✓ {socializer.totalEnabled} activas</span>
-                              <span style={{ color: '#dc3545' }}>✗ {socializer.totalDisabled} inactivas</span>
+                              <span style={{ color: '#dc3545', marginRight: '0.5rem' }}>✗ {socializer.totalDisabled} inactivas</span>
+                              <span style={{ color: '#0066cc' }}>★ {socializer.totalDefensores || 0} defensores</span>
                             </div>
                           </div>
                         </div>

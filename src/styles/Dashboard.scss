@@ -2796,7 +2796,12 @@ input[type="date"].form-group__input {
   gap: $spacing-lg;
   margin-bottom: $spacing-xl;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-md;
+  }
+
+  @media (max-width: 640px) {
     grid-template-columns: 1fr;
     gap: $spacing-md;
   }
@@ -2809,9 +2814,18 @@ input[type="date"].form-group__input {
   padding: $spacing-lg;
   text-align: center;
   transition: all 0.3s ease;
+  min-width: 0; // Permite que el contenido se contraiga
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 
   @media (max-width: 768px) {
     padding: $spacing-md;
+  }
+
+  @media (max-width: 480px) {
+    padding: $spacing-sm;
   }
 
   &:hover {
@@ -2826,7 +2840,9 @@ input[type="date"].form-group__input {
   &__icon {
     display: flex;
     justify-content: center;
+    align-items: center;
     margin-bottom: $spacing-sm;
+    min-height: 24px; // Asegura altura mínima para consistencia
   }
 
   &__value {
@@ -2834,9 +2850,15 @@ input[type="date"].form-group__input {
     font-weight: $font-weight-bold;
     color: $color-secondary;
     margin-bottom: $spacing-xs;
+    word-break: break-word;
+    width: 100%;
 
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
       font-size: $font-size-2xl;
+    }
+
+    @media (max-width: 640px) {
+      font-size: $font-size-xl;
     }
   }
 
@@ -2845,9 +2867,18 @@ input[type="date"].form-group__input {
     color: $color-light-text;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    word-break: break-word;
+    width: 100%;
+    line-height: 1.3;
 
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
       font-size: $font-size-xs;
+      letter-spacing: 0.3px;
+    }
+
+    @media (max-width: 640px) {
+      font-size: 0.65rem;
+      line-height: 1.2;
     }
   }
 
@@ -2873,6 +2904,11 @@ input[type="date"].form-group__input {
     border-width: 3px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
+    
+    @media (max-width: 768px) {
+      transform: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
   }
 }
 

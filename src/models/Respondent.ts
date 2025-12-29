@@ -256,8 +256,9 @@ export class Respondent {
       city: this._city || undefined,
       stratum: this._stratum || undefined,
       neighborhood: this._neighborhood || undefined,
-      latitude: this._latitude !== 0 ? this._latitude : undefined,
-      longitude: this._longitude !== 0 ? this._longitude : undefined,
+      // Enviar coordenadas siempre, incluso si son 0 (el backend debe manejar esto)
+      latitude: this._latitude,
+      longitude: this._longitude,
       defendorDePatria: this._defendorDePatria,
       isPatriaDefender: this._defendorDePatria,
     }

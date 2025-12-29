@@ -258,6 +258,16 @@ export function SurveyDetailModal({
                 <span className="detail-item__label">Rango de Edad:</span>
                 <span className="detail-item__value">{survey.ageRange}</span>
               </div>
+              <div className="detail-item">
+                <span className="detail-item__label">Defensor de la Patria:</span>
+                <span className="detail-item__value">
+                  {(survey as any).isPatriaDefender ? (
+                    <span style={{ color: '#28a745', fontWeight: 600 }}>✓ Sí</span>
+                  ) : (
+                    <span style={{ color: '#6c757d' }}>✗ No</span>
+                  )}
+                </span>
+              </div>
             </div>
           </section>
 

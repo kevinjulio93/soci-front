@@ -119,10 +119,12 @@ class ApiService {
   }
 
   async createRespondent(data: CreateRespondentRequest): Promise<CreateRespondentResponse> {
+    console.log('📤 API Service - Creando respondent con data:', JSON.stringify(data, null, 2))
     const response = await this.request<{ message: string; data: any }>(API_ENDPOINTS.RESPONDENTS, {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    console.log('📥 API Service - Respuesta del backend:', JSON.stringify(response.data, null, 2))
     
     return new CreateRespondentResponse(response.message, new RespondentData(response.data))
   }
@@ -369,10 +371,12 @@ class ApiService {
   }
 
   async updateLocation(data: { userId: string; latitude: number; longitude: number; accuracy: number }): Promise<{ success: boolean; message: string }> {
+    console.log('📍 API Service: Enviando request POST a /locations:', JSON.stringify(data, null, 2))
     const response = await this.request<any>(API_ENDPOINTS.LOCATIONS, {
       method: 'POST',
       body: JSON.stringify(data),
     })
+    console.log('📍 API Service: Respuesta de /locations:', JSON.stringify(response, null, 2))
     
     return {
       success: response.success ?? true,

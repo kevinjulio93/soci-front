@@ -71,10 +71,20 @@ export function useGeolocationTracking(options: UseGeolocationTrackingOptions = 
       user.role?.role === 'socializer'
     )
 
+    console.log('🎯 useGeolocationTracking: Evaluando tracking:', {
+      enabled,
+      hasUser: !!user,
+      userRole: user?.role?.role,
+      shouldTrack,
+      intervalMs
+    })
+
     if (shouldTrack) {
+      console.log('▶️ useGeolocationTracking: Iniciando tracking...')
       geolocationService
         .startTracking(intervalMs)
         .then(() => {
+          console.log('✅ useGeolocationTracking: Tracking iniciado exitosamente')
           setState((prev) => ({
             ...prev,
             isTracking: true,
@@ -82,6 +92,7 @@ export function useGeolocationTracking(options: UseGeolocationTrackingOptions = 
           }))
         })
         .catch((error) => {
+          console.error('❌ useGeolocationTracking: Error al iniciar tracking:', error)
           setState((prev) => ({
             ...prev,
             isTracking: false,
@@ -91,6 +102,7 @@ export function useGeolocationTracking(options: UseGeolocationTrackingOptions = 
     } else {
       // Detener tracking si las condiciones ya no se cumplen
       if (geolocationService.getTrackingStatus()) {
+        console.log('⏹️ useGeolocationTracking: Deteniendo tracking')
         geolocationService.stopTracking()
         setState((prev) => ({
           ...prev,

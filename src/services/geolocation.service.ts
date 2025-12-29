@@ -48,6 +48,7 @@ class GeolocationService {
       }
 
       // Obtener posición inicial
+      console.log('📍 GeolocationService: Solicitando posición inicial...')
       navigator.geolocation.getCurrentPosition(
         (position) => {
           this.lastPosition = {
@@ -56,10 +57,12 @@ class GeolocationService {
             accuracy: position.coords.accuracy,
             timestamp: position.timestamp,
           }
+          console.log('📍 GeolocationService: Posición inicial obtenida:', this.lastPosition)
           this.sendLocationToServer(this.lastPosition)
           resolve()
         },
         (error) => {
+          console.error('❌ GeolocationService: Error obteniendo posición inicial:', error)
           this.isTracking = false
           reject(this.mapGeolocationError(error))
         },
@@ -67,6 +70,7 @@ class GeolocationService {
       )
 
       // Iniciar watch para actualizaciones continuas de posición
+      console.log('👁️ GeolocationService: Iniciando watchPosition...')
       this.watchId = navigator.geolocation.watchPosition(
         (position) => {
           this.lastPosition = {
@@ -75,15 +79,20 @@ class GeolocationService {
             accuracy: position.coords.accuracy,
             timestamp: position.timestamp,
           }
+          console.log('📍 GeolocationService: Posición actualizada (watchPosition):', this.lastPosition)
         },
         (error) => this.handlePositionError(error),
         options
       )
 
       // Configurar intervalo para enviar ubicación periódicamente
+      console.log(`⏱️ GeolocationService: Configurando intervalo de ${intervalMs}ms para envío periódico`)
       this.intervalId = window.setInterval(() => {
         if (this.lastPosition) {
+          console.log('⏰ GeolocationService: Intervalo disparado, enviando ubicación...')
           this.sendLocationToServer(this.lastPosition)
+        } else {
+          console.warn('⏰ GeolocationService: Intervalo disparado pero no hay posición disponible')
         }
       }, intervalMs)
     })
@@ -164,21 +173,30 @@ class GeolocationService {
       // Obtener userId del localStorage
       const userString = localStorage.getItem('soci_user')
       if (!userString) {
+        console.warn('📍 GeolocationService: No se encontró usuario en localStorage')
         return
       }
 
       const user = JSON.parse(userString)
-      if (!user || !user.id) {
+      // El backend devuelve _id, no id
+      const userId = user?.id || user?._id
+      if (!userId) {
+        console.warn('📍 GeolocationService: Usuario sin ID válido', user)
         return
       }
 
-      await apiService.updateLocation({
-        userId: user.id,
+      const locationData = {
+        userId: userId,
         latitude: location.latitude,
         longitude: location.longitude,
         accuracy: location.accuracy,
-      })
+      }
+      
+      console.log('📍 GeolocationService: Enviando ubicación al servidor:', locationData)
+      const result = await apiService.updateLocation(locationData)
+      console.log('✅ GeolocationService: Ubicación enviada exitosamente:', result)
     } catch (error) {
+      console.error('❌ GeolocationService: Error al enviar ubicación:', error)
       // Error silencioso para no interrumpir el tracking
     }
   }

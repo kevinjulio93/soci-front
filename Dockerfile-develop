@@ -1,0 +1,38 @@
+# Etapa 1: Build
+FROM node:20-alpine AS builder
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm ci --legacy-peer-deps
+
+# Copiar el resto del código (incluye .env.production)
+COPY . .
+
+# Build de producción (usa .env.production automáticamente)
+RUN npm run build:dev
+
+# Etapa 2: Producción con PM2
+FROM node:20-alpine
+
+# Instalar PM2 y serve globalmente
+RUN npm install -g pm2 serve
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos build desde la etapa anterior
+COPY --from=builder /app/dist ./dist
+
+# Copiar configuración de PM2
+COPY ecosystem.config.js ./
+
+# Exponer puerto 5000
+EXPOSE 5000
+
+# Comando por defecto - iniciar con PM2
+CMD ["pm2-runtime", "start", "ecosystem.config.js"]

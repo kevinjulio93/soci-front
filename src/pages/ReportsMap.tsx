@@ -61,7 +61,7 @@ const unsuccessfulIcon = new Icon({
   shadowSize: MAP_CONFIG.SHADOW_SIZE
 })
 
-type FilterType = 'all' | 'successful' | 'unsuccessful'
+type FilterType = 'all' | 'successful' | 'unsuccessful' | 'defensores'
 
 interface SocializerReport {
   dailyStats: Array<{
@@ -85,6 +85,7 @@ export default function ReportsMap() {
     total: 0,
     successful: 0,
     unsuccessful: 0,
+    defensores: 0,
   })
 
   // Cargar todas las encuestas
@@ -105,7 +106,9 @@ export default function ReportsMap() {
       
       const respondentsWithLocation = filterRespondentsWithLocation(response.data)
       setAllRespondents(respondentsWithLocation)
-      setStats(calculateSurveyStats(respondentsWithLocation))
+      const newStats = calculateSurveyStats(respondentsWithLocation)
+      const defensoresCount = respondentsWithLocation.filter(r => (r as any).isPatriaDefender === true).length
+      setStats({ ...newStats, defensores: defensoresCount })
     } catch (error) {
       notificationService.handleApiError(error, MESSAGES.RESPONDENT_LOAD_ERROR)
     } finally {
@@ -131,7 +134,9 @@ export default function ReportsMap() {
 
       const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)
       setAllRespondents(respondentsWithLocation)
-      setStats(calculateSurveyStats(respondentsWithLocation))
+      const newStats = calculateSurveyStats(respondentsWithLocation)
+      const defensoresCount = respondentsWithLocation.filter(r => (r as any).isPatriaDefender === true).length
+      setStats({ ...newStats, defensores: defensoresCount })
       setUseFilters(true)
       
       notificationService.success('Encuestas filtradas correctamente')
@@ -165,10 +170,35 @@ export default function ReportsMap() {
     if (filter === 'all') return true
     if (filter === 'successful') return r.willingToRespond === true
     if (filter === 'unsuccessful') return r.willingToRespond === false
+    if (filter === 'defensores') return (r as any).isPatriaDefender === true
     return true
   })
 
   const mapCenter = calculateMapCenter(allRespondents)
+  
+  // Aplicar pequeño offset a marcadores que comparten la misma ubicación
+  const getAdjustedPosition = (respondent: RespondentData, index: number, allData: RespondentData[]): [number, number] => {
+    const [lat, long] = extractCoordinates(respondent)
+    
+    // Verificar si hay otras encuestas en la misma ubicación (hasta 4 decimales)
+    const sameLocationCount = allData.filter((r, i) => {
+      if (i >= index) return false // Solo contar las anteriores
+      const [rLat, rLong] = extractCoordinates(r)
+      return Math.abs(rLat - lat) < 0.0001 && Math.abs(rLong - long) < 0.0001
+    }).length
+    
+    if (sameLocationCount > 0) {
+      // Aplicar offset pequeño en círculo alrededor del punto original
+      const angle = (sameLocationCount * 60) * (Math.PI / 180) // 60 grados entre cada marcador
+      const offsetDistance = 0.0002 // ~20 metros
+      const latOffset = Math.sin(angle) * offsetDistance
+      const longOffset = Math.cos(angle) * offsetDistance
+      
+      return [lat + latOffset, long + longOffset]
+    }
+    
+    return [lat, long]
+  }
 
   return (
     <div className="dashboard-layout">
@@ -287,7 +317,18 @@ export default function ReportsMap() {
                 }}></div>
               </div>
               <div className="stat-card__value">{stats.unsuccessful}</div>
-              <div className="stat-card__label">Rechazadas</div>
+              <div className="stat-card__label">No Exitosas</div>
+            </div>
+            <div 
+              className={`stat-card ${filter === 'defensores' ? 'stat-card--active' : ''}`}
+              onClick={() => setFilter('defensores')}
+              style={{ cursor: 'pointer', backgroundColor: '#fef3c7', borderColor: '#f59e0b' }}
+            >
+              <div className="stat-card__icon">
+                <span style={{ fontSize: '1.5rem' }}>⭐</span>
+              </div>
+              <div className="stat-card__value">{stats.defensores}</div>
+              <div className="stat-card__label">Defensores de la Patria</div>
             </div>
           </div>
 
@@ -314,10 +355,10 @@ export default function ReportsMap() {
                 
                 <MapBounds respondents={filteredRespondents} />
                 
-                {filteredRespondents.map((respondent) => {
+                {filteredRespondents.map((respondent, index) => {
                   const isSuccessful = respondent.willingToRespond === true
                   const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
-                  const [latitude, longitude] = extractCoordinates(respondent)
+                  const adjustedPosition = getAdjustedPosition(respondent, index, filteredRespondents)
                   
                   // Get label from noResponseReason/rejectionReason
                   const getReasonLabel = () => {
@@ -337,7 +378,7 @@ export default function ReportsMap() {
                   return (
                     <Marker
                       key={respondent._id}
-                      position={[latitude, longitude]}
+                      position={adjustedPosition}
                       icon={icon}
                     >
                       <Tooltip direction="top" offset={[0, -10]} opacity={0.9}>
