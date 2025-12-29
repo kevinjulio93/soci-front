@@ -136,6 +136,32 @@ export default function ReportsRealtime() {
     long: s.latestLocation?.longitude
   })))
   
+  // Aplicar pequeño offset a marcadores que comparten la misma ubicación
+  const getAdjustedPosition = (socializer: SocializerLocation, index: number): [number, number] => {
+    const lat = socializer.latestLocation!.latitude
+    const long = socializer.latestLocation!.longitude
+    
+    // Verificar si hay otros socializadores en la misma ubicación (hasta 4 decimales)
+    const sameLocationCount = socializersWithLocation.filter((s, i) => {
+      if (i >= index) return false // Solo contar los anteriores
+      const sLat = s.latestLocation!.latitude
+      const sLong = s.latestLocation!.longitude
+      return Math.abs(sLat - lat) < 0.0001 && Math.abs(sLong - long) < 0.0001
+    }).length
+    
+    if (sameLocationCount > 0) {
+      // Aplicar offset pequeño en círculo alrededor del punto original
+      const angle = (sameLocationCount * 60) * (Math.PI / 180) // 60 grados entre cada marcador
+      const offsetDistance = 0.0002 // ~20 metros
+      const latOffset = Math.sin(angle) * offsetDistance
+      const longOffset = Math.cos(angle) * offsetDistance
+      
+      return [lat + latOffset, long + longOffset]
+    }
+    
+    return [lat, long]
+  }
+  
   const socializersWithoutLocation = socializers.filter(s => !s.latestLocation)
 
   // Calcular el centro del mapa basado en las ubicaciones actuales
@@ -241,10 +267,10 @@ export default function ReportsRealtime() {
                       attribution={EXTERNAL_URLS.LEAFLET_ATTRIBUTION}
                       url={EXTERNAL_URLS.LEAFLET_TILE_URL}
                     />
-                    {socializersWithLocation.map((socializer) => (
+                    {socializersWithLocation.map((socializer, index) => (
                           <Marker
                             key={`${socializer._id}-${socializer.latestLocation!.timestamp}`}
-                            position={[socializer.latestLocation!.latitude, socializer.latestLocation!.longitude]}
+                            position={getAdjustedPosition(socializer, index)}
                             icon={defaultIcon}
                           >
                           <Popup>

@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { ROUTES } from '../constants'
 
-interface UseLogoutOptions {
+export interface UseLogoutOptions {
   onBeforeLogout?: () => Promise<void> | void
 }
 

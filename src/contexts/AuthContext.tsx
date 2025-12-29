@@ -8,7 +8,6 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react'
 import type { AuthState, User } from '../types'
 import { authService } from '../services/auth.service'
-import { storageService } from '../services/storage.service'
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<User>

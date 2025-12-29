@@ -463,7 +463,7 @@ export const getSocializersTableColumns = (
             (typeof socializer.coordinator === 'object' 
               ? socializer.coordinator.user === currentUser?.id 
               : socializer.coordinator === currentUser?.id)
-          canDelete = !isTargetCoordinator && isAssignedToCurrentUser
+          canDelete = !isTargetCoordinator && Boolean(isAssignedToCurrentUser)
         }
         
         const cannotViewLocation = isTargetAdmin || isTargetCoordinator
