@@ -442,8 +442,9 @@ export const getSocializersTableColumns = (
         
         // Determinar permisos del usuario actual
         const currentUserRole = currentUser?.role?.role?.toLowerCase() || ''
-        const isCurrentUserAdmin = currentUserRole === 'admin' || currentUserRole === 'root'
-        const isCurrentUserCoordinator = currentUserRole === 'coordinador' || currentUserRole === 'coordinator'
+        // Determinar roles
+        // const isCurrentUserAdmin = currentUserRole === 'admin' || currentUserRole === 'root'
+        // const isCurrentUserCoordinator = currentUserRole === 'coordinador' || currentUserRole === 'coordinator'
         
         // Lógica de permisos para eliminar:
         // - Admins no se pueden eliminar
@@ -454,6 +455,8 @@ export const getSocializersTableColumns = (
         const canDelete = false // Temporalmente deshabilitado para todos
         
         /* LÓGICA ORIGINAL DE PERMISOS (comentada temporalmente)
+        const isCurrentUserAdmin = currentUserRole === 'admin' || currentUserRole === 'root'
+        const isCurrentUserCoordinator = currentUserRole === 'coordinador' || currentUserRole === 'coordinator'
         let canDelete = false
         
         if (isTargetAdmin) {
