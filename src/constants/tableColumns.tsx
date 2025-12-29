@@ -354,7 +354,7 @@ export const getSocializersTableColumns = (
   onViewLocation: (socializer: Socializer) => void,
   isLoading: boolean,
   isReadOnly: boolean = false,
-  currentUser?: any
+  //currentUser?: any
 ): TableColumn<Socializer>[] => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return <span className="badge badge-empty">—</span>

@@ -291,7 +291,7 @@ export function SocializerManagement() {
 
           {!showForm && (
             <DataTable<Socializer>
-              columns={getSocializersTableColumns(handleEdit, handleDelete, handleViewLocation, isLoading, user?.role?.role?.toLowerCase() === 'readonly', user)}
+              columns={getSocializersTableColumns(handleEdit, handleDelete, handleViewLocation, isLoading, user?.role?.role?.toLowerCase() === 'readonly')}
               data={socializers}
               currentPage={currentPage}
               totalPages={totalPages}
