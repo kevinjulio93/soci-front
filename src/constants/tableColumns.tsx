@@ -449,6 +449,11 @@ export const getSocializersTableColumns = (
         // - Admins no se pueden eliminar
         // - Admins pueden eliminar coordinadores y socializadores
         // - Coordinadores solo pueden eliminar sus socializadores asignados
+        // NOTA: Actualmente deshabilitado para todos (canDelete = false)
+        // Para habilitar, descomentar la lógica de permisos original
+        const canDelete = false // Temporalmente deshabilitado para todos
+        
+        /* LÓGICA ORIGINAL DE PERMISOS (comentada temporalmente)
         let canDelete = false
         
         if (isTargetAdmin) {
@@ -465,6 +470,7 @@ export const getSocializersTableColumns = (
               : socializer.coordinator === currentUser?.id)
           canDelete = !isTargetCoordinator && Boolean(isAssignedToCurrentUser)
         }
+        */
         
         const cannotViewLocation = isTargetAdmin || isTargetCoordinator
         
