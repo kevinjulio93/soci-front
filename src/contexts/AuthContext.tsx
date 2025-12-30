@@ -100,12 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     setIsLoading(true)
     try {
-      console.log('AuthContext: Iniciando logout')
-      
       // Llamar al servicio de logout (limpia storage Y llama al endpoint)
       await authService.logout()
-      
-      console.log('AuthContext: Actualizando estado después de logout')
       
       // Actualizar estado
       setAuthState({

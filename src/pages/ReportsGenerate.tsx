@@ -146,7 +146,6 @@ export default function ReportsGenerate() {
       // La respuesta es un array directo de encuestas en response.data
       const surveys: Survey[] = response.data || []
       
-      console.log('📊 Total encuestas recibidas:', surveys.length)
       
       // Agrupar encuestas por socializador
       const groupedBySocializer = new Map<string, SocializerReport>()
@@ -177,7 +176,6 @@ export default function ReportsGenerate() {
       })
       
       const reportArray = Array.from(groupedBySocializer.values())
-      console.log('📊 Socializadores encontrados:', reportArray.length)
       
       setReportData(reportArray)
       

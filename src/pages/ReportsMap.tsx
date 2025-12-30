@@ -306,17 +306,6 @@ export default function ReportsMap() {
     try {
       setIsLoading(true)
       const response = await apiService.getRespondents(1, 10000)
-      
-      console.log('📊 Total encuestas recibidas:', response.data.length)
-      console.log('📊 Encuestas con location:', response.data.filter(r => r.location).length)
-      console.log('📊 Encuestas con coordenadas no [0,0]:', response.data.filter(r => 
-        r.location && 
-        r.location.coordinates && 
-        r.location.coordinates.length === 2 &&
-        r.location.coordinates[0] !== 0 && 
-        r.location.coordinates[1] !== 0
-      ).length)
-      
       const respondentsWithLocation = filterRespondentsWithLocation(response.data)
       setAllRespondents(respondentsWithLocation)
       const newStats = calculateSurveyStats(respondentsWithLocation)
@@ -340,34 +329,18 @@ export default function ReportsMap() {
       setIsLoading(true)
       const response = await apiService.getReportsBySocializerAndDate(startDate, endDate)
 
-      console.log('📊 Response completa:', response)
-      console.log('📊 Response.data:', response.data)
 
       // La respuesta tiene estructura: { data: { report: [...] } }
       // Cada elemento en report tiene allSurveys: RespondentData[]
       const report = response.data?.report || []
       
-      console.log('📊 Report array:', report)
-      console.log('📊 Primer socializador:', report[0])
       
       // Extraer todas las encuestas de todos los socializadores
       const allSurveys: RespondentData[] = report.flatMap((socializer: any) => 
         socializer.allSurveys || []
       )
 
-      console.log('📊 Total encuestas extraídas:', allSurveys.length)
-      console.log('📊 Primera encuesta:', allSurveys[0])
-      console.log('📊 Encuestas con campo location:', allSurveys.filter(s => s.location).length)
-      console.log('📊 Encuestas con coordinates:', allSurveys.filter(s => s.location?.coordinates).length)
-      console.log('📊 Sample locations:', allSurveys.slice(0, 3).map(s => ({
-        fullName: s.fullName,
-        location: s.location,
-        hasCoordinates: !!s.location?.coordinates,
-        coordinates: s.location?.coordinates
-      })))
-
       const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)
-      console.log('📊 Encuestas con ubicación válida:', respondentsWithLocation.length)
       
       if (respondentsWithLocation.length === 0 && allSurveys.length > 0) {
         console.warn('⚠️ Todas las encuestas fueron filtradas. Verificar estructura de datos.')

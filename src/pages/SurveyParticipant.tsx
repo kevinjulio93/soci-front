@@ -158,7 +158,6 @@ export default function SurveyParticipant() {
         })
         latitude = position.coords.latitude
         longitude = position.coords.longitude
-        console.log('📍 Ubicación capturada:', { latitude, longitude, accuracy: position.coords.accuracy })
       } catch (error) {
         console.warn('No se pudo obtener la ubicación GPS:', error)
         notificationService.warning('No se pudo obtener la ubicación GPS. La encuesta se guardará sin coordenadas.')
@@ -214,7 +213,6 @@ export default function SurveyParticipant() {
 
       // Convertir a DTO para enviar al backend
       const respondentDTO = respondent.toDTO()
-      console.log('📤 DTO a enviar al backend:', JSON.stringify(respondentDTO, null, 2))
 
       // Si está offline, guardar localmente
       if (!isOnline) {

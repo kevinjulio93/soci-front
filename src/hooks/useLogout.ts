@@ -16,20 +16,16 @@ export function useLogout(options?: UseLogoutOptions) {
   const { logout: authLogout } = useAuth()
 
   const handleLogout = async () => {
-    console.log('=== useLogout: Iniciando proceso de logout ===')
     
     try {
       // Ejecutar callback antes de logout si existe (ej: detener grabación)
       if (options?.onBeforeLogout) {
-        console.log('useLogout: Ejecutando callback onBeforeLogout')
         await options.onBeforeLogout()
       }
 
       // Ejecutar logout (limpia storage y llama al backend)
-      console.log('useLogout: Ejecutando authLogout')
       await authLogout()
       
-      console.log('useLogout: Navegando a login')
       navigate(ROUTES.LOGIN)
     } catch (error) {
       console.error('useLogout: Error al cerrar sesión:', error)
@@ -37,7 +33,6 @@ export function useLogout(options?: UseLogoutOptions) {
       navigate(ROUTES.LOGIN)
     }
     
-    console.log('=== useLogout: Proceso completado ===')
   }
 
   return handleLogout

@@ -85,18 +85,14 @@ export default function ReportsRealtime() {
       
       // El endpoint ya devuelve solo socializadores con ubicaciones
       let socializersList = response.data || []
-      
-      console.log('Total socializadores recibidos del backend:', socializersList.length)
-      console.log('Datos completos:', socializersList)
+
       
       // Si el usuario es coordinador, filtrar solo sus socializadores asignados
       const userRole = user?.role?.role?.toLowerCase()
       if (userRole === 'coordinador' || userRole === 'coordinator') {
-        const beforeFilter = socializersList.length
         socializersList = socializersList.filter((s: SocializerLocation) => 
           s.coordinator && s.coordinator.user === user?.id
         )
-        console.log(`Filtro de coordinador: ${beforeFilter} -> ${socializersList.length}`)
       }
       
       setSocializers(socializersList)
@@ -128,13 +124,6 @@ export default function ReportsRealtime() {
     s.latestLocation.latitude !== 0 &&
     s.latestLocation.longitude !== 0
   )
-  
-  console.log('Socializadores con ubicación válida:', socializersWithLocation.length)
-  console.log('Detalles:', socializersWithLocation.map(s => ({
-    nombre: s.fullName,
-    lat: s.latestLocation?.latitude,
-    long: s.latestLocation?.longitude
-  })))
   
   // Aplicar pequeño offset a marcadores que comparten la misma ubicación
   const getAdjustedPosition = (socializer: SocializerLocation, index: number): [number, number] => {

@@ -47,17 +47,13 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
-    console.log('=== INICIANDO LOGOUT ===')
     
     const token = storageService.getToken()
-    console.log('Token obtenido del storage:', token ? 'existe' : 'no existe')
     
     // PRIMERO: Invalidar el token en el backend (mientras aún está en storage)
     if (token) {
       try {
-        console.log('Llamando al endpoint de logout en el backend...')
         await apiService.logout()
-        console.log('✅ Token invalidado en el backend correctamente')
       } catch (error) {
         // Si falla el logout en el backend, continuar igual
         console.error('❌ Error al invalidar token en el backend:', error)
@@ -67,11 +63,8 @@ class AuthService {
     }
     
     // SEGUNDO: Limpiar el storage local después de invalidar en backend
-    console.log('Limpiando storage local...')
     storageService.clear()
-    console.log('Storage limpiado')
     
-    console.log('=== LOGOUT COMPLETADO ===')
   }
 
   restoreSession(): User | null {

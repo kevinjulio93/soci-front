@@ -302,8 +302,14 @@
     font-weight: $font-weight-semibold;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: $spacing-sm;
     white-space: nowrap;
+    width: 100%;
+
+    @media (min-width: 640px) {
+      width: auto;
+    }
 
     svg {
       transition: transform 0.6s ease;
@@ -2569,17 +2575,38 @@
 .reports-realtime {
   &__header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: $spacing-xl;
-    flex-wrap: wrap;
-    gap: $spacing-lg;
+    flex-direction: column;
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+
+    @media (min-width: 640px) {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: $spacing-xl;
+      gap: $spacing-lg;
+    }
   }
 
   &__stats {
-    display: flex;
-    gap: $spacing-lg;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+    width: 100%;
+
+    @media (min-width: 480px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(3, 1fr);
+      width: auto;
+      flex: 1;
+    }
+
+    @media (min-width: 1024px) {
+      gap: $spacing-lg;
+    }
   }
 
   &__content {
@@ -2599,23 +2626,36 @@
   background: $color-white;
   border: 1px solid $color-border;
   border-radius: $border-radius-md;
-  padding: $spacing-lg;
-  min-width: 120px;
+  padding: $spacing-md;
   text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (min-width: 640px) {
+    padding: $spacing-lg;
+  }
 
   &__value {
-    font-size: 2rem;
+    font-size: $font-size-2xl;
     font-weight: $font-weight-bold;
     color: $color-primary;
     line-height: 1;
     margin-bottom: $spacing-xs;
+
+    @media (min-width: 640px) {
+      font-size: $font-size-3xl;
+    }
   }
 
   &__label {
-    font-size: $font-size-sm;
+    font-size: $font-size-xs;
     color: $color-light-text;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+
+    @media (min-width: 640px) {
+      font-size: $font-size-sm;
+    }
   }
 }
 
