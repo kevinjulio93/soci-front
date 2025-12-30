@@ -84,7 +84,7 @@ export default function AdminDashboard() {
                     </svg>
                   )}
                   value={totalSurveys.toLocaleString()}
-                  label="Total Encuestas"
+                  label="Total Intervenciones"
                   variant="primary"
                 />
               </div>

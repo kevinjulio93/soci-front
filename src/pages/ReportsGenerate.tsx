@@ -138,7 +138,47 @@ export default function ReportsGenerate() {
       )
       
       setReportResponse(response)
-      setReportData(response.data.report)
+      
+      // Verificar si la respuesta es el formato nuevo (array directo) o el antiguo (con report)
+      if (response.data.report) {
+        // Formato antiguo con socializadores agrupados
+        setReportData(response.data.report)
+      } else if (Array.isArray(response.data)) {
+        // Formato nuevo: array directo de encuestas
+        // Agrupar encuestas por socializador
+        const groupedBySocializer = new Map<string, SocializerReport>()
+        
+        response.data.forEach((survey: any) => {
+          const autorId = survey.autor?._id || 'unknown'
+          
+          if (!groupedBySocializer.has(autorId)) {
+            groupedBySocializer.set(autorId, {
+              _id: autorId,
+              socializerName: survey.autor?.fullName || 'Desconocido',
+              socializerIdNumber: survey.autor?.profile?.idNumber || 'N/A',
+              userEmail: survey.autor?.email || 'N/A',
+              totalSurveys: 0,
+              totalEnabled: 0,
+              totalDisabled: 0,
+              totalDefensores: 0,
+              dailyStats: [],
+              allSurveys: []
+            })
+          }
+          
+          const socReport = groupedBySocializer.get(autorId)!
+          socReport.totalSurveys++
+          if (survey.status === 'enabled') socReport.totalEnabled++
+          if (survey.status === 'disabled') socReport.totalDisabled++
+          if (survey.isPatriaDefender) socReport.totalDefensores++
+          socReport.allSurveys.push(survey)
+        })
+        
+        setReportData(Array.from(groupedBySocializer.values()))
+      } else {
+        setReportData([])
+      }
+      
       notificationService.success('Reporte generado exitosamente')
       
     } catch (err) {
@@ -160,7 +200,7 @@ export default function ReportsGenerate() {
       'Socializador',
       'ID Socializador',
       'Email',
-      'Total Encuestas',
+      'Total Intervenciones',
       'Activas',
       'Inactivas',
       'Fecha',
@@ -337,7 +377,7 @@ export default function ReportsGenerate() {
                             <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#4a7c6f' }}>
                               {socializer.totalSurveys}
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: '#666' }}>Total Encuestas</div>
+                            <div style={{ fontSize: '0.75rem', color: '#666' }}>Total Intervenciones</div>
                             <div style={{ marginTop: '0.25rem', fontSize: '0.875rem' }}>
                               <span style={{ color: '#28a745', marginRight: '0.5rem' }}>✓ {socializer.totalEnabled} activas</span>
                               <span style={{ color: '#dc3545', marginRight: '0.5rem' }}>✗ {socializer.totalDisabled} inactivas</span>

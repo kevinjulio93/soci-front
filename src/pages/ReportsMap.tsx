@@ -1,11 +1,12 @@
 /**
  * ReportsMap - Mapa de ubicaciones de encuestas
  * Muestra todas las encuestas en un mapa con marcadores de colores según el estado
+ * Optimizado para manejar miles de registros con renderizado condicional
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, memo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents } from 'react-leaflet'
 import { Icon, LatLngBounds } from 'leaflet'
 import { Sidebar, DateInput } from '../components'
 import { apiService } from '../services/api.service'
@@ -22,6 +23,165 @@ import type { RespondentData } from '../models/ApiResponses'
 import 'leaflet/dist/leaflet.css'
 import '../styles/Dashboard.scss'
 
+// Componente optimizado de marcador individual
+const OptimizedMarker = memo(({ 
+  respondent, 
+  icon, 
+  position 
+}: { 
+  respondent: RespondentData
+  icon: Icon
+  position: [number, number]
+}) => {
+  const isSuccessful = respondent.willingToRespond === true
+  
+  // Get label from noResponseReason/rejectionReason
+  const getReasonLabel = () => {
+    const noResponse = respondent.noResponseReason as unknown as { label?: string }
+    const rejection = respondent.rejectionReason as unknown as { label?: string }
+    if (noResponse?.label) return noResponse.label
+    if (rejection?.label) return rejection.label
+    return 'No especificada'
+  }
+  const reasonLabel = getReasonLabel()
+  
+  // Tooltip text - show label for unsuccessful surveys
+  const tooltipText = isSuccessful 
+    ? respondent.fullName || 'Encuesta exitosa'
+    : reasonLabel
+  
+  return (
+    <Marker position={position} icon={icon}>
+      <Tooltip direction="top" offset={[0, -10]} opacity={0.9}>
+        {tooltipText}
+      </Tooltip>
+      <Popup>
+        <div style={{ minWidth: '200px' }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600' }}>
+            {isSuccessful 
+              ? (respondent.fullName || 'No proporcionado')
+              : reasonLabel
+            }
+          </h4>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+            <strong>Estado:</strong>{' '}
+            <span style={{ color: isSuccessful ? '#3b82f6' : '#ef4444' }}>
+              {isSuccessful ? 'Exitosa' : 'Rechazada'}
+            </span>
+          </div>
+          {!isSuccessful && (respondent.noResponseReason || respondent.rejectionReason) && (
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+              <strong>Razón:</strong> {reasonLabel}
+            </div>
+          )}
+          {respondent.neighborhood && (
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+              <strong>Barrio:</strong> {respondent.neighborhood}
+            </div>
+          )}
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            <strong>Fecha:</strong> {formatDateES(respondent.createdAt)}
+          </div>
+        </div>
+      </Popup>
+    </Marker>
+  )
+})
+
+OptimizedMarker.displayName = 'OptimizedMarker'
+
+// Componente para renderizar solo marcadores visibles en el viewport
+function VisibleMarkers({ 
+  respondents, 
+  getAdjustedPosition, 
+  successfulIcon, 
+  unsuccessfulIcon 
+}: { 
+  respondents: RespondentData[]
+  getAdjustedPosition: (respondent: RespondentData, index: number, allData: RespondentData[]) => [number, number]
+  successfulIcon: Icon
+  unsuccessfulIcon: Icon
+}) {
+  const map = useMap()
+  const [visibleMarkers, setVisibleMarkers] = useState<RespondentData[]>([])
+  const [zoom, setZoom] = useState(map.getZoom())
+
+  // Función para calcular marcadores visibles
+  const updateVisibleMarkers = useCallback(() => {
+    const bounds = map.getBounds()
+    const currentZoom = map.getZoom()
+    setZoom(currentZoom)
+    
+    // Filtrar solo marcadores dentro del viewport con un margen pequeño
+    const padding = 0.05 // 5% de margen para precargar
+    const latPadding = (bounds.getNorth() - bounds.getSouth()) * padding
+    const lngPadding = (bounds.getEast() - bounds.getWest()) * padding
+    
+    const visible = respondents.filter((r) => {
+      const [lat, lng] = extractCoordinates(r)
+      return lat >= bounds.getSouth() - latPadding &&
+             lat <= bounds.getNorth() + latPadding &&
+             lng >= bounds.getWest() - lngPadding &&
+             lng <= bounds.getEast() + lngPadding
+    })
+    
+    // Si el zoom es alto (>= 14), renderizar todos los visibles
+    // Si el zoom es bajo, limitar a 500 para performance
+    if (currentZoom >= 14) {
+      setVisibleMarkers(visible)
+    } else {
+      setVisibleMarkers(visible.slice(0, 500))
+    }
+  }, [respondents, map])
+
+  // Escuchar eventos del mapa
+  useMapEvents({
+    moveend: updateVisibleMarkers,
+    zoomend: updateVisibleMarkers,
+  })
+
+  // Actualizar en el primer render y cuando cambien los respondents
+  useEffect(() => {
+    updateVisibleMarkers()
+  }, [respondents, updateVisibleMarkers])
+
+  return (
+    <>
+      {visibleMarkers.map((respondent, index) => {
+        const isSuccessful = respondent.willingToRespond === true
+        const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
+        const adjustedPosition = getAdjustedPosition(respondent, index, visibleMarkers)
+        
+        return (
+          <OptimizedMarker
+            key={respondent._id}
+            respondent={respondent}
+            icon={icon}
+            position={adjustedPosition}
+          />
+        )
+      })}
+      {/* Indicador de marcadores visibles */}
+      <div style={{
+        position: 'absolute',
+        top: '10px',
+        right: '10px',
+        background: 'rgba(255, 255, 255, 0.9)',
+        padding: '8px 12px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        zIndex: 1000,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        Mostrando {visibleMarkers.length} de {respondents.length} marcadores
+        {respondents.length > visibleMarkers.length && zoom < 14 && (
+          <> - Haz zoom para ver todos</>
+        )}
+      </div>
+    </>
+  )
+}
+
 // Componente para ajustar los límites del mapa
 function MapBounds({ respondents }: { respondents: RespondentData[] }) {
   const map = useMap()
@@ -36,7 +196,8 @@ function MapBounds({ respondents }: { respondents: RespondentData[] }) {
       ] as [number, number])
     )
     
-    map.fitBounds(bounds, { padding: [50, 50] })
+    // Ajustar bounds con zoom máximo para ver de cerca
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 })
   }, [respondents, map])
   
   return null
@@ -81,12 +242,64 @@ export default function ReportsMap() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [useFilters, setUseFilters] = useState(false)
+  const [showRejectionBreakdown, setShowRejectionBreakdown] = useState(false)
   const [stats, setStats] = useState({
     total: 0,
     successful: 0,
     unsuccessful: 0,
     defensores: 0,
   })
+
+  // Calcular estadísticas de motivos de rechazo
+  const rejectionStats = useMemo(() => {
+    const unsuccessful = allRespondents.filter(r => r.willingToRespond === false)
+    const stats = new Map<string, { label: string; count: number }>()
+    
+    unsuccessful.forEach(r => {
+      const reason = r.noResponseReason || r.rejectionReason
+      if (reason) {
+        const reasonObj = reason as unknown as { value?: string; label?: string }
+        const key = reasonObj.value || 'other'
+        const label = reasonObj.label || 'Otro motivo'
+        
+        if (stats.has(key)) {
+          stats.get(key)!.count++
+        } else {
+          stats.set(key, { label, count: 1 })
+        }
+      } else {
+        if (stats.has('no_specified')) {
+          stats.get('no_specified')!.count++
+        } else {
+          stats.set('no_specified', { label: 'No especificado', count: 1 })
+        }
+      }
+    })
+    
+    return Array.from(stats.values()).sort((a, b) => b.count - a.count)
+  }, [allRespondents])
+
+  // Handler para el click en la card de no exitosas
+  const handleUnsuccessfulClick = () => {
+    setFilter('unsuccessful')
+    setShowRejectionBreakdown(!showRejectionBreakdown)
+  }
+
+  // Handlers para otras cards que ocultan el desglose
+  const handleAllClick = () => {
+    setFilter('all')
+    setShowRejectionBreakdown(false)
+  }
+
+  const handleSuccessfulClick = () => {
+    setFilter('successful')
+    setShowRejectionBreakdown(false)
+  }
+
+  const handleDefensoresClick = () => {
+    setFilter('defensores')
+    setShowRejectionBreakdown(false)
+  }
 
   // Cargar todas las encuestas
   const loadAllRespondents = async () => {
@@ -127,10 +340,8 @@ export default function ReportsMap() {
       setIsLoading(true)
       const response = await apiService.getReportsBySocializerAndDate(startDate, endDate)
 
-      const allSurveys: RespondentData[] = []
-      response.data.report.forEach((socializerReport: SocializerReport) => {
-        allSurveys.push(...socializerReport.allSurveys)
-      })
+      // La nueva respuesta del backend trae directamente el array data con todas las encuestas
+      const allSurveys: RespondentData[] = response.data || []
 
       const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)
       setAllRespondents(respondentsWithLocation)
@@ -166,18 +377,21 @@ export default function ReportsMap() {
     loadFilteredRespondents()
   }
 
-  const filteredRespondents = allRespondents.filter(r => {
-    if (filter === 'all') return true
-    if (filter === 'successful') return r.willingToRespond === true
-    if (filter === 'unsuccessful') return r.willingToRespond === false
-    if (filter === 'defensores') return (r as any).isPatriaDefender === true
-    return true
-  })
+  // Memoizar el filtrado para evitar recálculos innecesarios
+  const filteredRespondents = useMemo(() => {
+    return allRespondents.filter(r => {
+      if (filter === 'all') return true
+      if (filter === 'successful') return r.willingToRespond === true
+      if (filter === 'unsuccessful') return r.willingToRespond === false
+      if (filter === 'defensores') return (r as any).isPatriaDefender === true
+      return true
+    })
+  }, [allRespondents, filter])
 
-  const mapCenter = calculateMapCenter(allRespondents)
+  const mapCenter = useMemo(() => calculateMapCenter(allRespondents), [allRespondents])
   
-  // Aplicar pequeño offset a marcadores que comparten la misma ubicación
-  const getAdjustedPosition = (respondent: RespondentData, index: number, allData: RespondentData[]): [number, number] => {
+  // Memoizar la función de ajuste de posición
+  const getAdjustedPosition = useCallback((respondent: RespondentData, index: number, allData: RespondentData[]): [number, number] => {
     const [lat, long] = extractCoordinates(respondent)
     
     // Verificar si hay otras encuestas en la misma ubicación (hasta 4 decimales)
@@ -198,7 +412,7 @@ export default function ReportsMap() {
     }
     
     return [lat, long]
-  }
+  }, [])
 
   return (
     <div className="dashboard-layout">
@@ -277,15 +491,15 @@ export default function ReportsMap() {
           <div className="reports-stats">
             <div 
               className={`stat-card ${filter === 'all' ? 'stat-card--active' : ''}`}
-              onClick={() => setFilter('all')}
+              onClick={handleAllClick}
               style={{ cursor: 'pointer' }}
             >
               <div className="stat-card__value">{stats.total}</div>
-              <div className="stat-card__label">Total de Encuestas</div>
+              <div className="stat-card__label">Total de Intervenciones</div>
             </div>
             <div 
               className={`stat-card stat-card--success ${filter === 'successful' ? 'stat-card--active' : ''}`}
-              onClick={() => setFilter('successful')}
+              onClick={handleSuccessfulClick}
               style={{ cursor: 'pointer' }}
             >
               <div className="stat-card__icon">
@@ -303,7 +517,7 @@ export default function ReportsMap() {
             </div>
             <div 
               className={`stat-card stat-card--danger ${filter === 'unsuccessful' ? 'stat-card--active' : ''}`}
-              onClick={() => setFilter('unsuccessful')}
+              onClick={handleUnsuccessfulClick}
               style={{ cursor: 'pointer' }}
             >
               <div className="stat-card__icon">
@@ -321,7 +535,7 @@ export default function ReportsMap() {
             </div>
             <div 
               className={`stat-card ${filter === 'defensores' ? 'stat-card--active' : ''}`}
-              onClick={() => setFilter('defensores')}
+              onClick={handleDefensoresClick}
               style={{ cursor: 'pointer', backgroundColor: '#fef3c7', borderColor: '#f59e0b' }}
             >
               <div className="stat-card__icon">
@@ -331,6 +545,70 @@ export default function ReportsMap() {
               <div className="stat-card__label">Defensores de la Patria</div>
             </div>
           </div>
+
+          {/* Desglose de motivos de rechazo */}
+          {showRejectionBreakdown && stats.unsuccessful > 0 && (
+            <div style={{
+              backgroundColor: '#fef2f2',
+              borderRadius: '8px',
+              padding: '20px',
+              marginBottom: '24px',
+              border: '1px solid #fecaca'
+            }}>
+              <h3 style={{
+                margin: '0 0 16px 0',
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#991b1b'
+              }}>
+                📊 Desglose de Motivos de Rechazo
+              </h3>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '12px'
+              }}>
+                {rejectionStats.map((stat, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      backgroundColor: 'white',
+                      borderRadius: '6px',
+                      padding: '12px',
+                      border: '1px solid #fecaca',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}
+                  >
+                    <div style={{
+                      fontSize: '24px',
+                      fontWeight: '700',
+                      color: '#dc2626',
+                      marginBottom: '4px'
+                    }}>
+                      {stat.count}
+                    </div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#6b7280',
+                      lineHeight: '1.3'
+                    }}>
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {rejectionStats.length === 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  color: '#6b7280',
+                  fontSize: '14px',
+                  padding: '20px'
+                }}>
+                  No hay datos de motivos de rechazo disponibles
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Mapa */}
           {isLoading ? (
@@ -345,77 +623,26 @@ export default function ReportsMap() {
             <div className="dashboard-map-container">
               <MapContainer
                 center={mapCenter}
-                zoom={12}
+                zoom={18}
+                maxZoom={18}
                 style={{ height: '100%', width: '100%' }}
+                preferCanvas={true}
               >
                 <TileLayer
                   attribution={EXTERNAL_URLS.LEAFLET_ATTRIBUTION}
                   url={EXTERNAL_URLS.LEAFLET_TILE_URL}
+                  maxZoom={18}
                 />
                 
                 <MapBounds respondents={filteredRespondents} />
                 
-                {filteredRespondents.map((respondent, index) => {
-                  const isSuccessful = respondent.willingToRespond === true
-                  const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
-                  const adjustedPosition = getAdjustedPosition(respondent, index, filteredRespondents)
-                  
-                  // Get label from noResponseReason/rejectionReason
-                  const getReasonLabel = () => {
-                    const noResponse = respondent.noResponseReason as unknown as { label?: string }
-                    const rejection = respondent.rejectionReason as unknown as { label?: string }
-                    if (noResponse?.label) return noResponse.label
-                    if (rejection?.label) return rejection.label
-                    return 'No especificada'
-                  }
-                  const reasonLabel = getReasonLabel()
-                  
-                  // Tooltip text - show label for unsuccessful surveys
-                  const tooltipText = isSuccessful 
-                    ? respondent.fullName || 'Encuesta exitosa'
-                    : reasonLabel
-                  
-                  return (
-                    <Marker
-                      key={respondent._id}
-                      position={adjustedPosition}
-                      icon={icon}
-                    >
-                      <Tooltip direction="top" offset={[0, -10]} opacity={0.9}>
-                        {tooltipText}
-                      </Tooltip>
-                      <Popup>
-                        <div style={{ minWidth: '200px' }}>
-                          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600' }}>
-                            {isSuccessful 
-                              ? (respondent.fullName || 'No proporcionado')
-                              : reasonLabel
-                            }
-                          </h4>
-                          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                            <strong>Estado:</strong>{' '}
-                            <span style={{ color: isSuccessful ? '#3b82f6' : '#ef4444' }}>
-                              {isSuccessful ? 'Exitosa' : 'Rechazada'}
-                            </span>
-                          </div>
-                          {!isSuccessful && (respondent.noResponseReason || respondent.rejectionReason) && (
-                            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                              <strong>Razón:</strong> {reasonLabel}
-                            </div>
-                          )}
-                          {respondent.neighborhood && (
-                            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                              <strong>Barrio:</strong> {respondent.neighborhood}
-                            </div>
-                          )}
-                          <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                            <strong>Fecha:</strong> {formatDateES(respondent.createdAt)}
-                          </div>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  )
-                })}
+                {/* Renderizado optimizado de marcadores solo en viewport */}
+                <VisibleMarkers
+                  respondents={filteredRespondents}
+                  getAdjustedPosition={getAdjustedPosition}
+                  successfulIcon={successfulIcon}
+                  unsuccessfulIcon={unsuccessfulIcon}
+                />
               </MapContainer>
             </div>
           )}
