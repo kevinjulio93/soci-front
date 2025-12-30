@@ -22,8 +22,8 @@ export default function AdminDashboard() {
     userId: string;
     email: string;
     totalSurveys: number;
-    enabledSurveys: number;
-    disabledSurveys: number;
+    successfulSurveys: number;
+    unsuccessfulSurveys: number;
   }>>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -109,11 +109,11 @@ export default function AdminDashboard() {
                           <span className="ranking-item__label">total</span>
                         </div>
                         <div className="ranking-item__breakdown">
-                          <span className="ranking-item__detail ranking-item__detail--enabled">
-                            {item.enabledSurveys} activas
+                          <span className="ranking-item__detail ranking-item__detail--success">
+                            {item.successfulSurveys} exitosas
                           </span>
-                          <span className="ranking-item__detail ranking-item__detail--disabled">
-                            {item.disabledSurveys} inactivas
+                          <span className="ranking-item__detail ranking-item__detail--unsuccessful">
+                            {item.unsuccessfulSurveys} no exitosas
                           </span>
                         </div>
                       </div>

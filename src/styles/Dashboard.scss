@@ -2131,12 +2131,14 @@
     border-radius: $border-radius-sm;
     font-weight: $font-weight-medium;
 
-    &--enabled {
+    &--enabled,
+    &--success {
       background-color: #d1fae5;
       color: #065f46;
     }
 
-    &--disabled {
+    &--disabled,
+    &--unsuccessful {
       background-color: #fee2e2;
       color: #991b1b;
     }

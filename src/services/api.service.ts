@@ -186,8 +186,8 @@ class ApiService {
     userId: string;
     email: string;
     totalSurveys: number;
-    enabledSurveys: number;
-    disabledSurveys: number;
+    successfulSurveys: number;
+    unsuccessfulSurveys: number;
   }>> {
     const response = await this.request<any>(API_ENDPOINTS.RESPONDENTS_STATS_TOP_SOCIALIZERS(limit), {
       method: 'GET',
