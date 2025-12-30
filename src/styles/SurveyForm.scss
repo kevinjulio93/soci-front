@@ -201,6 +201,8 @@
 
 .form-group {
   margin-bottom: $spacing-lg;
+  width: 100%;
+  box-sizing: border-box;
 
   @media (max-width: 640px) {
     margin-bottom: $spacing-md;
@@ -234,6 +236,7 @@
   transition: all $transition-base;
   background: $color-white;
   color: $color-dark-text;
+  box-sizing: border-box;
 
   &::placeholder {
     color: #999;

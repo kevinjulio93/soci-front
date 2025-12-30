@@ -417,6 +417,30 @@ class ApiService {
     
     return response
   }
+
+  async getCompleteReport(
+    startDate?: string,
+    endDate?: string,
+    socializerId?: string,
+    page: number = 1,
+    perPage: number = 10000
+  ): Promise<any> {
+    const params = new URLSearchParams()
+    
+    if (startDate) params.append('startDate', startDate)
+    if (endDate) params.append('endDate', endDate)
+    if (socializerId) params.append('socializerId', socializerId)
+    params.append('page', page.toString())
+    params.append('perPage', perPage.toString())
+
+    const url = `${API_ENDPOINTS.RESPONDENTS_REPORTS_COMPLETE}?${params.toString()}`
+
+    const response = await this.request<any>(url, {
+      method: 'GET',
+    })
+    
+    return response
+  }
 }
 
 export const apiService = new ApiService()

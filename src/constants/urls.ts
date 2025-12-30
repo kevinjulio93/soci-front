@@ -46,6 +46,7 @@ export const API_ENDPOINTS = {
   RESPONDENTS_STATS_TOTAL: '/respondents/stats/total',
   RESPONDENTS_STATS_TOP_SOCIALIZERS: (limit: number = 10) => `/respondents/stats/top-socializers?limit=${limit}`,
   RESPONDENTS_REPORTS_BY_SOCIALIZER_DATE: '/respondents/reports/by-socializer-date',
+  RESPONDENTS_REPORTS_COMPLETE: '/respondents/reports/complete',
   
   // Socializers
   SOCIALIZERS: '/socializers',

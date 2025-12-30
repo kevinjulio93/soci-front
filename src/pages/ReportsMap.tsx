@@ -224,14 +224,14 @@ const unsuccessfulIcon = new Icon({
 
 type FilterType = 'all' | 'successful' | 'unsuccessful' | 'defensores'
 
-interface SocializerReport {
-  dailyStats: Array<{
-    date: string
-    totalSurveys: number
-    surveys: RespondentData[]
-  }>
-  allSurveys: RespondentData[]
-}
+// interface SocializerReport {
+//   dailyStats: Array<{
+//     date: string
+//     totalSurveys: number
+//     surveys: RespondentData[]
+//   }>
+//   allSurveys: RespondentData[]
+// }
 
 export default function ReportsMap() {
   const navigate = useNavigate()
@@ -285,7 +285,7 @@ export default function ReportsMap() {
     setShowRejectionBreakdown(!showRejectionBreakdown)
   }
 
-  // Handlers para otras cards que ocultan el desglose
+  // Handlers para otras cards que ocultan los motivos de rechazo
   const handleAllClick = () => {
     setFilter('all')
     setShowRejectionBreakdown(false)
@@ -340,10 +340,39 @@ export default function ReportsMap() {
       setIsLoading(true)
       const response = await apiService.getReportsBySocializerAndDate(startDate, endDate)
 
-      // La nueva respuesta del backend trae directamente el array data con todas las encuestas
-      const allSurveys: RespondentData[] = response.data || []
+      console.log('📊 Response completa:', response)
+      console.log('📊 Response.data:', response.data)
+
+      // La respuesta tiene estructura: { data: { report: [...] } }
+      // Cada elemento en report tiene allSurveys: RespondentData[]
+      const report = response.data?.report || []
+      
+      console.log('📊 Report array:', report)
+      console.log('📊 Primer socializador:', report[0])
+      
+      // Extraer todas las encuestas de todos los socializadores
+      const allSurveys: RespondentData[] = report.flatMap((socializer: any) => 
+        socializer.allSurveys || []
+      )
+
+      console.log('📊 Total encuestas extraídas:', allSurveys.length)
+      console.log('📊 Primera encuesta:', allSurveys[0])
+      console.log('📊 Encuestas con campo location:', allSurveys.filter(s => s.location).length)
+      console.log('📊 Encuestas con coordinates:', allSurveys.filter(s => s.location?.coordinates).length)
+      console.log('📊 Sample locations:', allSurveys.slice(0, 3).map(s => ({
+        fullName: s.fullName,
+        location: s.location,
+        hasCoordinates: !!s.location?.coordinates,
+        coordinates: s.location?.coordinates
+      })))
 
       const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)
+      console.log('📊 Encuestas con ubicación válida:', respondentsWithLocation.length)
+      
+      if (respondentsWithLocation.length === 0 && allSurveys.length > 0) {
+        console.warn('⚠️ Todas las encuestas fueron filtradas. Verificar estructura de datos.')
+      }
+      
       setAllRespondents(respondentsWithLocation)
       const newStats = calculateSurveyStats(respondentsWithLocation)
       const defensoresCount = respondentsWithLocation.filter(r => (r as any).isPatriaDefender === true).length
@@ -352,6 +381,7 @@ export default function ReportsMap() {
       
       notificationService.success('Encuestas filtradas correctamente')
     } catch (error) {
+      console.error('❌ Error al filtrar encuestas:', error)
       notificationService.handleApiError(error, 'Error al filtrar encuestas')
     } finally {
       setIsLoading(false)
@@ -546,52 +576,19 @@ export default function ReportsMap() {
             </div>
           </div>
 
-          {/* Desglose de motivos de rechazo */}
+          {/* Motivos de rechazo */}
           {showRejectionBreakdown && stats.unsuccessful > 0 && (
-            <div style={{
-              backgroundColor: '#fef2f2',
-              borderRadius: '8px',
-              padding: '20px',
-              marginBottom: '24px',
-              border: '1px solid #fecaca'
-            }}>
-              <h3 style={{
-                margin: '0 0 16px 0',
-                fontSize: '16px',
-                fontWeight: '600',
-                color: '#991b1b'
-              }}>
-                📊 Desglose de Motivos de Rechazo
+            <div className="rejection-breakdown">
+              <h3 className="rejection-breakdown__title">
+                📊 Motivos de Rechazo
               </h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: '12px'
-              }}>
+              <div className="rejection-breakdown__grid">
                 {rejectionStats.map((stat, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      backgroundColor: 'white',
-                      borderRadius: '6px',
-                      padding: '12px',
-                      border: '1px solid #fecaca',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                    }}
-                  >
-                    <div style={{
-                      fontSize: '24px',
-                      fontWeight: '700',
-                      color: '#dc2626',
-                      marginBottom: '4px'
-                    }}>
+                  <div key={index} className="rejection-breakdown__item">
+                    <div className="rejection-breakdown__count">
                       {stat.count}
                     </div>
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#6b7280',
-                      lineHeight: '1.3'
-                    }}>
+                    <div className="rejection-breakdown__label">
                       {stat.label}
                     </div>
                   </div>

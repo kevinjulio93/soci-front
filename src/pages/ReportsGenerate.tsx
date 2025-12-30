@@ -26,18 +26,25 @@ interface SocializerOption {
 interface Survey {
   _id: string
   fullName: string
-  identification: string
+  identification?: string
   status: 'enabled' | 'disabled'
   createdAt: string
-  defendorDePatria?: boolean
-}
-
-interface DailyStat {
-  date: string
-  totalSurveys: number
-  enabledSurveys: number
-  disabledSurveys: number
-  surveys: Survey[]
+  isPatriaDefender?: boolean
+  surveyStatus?: 'successful' | 'unsuccessful'
+  willingToRespond?: boolean
+  location?: {
+    type: string
+    coordinates: number[]
+  }
+  audioUrl?: string
+  autor?: {
+    _id: string
+    fullName: string
+    email: string
+    profile?: {
+      idNumber: string
+    }
+  }
 }
 
 interface SocializerReport {
@@ -49,20 +56,16 @@ interface SocializerReport {
   totalEnabled: number
   totalDisabled: number
   totalDefensores: number
-  dailyStats: DailyStat[]
   allSurveys: Survey[]
 }
 
-interface ReportResponse {
+interface CompleteReportResponse {
   message: string
-  data: {
-    dateRange: {
-      startDate: string
-      endDate: string
-    }
-    totalSocializers: number
-    report: SocializerReport[]
-  }
+  currentPage: number
+  itemsPerPage: number
+  totalItems: number
+  totalPages: number
+  data: Survey[]
 }
 
 export default function ReportsGenerate() {
@@ -73,7 +76,7 @@ export default function ReportsGenerate() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [reportResponse, setReportResponse] = useState<ReportResponse | null>(null)
+  const [reportResponse, setReportResponse] = useState<CompleteReportResponse | null>(null)
   
   const [filters, setFilters] = useState<ReportFilters>({
     startDate: '',
@@ -131,7 +134,8 @@ export default function ReportsGenerate() {
       setIsGenerating(true)
       setError(null)
       
-      const response = await apiService.getReportsBySocializerAndDate(
+      // Usar el nuevo endpoint /reports/complete
+      const response = await apiService.getCompleteReport(
         filters.startDate,
         filters.endDate,
         filters.socializerId || undefined
@@ -139,45 +143,43 @@ export default function ReportsGenerate() {
       
       setReportResponse(response)
       
-      // Verificar si la respuesta es el formato nuevo (array directo) o el antiguo (con report)
-      if (response.data.report) {
-        // Formato antiguo con socializadores agrupados
-        setReportData(response.data.report)
-      } else if (Array.isArray(response.data)) {
-        // Formato nuevo: array directo de encuestas
-        // Agrupar encuestas por socializador
-        const groupedBySocializer = new Map<string, SocializerReport>()
+      // La respuesta es un array directo de encuestas en response.data
+      const surveys: Survey[] = response.data || []
+      
+      console.log('📊 Total encuestas recibidas:', surveys.length)
+      
+      // Agrupar encuestas por socializador
+      const groupedBySocializer = new Map<string, SocializerReport>()
+      
+      surveys.forEach((survey) => {
+        const autorId = survey.autor?._id || 'unknown'
         
-        response.data.forEach((survey: any) => {
-          const autorId = survey.autor?._id || 'unknown'
-          
-          if (!groupedBySocializer.has(autorId)) {
-            groupedBySocializer.set(autorId, {
-              _id: autorId,
-              socializerName: survey.autor?.fullName || 'Desconocido',
-              socializerIdNumber: survey.autor?.profile?.idNumber || 'N/A',
-              userEmail: survey.autor?.email || 'N/A',
-              totalSurveys: 0,
-              totalEnabled: 0,
-              totalDisabled: 0,
-              totalDefensores: 0,
-              dailyStats: [],
-              allSurveys: []
-            })
-          }
-          
-          const socReport = groupedBySocializer.get(autorId)!
-          socReport.totalSurveys++
-          if (survey.status === 'enabled') socReport.totalEnabled++
-          if (survey.status === 'disabled') socReport.totalDisabled++
-          if (survey.isPatriaDefender) socReport.totalDefensores++
-          socReport.allSurveys.push(survey)
-        })
+        if (!groupedBySocializer.has(autorId)) {
+          groupedBySocializer.set(autorId, {
+            _id: autorId,
+            socializerName: survey.autor?.fullName || 'Desconocido',
+            socializerIdNumber: survey.autor?.profile?.idNumber || 'N/A',
+            userEmail: survey.autor?.email || 'N/A',
+            totalSurveys: 0,
+            totalEnabled: 0,
+            totalDisabled: 0,
+            totalDefensores: 0,
+            allSurveys: []
+          })
+        }
         
-        setReportData(Array.from(groupedBySocializer.values()))
-      } else {
-        setReportData([])
-      }
+        const socReport = groupedBySocializer.get(autorId)!
+        socReport.totalSurveys++
+        if (survey.status === 'enabled') socReport.totalEnabled++
+        if (survey.status === 'disabled') socReport.totalDisabled++
+        if (survey.isPatriaDefender) socReport.totalDefensores++
+        socReport.allSurveys.push(survey)
+      })
+      
+      const reportArray = Array.from(groupedBySocializer.values())
+      console.log('📊 Socializadores encontrados:', reportArray.length)
+      
+      setReportData(reportArray)
       
       notificationService.success('Reporte generado exitosamente')
       
@@ -203,25 +205,26 @@ export default function ReportsGenerate() {
       'Total Intervenciones',
       'Activas',
       'Inactivas',
-      'Fecha',
-      'Encuestas del Día',
+      'Defensores de la Patria',
+      'Exitosas',
+      'No Exitosas',
     ]
 
-    const rows: string[][] = []
-    
-    reportData.forEach(socializer => {
-      socializer.dailyStats.forEach(day => {
-        rows.push([
-          socializer.socializerName,
-          socializer.socializerIdNumber,
-          socializer.userEmail,
-          socializer.totalSurveys.toString(),
-          socializer.totalEnabled.toString(),
-          socializer.totalDisabled.toString(),
-          day.date,
-          day.totalSurveys.toString(),
-        ])
-      })
+    const rows: string[][] = reportData.map(socializer => {
+      const successful = socializer.allSurveys.filter(s => s.willingToRespond === true).length
+      const unsuccessful = socializer.allSurveys.filter(s => s.willingToRespond === false).length
+      
+      return [
+        socializer.socializerName,
+        socializer.socializerIdNumber,
+        socializer.userEmail,
+        socializer.totalSurveys.toString(),
+        socializer.totalEnabled.toString(),
+        socializer.totalDisabled.toString(),
+        socializer.totalDefensores.toString(),
+        successful.toString(),
+        unsuccessful.toString(),
+      ]
     })
 
     const csvContent = [
@@ -240,6 +243,8 @@ export default function ReportsGenerate() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+    
+    notificationService.success('Archivo CSV descargado exitosamente')
   }
 
   return (
@@ -351,10 +356,13 @@ export default function ReportsGenerate() {
                   </h3>
                   <div className="results-header__info">
                     <span className="results-header__count">
-                      {reportResponse.data.totalSocializers} {reportResponse.data.totalSocializers === 1 ? 'socializador' : 'socializadores'}
+                      {reportData.length} {reportData.length === 1 ? 'socializador' : 'socializadores'}
+                    </span>
+                    <span className="results-header__count">
+                      {reportResponse.totalItems} {reportResponse.totalItems === 1 ? 'encuesta' : 'encuestas'}
                     </span>
                     <span className="results-header__date-range">
-                      {reportResponse.data.dateRange.startDate} - {reportResponse.data.dateRange.endDate}
+                      {filters.startDate} - {filters.endDate}
                     </span>
                   </div>
                 </div>
