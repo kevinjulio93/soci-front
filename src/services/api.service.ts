@@ -11,7 +11,6 @@ import type {
   CreateRespondentRequest,
   UpdateRespondentRequest,
   CreateSocializerRequest,
-  UpdateSocializerRequest,
   User,
 } from '../types'
 import {
@@ -40,11 +39,69 @@ interface ApiError {
   details?: unknown
 }
 
+type UserListItem = {
+  _id: string
+  fullName: string
+  email: string
+}
+
+type UpdateUserPayload = {
+  email?: string
+  password?: string
+  status?: string
+  profileData?: {
+    fullName?: string
+    phone?: string
+    idNumber?: string
+  }
+}
+
+type UserProfileResponse = {
+  user: User
+  profile?: unknown
+  fullName?: string
+  profileType?: string
+}
+
+type AdminDashboardParams = {
+  startDate: string
+  endDate: string
+  usuariosDependientes: string
+}
+
+type TopSocializerStats = {
+  socializerId: string
+  fullName: string
+  idNumber: string
+  userId: string
+  email: string
+  totalSurveys: number
+  successfulSurveys: number
+  unsuccessfulSurveys: number
+}
+
 class ApiService {
   private baseUrl: string
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl
+  }
+
+  private async buildError(response: Response): Promise<ApiError> {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+    try {
+      const errorData = await response.json()
+      if (errorData?.message) {
+        errorMessage = errorData.message
+      }
+    } catch {
+      // Si no se puede parsear el JSON, usar el mensaje por defecto
+    }
+
+    return {
+      message: errorMessage,
+      code: response.status.toString(),
+    }
   }
 
   private async request<T>(
@@ -66,22 +123,7 @@ class ApiService {
       const response = await fetch(url, { ...options, headers })
 
       if (!response.ok) {
-        // Intentar obtener el mensaje de error del backend
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
-        try {
-          const errorData = await response.json()
-          if (errorData.message) {
-            errorMessage = errorData.message
-          }
-        } catch {
-          // Si no se puede parsear el JSON, usar el mensaje por defecto
-        }
-
-        const error: ApiError = {
-          message: errorMessage,
-          code: response.status.toString(),
-        }
-        throw error
+        throw await this.buildError(response)
       }
 
       return await response.json()
@@ -96,42 +138,70 @@ class ApiService {
     }
   }
 
-  async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    return this.request<LoginResponse>(API_ENDPOINTS.AUTH_LOGIN, {
+  private async requestFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`
+    const token = localStorage.getItem('soci_token')
+
+    const response = await fetch(url, {
       method: 'POST',
-      body: JSON.stringify(credentials),
+      headers: {
+        'x-access-token': token || '',
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw await this.buildError(response)
+    }
+
+    return await response.json()
+  }
+
+  private async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: 'GET' })
+  }
+
+  private async post<T>(endpoint: string, body?: unknown): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     })
   }
 
-  async getUserProfile(): Promise<{ user: User; profile?: any; fullName?: string; profileType?: string }> {
-    return this.request<{ user: User; profile?: any; fullName?: string; profileType?: string }>(API_ENDPOINTS.USER_PROFILE, {
-      method: 'GET',
+  private async put<T>(endpoint: string, body?: unknown): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     })
+  }
+
+  private async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: 'DELETE' })
+  }
+
+  async login(credentials: LoginCredentials): Promise<LoginResponse> {
+    return this.post<LoginResponse>(API_ENDPOINTS.AUTH_LOGIN, credentials)
+  }
+
+  async getUserProfile(): Promise<UserProfileResponse> {
+    return this.get<UserProfileResponse>(API_ENDPOINTS.USER_PROFILE)
   }
 
   async logout(): Promise<void> {
-    const result = await this.request<void>(API_ENDPOINTS.AUTH_LOGOUT, {
-      method: 'POST',
-    })
-    return result
+    return this.post<void>(API_ENDPOINTS.AUTH_LOGOUT)
   }
 
   async createRespondent(data: CreateRespondentRequest): Promise<CreateRespondentResponse> {
-    const response = await this.request<{ message: string; data: any }>(API_ENDPOINTS.RESPONDENTS, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-    
+    const response = await this.post<{ message: string; data: any }>(API_ENDPOINTS.RESPONDENTS, data)
+
     return new CreateRespondentResponse(response.message, new RespondentData(response.data))
   }
 
   async getRespondents(page: number = 1, perPage: number = 10): Promise<GetRespondentsResponse> {
-    const response = await this.request<any>(`${API_ENDPOINTS.RESPONDENTS}?page=${page}&perPage=${perPage}`, {
-      method: 'GET',
-    })
-    
+    const response = await this.get<any>(`${API_ENDPOINTS.RESPONDENTS}?page=${page}&perPage=${perPage}`)
+
     const respondents = response.data.map((item: any) => new RespondentData(item))
-    
+
     return new GetRespondentsResponse(
       response.currentPage,
       response.itemsPerPage,
@@ -142,27 +212,20 @@ class ApiService {
   }
 
   async getRespondentById(id: string): Promise<GetRespondentResponse> {
-    const response = await this.request<any>(API_ENDPOINTS.RESPONDENT_BY_ID(id), {
-      method: 'GET',
-    })
-    
+    const response = await this.get<any>(API_ENDPOINTS.RESPONDENT_BY_ID(id))
+
     return new GetRespondentResponse(new RespondentData(response.data))
   }
 
   async updateRespondent(id: string, data: UpdateRespondentRequest): Promise<UpdateRespondentResponse> {
-    const response = await this.request<any>(API_ENDPOINTS.RESPONDENT_BY_ID(id), {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    })
-    
+    const response = await this.put<any>(API_ENDPOINTS.RESPONDENT_BY_ID(id), data)
+
     return new UpdateRespondentResponse(response.message, new RespondentData(response.data))
   }
 
   async deleteRespondent(id: string): Promise<{ success: boolean; message: string }> {
-    const response = await this.request<any>(API_ENDPOINTS.RESPONDENT_BY_ID(id), {
-      method: 'DELETE',
-    })
-    
+    const response = await this.delete<any>(API_ENDPOINTS.RESPONDENT_BY_ID(id))
+
     return {
       success: response.success ?? true,
       message: response.message ?? 'Encuestado eliminado correctamente',
@@ -170,30 +233,30 @@ class ApiService {
   }
 
   async getRespondentStats(): Promise<{ totalSurveys: number }> {
-    const response = await this.request<any>(API_ENDPOINTS.RESPONDENTS_STATS_TOTAL, {
-      method: 'GET',
-    })
-    
+    const response = await this.get<any>(API_ENDPOINTS.RESPONDENTS_STATS_TOTAL)
+
     return {
       totalSurveys: response.data?.total || 0,
     }
   }
 
-  async getTopSocializers(limit: number = 10): Promise<Array<{
-    socializerId: string;
-    fullName: string;
-    idNumber: string;
-    userId: string;
-    email: string;
-    totalSurveys: number;
-    successfulSurveys: number;
-    unsuccessfulSurveys: number;
-  }>> {
-    const response = await this.request<any>(API_ENDPOINTS.RESPONDENTS_STATS_TOP_SOCIALIZERS(limit), {
-      method: 'GET',
-    })
-    
+  async getTopSocializers(limit: number = 10): Promise<TopSocializerStats[]> {
+    const response = await this.get<any>(API_ENDPOINTS.RESPONDENTS_STATS_TOP_SOCIALIZERS(limit))
+
     return response.data || []
+  }
+
+  async getAdminDashboardOverview(params: AdminDashboardParams): Promise<any> {
+    const { startDate, endDate, usuariosDependientes } = params
+    if (!startDate || !endDate) {
+      throw new Error('startDate y endDate son requeridos para el dashboard')
+    }
+
+    const response = await this.get<any>(
+      API_ENDPOINTS.DASHBOARD_ADMIN(startDate, endDate, usuariosDependientes)
+    )
+
+    return response?.data ?? response
   }
 
   async uploadAudio(respondentId: string, audioBlob: Blob): Promise<UploadAudioResponse> {
@@ -202,7 +265,6 @@ class ApiService {
       throw new Error('El audio está vacío o no se pudo grabar correctamente')
     }
     
-    const token = localStorage.getItem('soci_token')
     const formData = new FormData()
     
     // Determinar la extensión del archivo basado en el tipo MIME
@@ -218,25 +280,7 @@ class ApiService {
     formData.append('audio', audioBlob, `recording-${respondentId}-${Date.now()}.${extension}`)
     formData.append('respondentId', respondentId)
     
-    const url = `${this.baseUrl}${API_ENDPOINTS.UPLOAD_AUDIO}`
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'x-access-token': token || '',
-      },
-      body: formData,
-    })
-
-    if (!response.ok) {
-      const error: ApiError = {
-        message: `HTTP ${response.status}: ${response.statusText}`,
-        code: response.status.toString(),
-      }
-      throw error
-    }
-
-    const result = await response.json()
+    const result = await this.requestFormData<{ message: string; audioUrl: string }>(API_ENDPOINTS.UPLOAD_AUDIO, formData)
     return new UploadAudioResponse(result.message, { audioUrl: result.audioUrl })
   }
 
@@ -244,59 +288,96 @@ class ApiService {
   // SOCIALIZERS ENDPOINTS
   // =============================================
 
-  async getSocializers(page: number = 1, perPage: number = 10): Promise<GetSocializersResponse> {
-    const response = await this.request<any>(`${API_ENDPOINTS.SOCIALIZERS}?page=${page}&perPage=${perPage}`)
+  async getSocializersWithLocations(): Promise<any> {
+    return this.get<any>(API_ENDPOINTS.SOCIALIZERS_WITH_LOCATIONS)
+  }
+
+  async getUsersHierarchy(page: number = 1, perPage: number = 10): Promise<GetSocializersResponse> {
+    const response = await this.get<any>(`${API_ENDPOINTS.USERS_HIERARCHY}?page=${page}&perPage=${perPage}`)
     
+    // La respuesta tiene estructura: { data: [], pagination: { page, perPage, total, totalPages } }
     const socializers = response.data.map((item: any) => new SocializerData(item))
     
     return new GetSocializersResponse(
-      response.currentPage,
-      response.itemsPerPage,
-      response.totalItems,
-      response.totalPages,
+      response.pagination.page,
+      response.pagination.perPage,
+      response.pagination.total,
+      response.pagination.totalPages,
       socializers
     )
   }
 
-  async getSocializer(id: string): Promise<GetSocializerResponse> {
-    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZER_BY_ID(id))
+  async getUser(id: string): Promise<GetSocializerResponse> {
+    const response = await this.get<any>(API_ENDPOINTS.USER_BY_ID(id))
     
     return new GetSocializerResponse(new SocializerData(response.data))
   }
 
-  async getSocializersWithLocations(): Promise<any> {
-    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZERS_WITH_LOCATIONS)
-    return response
-  }
-
-  async createSocializer(data: CreateSocializerRequest): Promise<CreateSocializerResponse> {
-    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZERS, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-    
-    return new CreateSocializerResponse(response.message, new SocializerData(response.data))
-  }
-
-  async updateSocializer(id: string, data: UpdateSocializerRequest): Promise<UpdateSocializerResponse> {
-    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZER_BY_ID(id), {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    })
+  async updateUser(userId: string, data: UpdateUserPayload): Promise<UpdateSocializerResponse> {
+    const response = await this.put<any>(API_ENDPOINTS.USER_BY_ID(userId), data)
     
     return new UpdateSocializerResponse(response.message, new SocializerData(response.data))
   }
 
+  async getUsersHierarchyByRole(userId: string, role: string): Promise<UserListItem[]> {
+    const response = await this.get<any>(API_ENDPOINTS.USERS_HIERARCHY_BY_ROLE(userId, role))
+    return this.mapUserList(response)
+  }
+
+  /**
+   * Obtiene subordinados de un usuario específico según el rol
+   * Por ejemplo: obtener coordinadores de campo bajo un coordinador de zona
+   */
+  async getSubordinatesByRole(parentUserId: string, role: string): Promise<UserListItem[]> {
+    try {
+      const response = await this.get<any>(API_ENDPOINTS.USERS_HIERARCHY_BY_ROLE(parentUserId, role))
+      return this.mapUserList(response)
+    } catch (error) {
+      console.error(`Error loading subordinates for role ${role}:`, error)
+      return []
+    }
+  }
+
+  async createSocializer(data: CreateSocializerRequest): Promise<CreateSocializerResponse> {
+    // Transformar datos al nuevo formato del endpoint users/create-with-profile
+    const requestBody: any = {
+      email: data.email,
+      password: data.password,
+      roleId: data.roleId,
+      profileData: {
+        fullName: data.fullName,
+        idNumber: data.idNumber,
+        phone: data.phone
+      }
+    }
+
+    // Agregar campos jerárquicos según lo que venga en data
+    if (data.supervisorId) {
+      requestBody.supervisorId = data.supervisorId
+    }
+    if (data.fieldCoordinatorId) {
+      requestBody.fieldCoordinatorId = data.fieldCoordinatorId
+    }
+    if (data.zoneCoordinatorId) {
+      requestBody.zoneCoordinatorId = data.zoneCoordinatorId
+    }
+    if (data.adminId) {
+      requestBody.adminId = data.adminId
+    }
+
+    const response = await this.post<any>(API_ENDPOINTS.USERS_CREATE_WITH_PROFILE, requestBody)
+    
+    return new CreateSocializerResponse(response.message, new SocializerData(response.data))
+  }
+
   async deleteSocializer(id: string): Promise<DeleteSocializerResponse> {
-    const response = await this.request<any>(API_ENDPOINTS.SOCIALIZER_BY_ID(id), {
-      method: 'DELETE',
-    })
+    const response = await this.delete<any>(API_ENDPOINTS.SOCIALIZER_BY_ID(id))
     
     return new DeleteSocializerResponse(response.message)
   }
 
   async getRoles(): Promise<GetRolesResponse> {
-    const response = await this.request<any>(API_ENDPOINTS.ROLES)
+    const response = await this.get<any>(API_ENDPOINTS.ROLES)
     
     const roles = response.data.map((item: any) => new RoleData(item))
     
@@ -304,15 +385,13 @@ class ApiService {
   }
 
   async getCoordinators(): Promise<Array<{
-    _id: string;
-    fullName: string;
-    idNumber: string;
-    email: string;
+    _id: string
+    fullName: string
+    idNumber: string
+    email: string
   }>> {
     // Obtener todos los socializers (con paginación grande para obtener todos)
-    const response = await this.request<any>(`${API_ENDPOINTS.SOCIALIZERS}?page=1&perPage=1000`, {
-      method: 'GET',
-    })
+    const response = await this.get<any>(`${API_ENDPOINTS.SOCIALIZERS}?page=1&perPage=1000`)
     
     // Filtrar solo los que tienen rol de coordinador
     const coordinators = (response.data || [])
@@ -332,16 +411,37 @@ class ApiService {
     return coordinators
   }
 
+  private mapUserList(response: any): UserListItem[] {
+    const data = Array.isArray(response?.data) ? response.data : Array.isArray(response) ? response : []
+    return data.map((item: any) => ({
+      _id: item._id,
+      fullName: item.fullName,
+      email: item.user?.email || item.email || '',
+    }))
+  }
+
+  async getZoneCoordinators(): Promise<UserListItem[]> {
+    const response = await this.get<any>(API_ENDPOINTS.ZONE_COORDINATORS)
+    return this.mapUserList(response)
+  }
+
+  async getFieldCoordinators(): Promise<UserListItem[]> {
+    const response = await this.get<any>(API_ENDPOINTS.FIELD_COORDINATORS)
+    return this.mapUserList(response)
+  }
+
+  async getSupervisors(): Promise<UserListItem[]> {
+    const response = await this.get<any>(API_ENDPOINTS.SUPERVISORS)
+    return this.mapUserList(response)
+  }
+
   async batchAssignCoordinator(data: {
     coordinatorId: string;
     socializerIds: string[];
     notes?: string;
     replaceExisting?: boolean;
   }): Promise<{ success: boolean; message: string; data?: any }> {
-    const response = await this.request<any>(API_ENDPOINTS.COORDINATOR_ASSIGNMENTS_BATCH, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
+    const response = await this.post<any>(API_ENDPOINTS.COORDINATOR_ASSIGNMENTS_BATCH, data)
     
     return {
       success: response.success ?? true,
@@ -355,10 +455,7 @@ class ApiService {
     socializerIds: string[];
     deleteRecords?: boolean;
   }): Promise<{ success: boolean; message: string }> {
-    const response = await this.request<any>(API_ENDPOINTS.COORDINATOR_ASSIGNMENTS_BATCH_UNASSIGN, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
+    const response = await this.post<any>(API_ENDPOINTS.COORDINATOR_ASSIGNMENTS_BATCH_UNASSIGN, data)
     
     return {
       success: response.success ?? true,
@@ -367,10 +464,7 @@ class ApiService {
   }
 
   async updateLocation(data: { userId: string; latitude: number; longitude: number; accuracy: number }): Promise<{ success: boolean; message: string }> {
-    const response = await this.request<any>(API_ENDPOINTS.LOCATIONS, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
+    const response = await this.post<any>(API_ENDPOINTS.LOCATIONS, data)
     
     return {
       success: response.success ?? true,
@@ -379,9 +473,7 @@ class ApiService {
   }
 
   async getLatestLocation(userId: string): Promise<{ lat: number; long: number; timestamp: string; accuracy?: number }> {
-    const response = await this.request<any>(API_ENDPOINTS.LOCATION_LATEST(userId), {
-      method: 'GET',
-    })
+    const response = await this.get<any>(API_ENDPOINTS.LOCATION_LATEST(userId))
     
     // La API devuelve coordinates en formato [longitude, latitude] (GeoJSON format)
     const [longitude, latitude] = response.data.location.coordinates
@@ -405,9 +497,7 @@ class ApiService {
       url += `&socializerId=${socializerId}`
     }
 
-    const response = await this.request<any>(url, {
-      method: 'GET',
-    })
+    const response = await this.get<any>(url)
     
     return response
   }
@@ -429,9 +519,7 @@ class ApiService {
 
     const url = `${API_ENDPOINTS.RESPONDENTS_REPORTS_COMPLETE}?${params.toString()}`
 
-    const response = await this.request<any>(url, {
-      method: 'GET',
-    })
+    const response = await this.get<any>(url)
     
     return response
   }

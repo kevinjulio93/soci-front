@@ -105,6 +105,13 @@ export interface Socializer {
       role: string
     } | string
   }
+  // Propiedades opcionales para compatibilidad con nueva estructura de API
+  email?: string
+  role?: {
+    _id: string
+    role: string
+  } | string
+  profile?: unknown
   createdAt: string
   updatedAt: string
 }
@@ -175,21 +182,10 @@ export interface CreateSocializerRequest {
   password: string
   roleId: string
   coordinator?: string
-  location?: {
-    lat: number
-    long: number
-  }
-  status?: 'enabled' | 'disabled'
-}
-
-export interface UpdateSocializerRequest {
-  fullName?: string
-  idNumber?: string
-  phone?: string
-  email?: string
-  password?: string
-  roleId?: string
-  coordinator?: string
+  supervisorId?: string
+  fieldCoordinatorId?: string
+  zoneCoordinatorId?: string
+  adminId?: string
   location?: {
     lat: number
     long: number

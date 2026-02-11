@@ -13,6 +13,7 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<User>
   logout: () => Promise<void>
   isLoading: boolean
+  isLoggingOut: boolean
   error: string | null
 }
 
@@ -25,26 +26,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Restaurar sesión al montar
   useEffect(() => {
-    const restoreSession = () => {
+    const restoreSession = async () => {
       const user = authService.restoreSession()
       if (user) {
+        const token = localStorage.getItem('soci_token')
         setAuthState({
           user,
-          token: localStorage.getItem('soci_token') || null,
+          token: token || null,
           isAuthenticated: true,
         })
+        
+        // Validar el estado del usuario después de restaurar
+        const result = await authService.validateUserStatus()
+        if (!result.isValid) {
+          // Usuario deshabilitado o sesión inválida
+          setAuthState({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+          })
+          setError('Su cuenta ha sido deshabilitada. Por favor contacte al administrador.')
+        }
       }
+      
       setIsLoading(false)
     }
 
     restoreSession()
   }, [])
 
-  // Validar estatus del usuario periódicamente
+  // Validar estatus del usuario periódicamente (cada 5 minutos)
   useEffect(() => {
     if (!authState.isAuthenticated || !authState.user) {
       return
@@ -62,11 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         setError('Su cuenta ha sido deshabilitada. Por favor contacte al administrador.')
       }
-      // No actualizar el estado si el usuario sigue siendo válido
-      // Los datos frescos ya están en localStorage por validateUserStatus()
     }
 
-    // Validar cada 5 minutos (no inmediatamente para evitar loop)
+    // Validar cada 5 minutos
     const interval = setInterval(validateStatus, 5 * 60 * 1000)
 
     return () => clearInterval(interval)
@@ -98,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const logout = useCallback(async () => {
-    setIsLoading(true)
+    setIsLoggingOut(true)
     try {
       // Llamar al servicio de logout (limpia storage Y llama al endpoint)
       await authService.logout()
@@ -121,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: false,
       })
     } finally {
-      setIsLoading(false)
+      setIsLoggingOut(false)
     }
   }, [])
 
@@ -130,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     isLoading,
+    isLoggingOut,
     error,
   }
 

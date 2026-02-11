@@ -23,6 +23,9 @@ export function LoginForm({ onSubmit, isLoading = false, error }: LoginFormProps
   return (
     <div className="login">
       <div className="login__box">
+        <div className="login__icon-container">
+          <img src="/image.png" alt="App Logo" className="login__icon" />
+        </div>
         <h1 className="login__title">Iniciar Sesión</h1>
 
         {error && <div className="error-message">{error}</div>}

@@ -14,29 +14,76 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: $color-background;
   font-family: $font-family-primary;
   padding: $spacing-md;
   width: 100%;
+  position: relative;
+  overflow: hidden;
+
+  // Background con colores del sistema y efecto de iluminación
+  background: linear-gradient(
+    135deg,
+    $color-tertiary 0%,
+    $color-secondary 50%,
+    $color-accent 100%
+  );
+
+  // Efecto de iluminación con spotlight
+  &::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: radial-gradient(
+      ellipse at 50% 30%,
+      rgba(255, 237, 78, 0.15) 0%,
+      transparent 60%
+    );
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(
+      circle,
+      rgba(255, 237, 78, 0.08) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    top: -300px;
+    right: -200px;
+    animation: lightPulse 4s ease-in-out infinite;
+  }
 
   // Element: .login__box
   &__box {
-    background: $color-white;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     padding: $spacing-2xl;
     border-radius: $border-radius-lg;
-    box-shadow: $shadow-lg;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     width: 100%;
     max-width: 400px;
     transition: all $transition-base;
+    position: relative;
+    z-index: 1;
+    border: 1px solid rgba(255, 255, 255, 0.8);
 
     @media (max-width: 640px) {
       padding: $spacing-xl;
       border-radius: $border-radius-md;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     }
 
     @media (min-width: 640px) and (max-width: 768px) {
       padding: $spacing-2xl;
       max-width: 450px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
     }
 
     @media (min-width: 768px) {
@@ -44,12 +91,20 @@
       border-radius: $border-radius-lg;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     }
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
   }
 
   // Element: .login__title
   &__title {
     text-align: center;
-    color: $color-dark-text;
+    background: linear-gradient(135deg, $color-primary 0%, $color-accent 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     font-weight: $font-weight-bold;
     margin-bottom: $spacing-lg;
 
@@ -66,6 +121,27 @@
     @media (min-width: 768px) {
       font-size: $font-size-3xl;
       margin-bottom: $spacing-2xl;
+    }
+  }
+
+  // Element: .login__icon-container
+  &__icon-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: $spacing-lg;
+    animation: iconBounce 3s ease-in-out infinite;
+  }
+
+  // Element: .login__icon
+  &__icon {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 15px rgba(255, 237, 78, 0.4));
+
+    @media (max-width: 640px) {
+      width: 60px;
+      height: 60px;
     }
   }
 }
@@ -243,5 +319,29 @@
     to {
       opacity: 1;
     }
+  }
+}
+
+// =============================================
+// BACKGROUND ANIMATIONS
+// =============================================
+
+@keyframes lightPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes iconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
   }
 }

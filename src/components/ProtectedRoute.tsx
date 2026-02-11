@@ -8,6 +8,7 @@ import type { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { authService } from '../services/auth.service'
+import { LoadingState } from './LoadingState'
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -22,11 +23,34 @@ export function ProtectedRoute({
   requireAdminRole = false,
   requireSocializerRole = false,
 }: ProtectedRouteProps) {
-  const { user, isAuthenticated, isLoading } = useAuth()
+  const { user, isAuthenticated, isLoading, isLoggingOut } = useAuth()
+
+  // Mostrar mensaje específico al cerrar sesión
+  if (isLoggingOut) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh' 
+      }}>
+        <LoadingState message="Cerrando sesión..." />
+      </div>
+    )
+  }
 
   // Mostrar loading mientras se restaura la sesión
   if (isLoading) {
-    return <div>Cargando...</div>
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh' 
+      }}>
+        <LoadingState message="Cargando sesión..." />
+      </div>
+    )
   }
 
   // No autenticado
@@ -36,8 +60,7 @@ export function ProtectedRoute({
 
   // Validar si el usuario está deshabilitado
   if (user.status === 'disabled') {
-    // Limpiar sesión y redirigir al login
-    authService.logout()
+    // Redirigir al login - el AuthContext se encargará de limpiar la sesión
     return <Navigate to="/login" replace />
   }
 

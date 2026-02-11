@@ -8,7 +8,7 @@ import Login from '../pages/Login'
 import SociologistDashboard from '../pages/SociologistDashboard'
 import AdminDashboard from '../pages/AdminDashboard'
 import SurveyParticipant from '../pages/SurveyParticipant'
-import { SocializerManagement } from '../pages/SocializerManagement'
+import { UserManagement } from '../pages/UserManagement'
 import SurveysList from '../pages/SurveysList'
 import Reports from '../pages/Reports'
 import ReportsRealtime from '../pages/ReportsRealtime'
@@ -37,7 +37,7 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.ADMIN_DASHBOARD,
     element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+      <ProtectedRoute requireAdminRole>
         <AdminDashboard />
       </ProtectedRoute>
     ),
@@ -45,31 +45,31 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.ADMIN_SOCIALIZERS,
     element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
-        <SocializerManagement />
+      <ProtectedRoute requireAdminRole>
+        <UserManagement />
       </ProtectedRoute>
     ),
   },
   {
     path: ROUTES.ADMIN_SOCIALIZERS_NEW,
     element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
-        <SocializerManagement />
+      <ProtectedRoute requireAdminRole>
+        <UserManagement />
       </ProtectedRoute>
     ),
   },
   {
     path: '/admin/socializers/edit/:id',
     element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
-        <SocializerManagement />
+      <ProtectedRoute requireAdminRole>
+        <UserManagement />
       </ProtectedRoute>
     ),
   },
   {
     path: ROUTES.ADMIN_SURVEYS,
     element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+      <ProtectedRoute requireAdminRole>
         <SurveysList />
       </ProtectedRoute>
     ),
@@ -77,7 +77,7 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.ADMIN_REPORTS,
     element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+      <ProtectedRoute requireAdminRole>
         <Reports />
       </ProtectedRoute>
     ),
@@ -85,7 +85,7 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.ADMIN_REPORTS_REALTIME,
     element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+      <ProtectedRoute requireAdminRole>
         <ReportsRealtime />
       </ProtectedRoute>
     ),
@@ -93,7 +93,7 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.ADMIN_REPORTS_GENERATE,
     element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+      <ProtectedRoute requireAdminRole>
         <ReportsGenerate />
       </ProtectedRoute>
     ),
@@ -101,7 +101,7 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.ADMIN_REPORTS_MAP,
     element: (
-      <ProtectedRoute allowedSubjects={['admin']} requireAdminRole>
+      <ProtectedRoute requireAdminRole>
         <ReportsMap />
       </ProtectedRoute>
     ),

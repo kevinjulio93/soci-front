@@ -3,13 +3,15 @@
  * Puede ser usado para cualquier tipo de datos
  */
 
+import type { ReactNode } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Pagination } from './Pagination'
 import '../styles/Dashboard.scss'
 
 export interface TableColumn<T> {
   key: string
   header: string
-  render: (item: T) => React.ReactNode
+  render: (item: T) => ReactNode
   className?: string
 }
 
@@ -35,7 +37,7 @@ interface DataTableProps<T> {
   onSelectionChange?: (selectedIds: Set<string>) => void
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   columns,
   data,
   currentPage,
@@ -52,13 +54,15 @@ export function DataTable<T extends Record<string, any>>({
   showSearch = false,
   getRowKey,
   selectable = false,
-  selectedItems = new Set(),
+  selectedItems,
   onSelectionChange,
 }: DataTableProps<T>) {
-  const handleSelectAll = () => {
+  const safeSelectedItems = useMemo(() => selectedItems ?? new Set<string>(), [selectedItems])
+
+  const handleSelectAll = useCallback(() => {
     if (!onSelectionChange) return
     
-    if (selectedItems.size === data.length) {
+    if (safeSelectedItems.size === data.length) {
       // Deselect all
       onSelectionChange(new Set())
     } else {
@@ -66,21 +70,35 @@ export function DataTable<T extends Record<string, any>>({
       const allIds = new Set(data.map(item => getRowKey(item)))
       onSelectionChange(allIds)
     }
-  }
+  }, [onSelectionChange, data, getRowKey, safeSelectedItems])
 
-  const handleSelectItem = (id: string) => {
+  const handleSelectItem = useCallback((id: string) => {
     if (!onSelectionChange) return
     
-    const newSelection = new Set(selectedItems)
+    const newSelection = new Set(safeSelectedItems)
     if (newSelection.has(id)) {
       newSelection.delete(id)
     } else {
       newSelection.add(id)
     }
     onSelectionChange(newSelection)
-  }
+  }, [onSelectionChange, safeSelectedItems])
 
-  const isAllSelected = data.length > 0 && selectedItems.size === data.length
+  const isAllSelected = useMemo(
+    () => data.length > 0 && safeSelectedItems.size === data.length,
+    [data.length, safeSelectedItems]
+  )
+
+  const colSpan = useMemo(
+    () => (selectable ? columns.length + 1 : columns.length),
+    [columns.length, selectable]
+  )
+
+  const isUnsuccessfulRow = useCallback((item: T): boolean => {
+    if (!item || typeof item !== 'object') return false
+    if (!('surveyStatus' in item)) return false
+    return (item as { surveyStatus?: string }).surveyStatus === 'unsuccessful'
+  }, [])
   return (
     <div className="survey-table">
       {showSearch && onSearch && (
@@ -129,7 +147,7 @@ export function DataTable<T extends Record<string, any>>({
             <tbody className="survey-table__tbody">
               {isLoading ? (
                 <tr className="survey-table__row">
-                  <td colSpan={selectable ? columns.length + 1 : columns.length} style={{ textAlign: 'center', padding: '2rem' }}>
+                  <td colSpan={colSpan} style={{ textAlign: 'center', padding: '2rem' }}>
                     <div className="loading-state">
                       <div className="loading-spinner"></div>
                       <p>Cargando...</p>
@@ -140,14 +158,14 @@ export function DataTable<T extends Record<string, any>>({
                 data.map((item) => {
                   const itemId = getRowKey(item)
                   // Verificar si es una fila sin datos (unsuccessful survey)
-                  const isUnsuccessful = 'surveyStatus' in (item as object) && (item as any).surveyStatus === 'unsuccessful'
+                  const isUnsuccessful = isUnsuccessfulRow(item)
                   return (
                     <tr key={itemId} className={`survey-table__row ${isUnsuccessful ? 'survey-table__row--unsuccessful' : ''}`}>
                       {selectable && (
                         <td className="survey-table__td survey-table__td--checkbox">
                           <input
                             type="checkbox"
-                            checked={selectedItems.has(itemId)}
+                            checked={safeSelectedItems.has(itemId)}
                             onChange={() => handleSelectItem(itemId)}
                             className="table-checkbox"
                           />

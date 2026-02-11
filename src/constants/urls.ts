@@ -47,19 +47,31 @@ export const API_ENDPOINTS = {
   RESPONDENTS_STATS_TOP_SOCIALIZERS: (limit: number = 10) => `/respondents/stats/top-socializers?limit=${limit}`,
   RESPONDENTS_REPORTS_BY_SOCIALIZER_DATE: '/respondents/reports/by-socializer-date',
   RESPONDENTS_REPORTS_COMPLETE: '/respondents/reports/complete',
+  DASHBOARD_ADMIN: (startDate: string, endDate: string, usuariosDependientes: string) =>
+    `/dashboard001?fecha_inicio=${encodeURIComponent(startDate)}&fecha_fin=${encodeURIComponent(endDate)}&usuarios_dependientes=${encodeURIComponent(usuariosDependientes)}`,
   
   // Socializers
   SOCIALIZERS: '/socializers',
   SOCIALIZER_BY_ID: (id: string) => `/socializers/${id}`,
   SOCIALIZERS_WITH_LOCATIONS: '/socializers/with-locations',
   
+  // Users
+  USERS_CREATE_WITH_PROFILE: '/users/create-with-profile',
+  USERS_HIERARCHY: '/users/hierarchy',
+  USERS_HIERARCHY_BY_ROLE: (id: string, role: string) => `/users/hierarchy/${id}?role=${role}`,
+  USER_BY_ID: (id: string) => `/users/${id}`,
+  
   // Roles
   ROLES: '/roles',
   
   // Coordinators
   COORDINATORS: '/socializers/coordinators',
+  COORDINATOR_ASSIGNMENTS: '/coordinator-assignments',
   COORDINATOR_ASSIGNMENTS_BATCH: '/coordinator-assignments/batch',
   COORDINATOR_ASSIGNMENTS_BATCH_UNASSIGN: '/coordinator-assignments/batch-unassign',
+  ZONE_COORDINATORS: '/zone-coordinators',
+  FIELD_COORDINATORS: '/field-coordinators',
+  SUPERVISORS: '/supervisors',
   
   // Location
   LOCATIONS: '/locations',

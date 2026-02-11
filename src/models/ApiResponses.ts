@@ -186,7 +186,7 @@ export class UploadAudioResponse extends ApiResponse<{ audioUrl: string }> {
 // =============================================
 
 export class SocializerData {
-  public _id: string
+  public _id: string // Profile ID de la lista
   public fullName: string
   public idNumber: string
   public phone: string
@@ -197,7 +197,7 @@ export class SocializerData {
   }
   public status: 'enabled' | 'disabled'
   public user: {
-    _id: string
+    _id: string // User ID
     email: string
     password?: string
     role: string | {
@@ -208,20 +208,122 @@ export class SocializerData {
     createdAt: string
     updatedAt: string
   }
+  public profile?: any
+  public email?: string
+  public role?: any
   public createdAt: string
   public updatedAt: string
 
   constructor(data: any) {
-    this._id = data._id
-    this.fullName = data.fullName
-    this.idNumber = data.idNumber
-    this.phone = data.phone
-    this.coordinator = data.coordinator
-    this.location = data.location
-    this.status = data.status
-    this.user = data.user
-    this.createdAt = data.createdAt
-    this.updatedAt = data.updatedAt
+    /**
+     * Estructura de respuestas del API:
+     * 
+     * 1. GET /users/hierarchy (lista):
+     * {
+     *   _id: "profileId",
+     *   fullName: "NAME",
+     *   idNumber: "123",
+     *   phone: "456",
+     *   status: "enabled",
+     *   user: {
+     *     _id: "userId",
+     *     email: "email@test.com",
+     *     role: { _id: "roleId", role: "roleName" },
+     *     status: "enabled"
+     *   },
+     *   profile?: {  // Coordinador padre si existe
+     *     _id: "parentProfileId",
+     *     fullName: "PARENT NAME",
+     *     fieldCoordinator?: "...",
+     *     zoneCoordinator?: "..."
+     *   }
+     * }
+     * 
+     * 2. GET /users/:id (individual):
+     * {
+     *   _id: "userId",
+     *   email: "email@test.com",
+     *   role: { _id: "roleId", role: "roleName" },
+     *   status: "enabled",
+     *   profile: {
+     *     _id: "profileId",
+     *     fullName: "NAME",
+     *     idNumber: "123",
+     *     phone: "456",
+     *     status: "enabled",
+     *     profile?: {  // Coordinador padre si existe
+     *       _id: "parentProfileId",
+     *       fullName: "PARENT NAME",
+     *       fieldCoordinator?: "..."
+     *     }
+     *   }
+     * }
+     */
+    
+    // Detectar si es estructura de lista o get individual
+    const isGetIndividual = data.email && data.profile && data.profile.fullName
+    
+    if (isGetIndividual) {
+      // Estructura de GET /users/:id
+      this._id = data.profile._id // profile ID
+      this.fullName = data.profile.fullName
+      this.idNumber = data.profile.idNumber
+      this.phone = data.profile.phone
+      this.status = data.profile.status || data.status
+      this.location = data.profile.location
+      this.createdAt = data.createdAt
+      this.updatedAt = data.updatedAt
+      
+      // Construir objeto user
+      this.user = {
+        _id: data._id, // userId
+        email: data.email,
+        role: data.role,
+        status: data.status,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt
+      }
+      
+      // Propiedades opcionales
+      this.email = data.email
+      this.role = data.role
+      this.profile = data.profile.profile // Coordinador padre
+      
+      // Coordinator del coordinador padre si existe
+      if (data.profile.profile) {
+        this.coordinator = data.profile.profile.fieldCoordinator || data.profile.profile.zoneCoordinator || data.profile.profile._id
+      }
+    } else {
+      // Estructura de GET /users/hierarchy (lista)
+      this._id = data._id // profile ID
+      this.fullName = data.fullName
+      this.idNumber = data.idNumber
+      this.phone = data.phone
+      this.status = data.status
+      this.location = data.location
+      this.createdAt = data.createdAt
+      this.updatedAt = data.updatedAt
+      
+      // El objeto user
+      this.user = {
+        _id: data.user._id,
+        email: data.user.email,
+        role: data.user.role,
+        status: data.user.status,
+        createdAt: data.user.createdAt,
+        updatedAt: data.user.updatedAt
+      }
+      
+      // Propiedades opcionales
+      this.email = data.user?.email
+      this.role = data.user?.role
+      this.profile = data.profile // Coordinador padre
+      
+      // Coordinator si existe
+      if (data.profile) {
+        this.coordinator = data.profile.fieldCoordinator || data.profile.zoneCoordinator || data.profile._id
+      }
+    }
   }
 
   isEnabled(): boolean {
@@ -229,11 +331,22 @@ export class SocializerData {
   }
 
   getRoleId(): string {
-    return typeof this.user.role === 'string' ? this.user.role : this.user.role._id
+    const role = this.role || this.user?.role
+    return typeof role === 'string' ? role : role?._id || ''
   }
 
   getRoleName(): string {
-    return typeof this.user.role === 'string' ? this.user.role : this.user.role.role
+    const role = this.role || this.user?.role
+    return typeof role === 'string' ? role : role?.role || ''
+  }
+
+  getUserId(): string {
+    return this.user?._id || ''
+  }
+
+  getProfileId(): string {
+    // Si tiene profile, _id es userId, sino es profileId
+    return this.profile ? this.profile._id : this._id
   }
 }
 

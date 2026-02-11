@@ -395,14 +395,15 @@ export const getSocializersTableColumns = (
       key: 'contact',
       header: 'CONTACTO',
       render: (socializer) => (
-        <span className="contact-phone">{socializer.user?.email || <span className="badge badge-empty">—</span>}</span>
+        <span className="contact-phone">{socializer.email || socializer.user?.email || <span className="badge badge-empty">—</span>}</span>
       )
     },
     {
       key: 'role',
       header: 'ROL',
       render: (socializer) => {
-        const role = typeof socializer.user?.role === 'object' ? socializer.user.role.role : ''
+        const roleValue = socializer.role || socializer.user?.role
+        const role = typeof roleValue === 'string' ? roleValue : roleValue?.role || ''
         if (!role) return <span className="badge badge-empty">—</span>
         const roleClass = role.toLowerCase() === 'admin' ? 'badge-purple' : 
                           role.toLowerCase() === 'socializer' || role.toLowerCase() === 'socializador' ? 'badge-blue' : 'badge-gray'
@@ -436,7 +437,8 @@ export const getSocializersTableColumns = (
       key: 'actions',
       header: 'ACCIONES',
       render: (socializer) => {
-        const roleStr = typeof socializer.user?.role === 'object' ? socializer.user.role.role : ''
+        const roleValue = socializer.user?.role
+        const roleStr = typeof roleValue === 'string' ? roleValue : roleValue?.role || ''
         const isTargetAdmin = roleStr === 'admin'
         const isTargetCoordinator = roleStr === 'coordinador' || roleStr === 'coordinator'
         

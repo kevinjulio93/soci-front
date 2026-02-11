@@ -4,20 +4,30 @@
 
 /**
  * Formatea una fecha a formato local español
+ * Maneja correctamente fechas ISO (YYYY-MM-DD) evitando desplazamientos de timezone
  */
 export const formatDateES = (date: string | Date): string => {
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    // Para fechas ISO (YYYY-MM-DD), parsear manualmente para evitar timezone issues
+    const [year, month, day] = date.split('-').map(Number)
+    return new Date(year, month - 1, day).toLocaleDateString('es-ES')
+  }
   return new Date(date).toLocaleDateString('es-ES')
 }
 
 /**
- * Formatea una fecha a formato ISO (YYYY-MM-DD)
+ * Formatea una fecha a formato ISO (YYYY-MM-DD) en zona horaria local
+ * Evita problemas de UTC desplazando la fecha
  */
 export const formatDateISO = (date: Date): string => {
-  return date.toISOString().split('T')[0]
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 /**
- * Obtiene la fecha actual en formato ISO
+ * Obtiene la fecha actual en formato ISO usando zona horaria local
  */
 export const getTodayISO = (): string => {
   return formatDateISO(new Date())

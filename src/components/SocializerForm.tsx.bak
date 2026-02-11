@@ -2,7 +2,7 @@
  * SocializerForm - Formulario para crear/editar socializadores
  */
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import type { RoleOption } from '../types'
 import { SocializerFormData } from '../models/FormData'
@@ -32,23 +32,6 @@ interface CoordinatorData {
   }
   email?: string
 }
-
-type FormPayload = ReturnType<SocializerFormData['toFormData']> & {
-  supervisorId?: string
-  fieldCoordinatorId?: string
-  zoneCoordinatorId?: string
-}
-
-const ROLE_ORDER = [
-  'Administrador',
-  'Coordinador de Zona',
-  'Coordinador de Campo',
-  'Supervisor',
-  'Socializador',
-  'Solo Lectura',
-]
-
-const normalizeRoleValue = (roleValue: string): string => roleValue.toLowerCase()
 
 export function SocializerForm({
   onSubmit,
@@ -86,12 +69,12 @@ export function SocializerForm({
 
   // Helper para obtener fullName de la nueva estructura de API
   const getCoordinatorFullName = (item: CoordinatorData): string => {
-    return (item.fullName || item.user?.fullName || '') as string
+    return item.fullName || item.user?.fullName || ''
   }
 
   const loadHierarchyOptions = useCallback(async (role: string, parentCoordinatorId?: string) => {
     try {
-      const normalizedRole = normalizeRoleValue(role)
+      const normalizedRole = role.toLowerCase()
       
       // Si no hay usuario logueado o no tiene profile, no cargar
       if (!user?.id) return
@@ -145,58 +128,6 @@ export function SocializerForm({
   const watchedRoleId = watch('roleId')
   const watchedFieldCoordinator = watch('assignedFieldCoordinator')
   const watchedZoneCoordinator = watch('assignedZoneCoordinator')
-
-  const roleOptions = useMemo(() => roles.map((role) => ({
-    value: role._id,
-    label: role.role,
-  })), [roles])
-
-  const visibleHierarchyFields = useMemo(() => (
-    isEditMode ? [] : getVisibleFieldsForRole(userRole, selectedRole)
-  ), [isEditMode, userRole, selectedRole])
-
-  const loadRoles = useCallback(async () => {
-    try {
-      const response = await apiService.getRoles()
-      // Usar el método helper de la clase GetRolesResponse
-      let activeRoles = response.getActiveRoles()
-      
-      // Filtrar roles según jerarquía usando la configuración
-      const hierarchyConfig = getHierarchyConfig(userRole)
-      
-      // Usar creatableRoles de la configuración para filtrar
-      if (hierarchyConfig.creatableRoles && hierarchyConfig.creatableRoles.length > 0) {
-        activeRoles = activeRoles.filter(role => 
-          hierarchyConfig.creatableRoles!.includes(role.role.toLowerCase())
-        )
-      }
-      // Si no tiene creatableRoles definidos, no puede crear nada (como readonly)
-      
-      // Traducir roles sin filtrar ni limitar la cantidad
-      const translatedRoles = activeRoles.map(role => ({
-        _id: role._id,
-        role: translateRole(role.role),
-        originalRole: role.role,
-        status: role.status
-      }))
-      
-      // Ordenar roles en el orden requerido: Administrador, Supervisor, Socializador, Solo Lectura
-      translatedRoles.sort((a, b) => {
-        const indexA = ROLE_ORDER.indexOf(a.role)
-        const indexB = ROLE_ORDER.indexOf(b.role)
-        // Si no está en el orden, ponerlo al final
-        if (indexA === -1) return 1
-        if (indexB === -1) return -1
-        return indexA - indexB
-      })
-      
-      setRoles(translatedRoles)
-    } catch {
-      // Error silencioso
-    } finally {
-      setLoadingRoles(false)
-    }
-  }, [userRole])
 
   // Actualizar valores del formulario cuando cambien los datos iniciales
   useEffect(() => {
@@ -254,7 +185,8 @@ export function SocializerForm({
 
   useEffect(() => {
     loadRoles()
-  }, [loadRoles])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Auto-seleccionar rol según la configuración del usuario
   useEffect(() => {
@@ -269,26 +201,79 @@ export function SocializerForm({
     }
   }, [roles, userRole, isEditMode, initialData, setValue])
 
+  const loadHierarchyOptions = useCallback(async (role: string, parentCoordinatorId?: string) => {
+    try {
+      const normalizedRole = role.toLowerCase()
+      
+      // Si no hay usuario logueado o no tiene profile, no cargar
+      if (!user?.id) return
+
+      if (normalizedRole === 'socializer' || normalizedRole === 'socializador') {
+        setLoadingCoordinators(true)
+        // Si hay un coordinador de campo seleccionado, filtrar supervisores por ese coordinador
+        if (parentCoordinatorId) {
+          const supervisors = await apiService.getSubordinatesByRole(parentCoordinatorId, 'supervisor')
+          setCoordinators(supervisors)
+        } else {
+          // Si no hay coordinador de campo, usar el usuario logueado
+          const supervisors = await apiService.getSubordinatesByRole(user.id, 'supervisor')
+          setCoordinators(supervisors)
+        }
+        return
+      }
+
+      if (normalizedRole === 'supervisor') {
+        setLoadingCoordinators(true)
+        // Si hay un coordinador de zona seleccionado, filtrar coordinadores de campo por ese coordinador
+        if (parentCoordinatorId) {
+          const fieldCoords = await apiService.getSubordinatesByRole(parentCoordinatorId, 'fieldcoordinator')
+          setFieldCoordinators(fieldCoords)
+        } else {
+          // Si no hay coordinador de zona, usar el usuario logueado
+          const fieldCoords = await apiService.getSubordinatesByRole(user.id, 'fieldcoordinator')
+          setFieldCoordinators(fieldCoords)
+        }
+        return
+      }
+
+      if (normalizedRole === 'fieldcoordinator' || normalizedRole === 'coordinador de campo') {
+        if (zoneCoordinators.length > 0) return
+        setLoadingCoordinators(true)
+        // Usar endpoint con jerarquía para obtener solo coordinadores de zona permitidos
+        const zoneCoords = await apiService.getSubordinatesByRole(user.id, 'zonecoordinator')
+        setZoneCoordinators(zoneCoords)
+        return
+      }
+
+      return
+    } catch {
+      // Error silencioso
+    } finally {
+      setLoadingCoordinators(false)
+    }
+  }, [user?.id, zoneCoordinators.length])
 
   useEffect(() => {
     if (!selectedRole) return
     loadHierarchyOptions(selectedRole)
-  }, [selectedRole, loadHierarchyOptions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRole])
 
   // Recargar supervisores cuando cambie el coordinador de campo seleccionado
   useEffect(() => {
-    const normalizedRole = normalizeRoleValue(selectedRole)
+    const normalizedRole = selectedRole.toLowerCase()
     if ((normalizedRole === 'socializer' || normalizedRole === 'socializador') && watchedFieldCoordinator) {
       // Limpiar selección de supervisor actual
       setValue('assignedSupervisor', '')
       // Recargar supervisores filtrados por el coordinador de campo
       loadHierarchyOptions(selectedRole, watchedFieldCoordinator)
     }
-  }, [watchedFieldCoordinator, selectedRole, loadHierarchyOptions, setValue])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedFieldCoordinator])
 
   // Recargar coordinadores de campo cuando cambie el coordinador de zona seleccionado
   useEffect(() => {
-    const normalizedRole = normalizeRoleValue(selectedRole)
+    const normalizedRole = selectedRole.toLowerCase()
     if (normalizedRole === 'supervisor' && watchedZoneCoordinator) {
       // Limpiar selección de coordinador de campo actual
       setValue('assignedFieldCoordinator', '')
@@ -298,31 +283,85 @@ export function SocializerForm({
       // Recargar coordinadores de campo filtrados por el coordinador de zona
       loadHierarchyOptions(selectedRole, watchedZoneCoordinator)
     }
-  }, [watchedZoneCoordinator, selectedRole, loadHierarchyOptions, setValue])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedZoneCoordinator])
+
+  const loadRoles = async () => {
+    try {
+      const response = await apiService.getRoles()
+      // Usar el método helper de la clase GetRolesResponse
+      let activeRoles = response.getActiveRoles()
+      
+      // Filtrar roles según jerarquía usando la configuración
+      const hierarchyConfig = getHierarchyConfig(userRole)
+      
+      // Usar creatableRoles de la configuración para filtrar
+      if (hierarchyConfig.creatableRoles && hierarchyConfig.creatableRoles.length > 0) {
+        activeRoles = activeRoles.filter(role => 
+          hierarchyConfig.creatableRoles!.includes(role.role.toLowerCase())
+        )
+      }
+      // Si no tiene creatableRoles definidos, no puede crear nada (como readonly)
+      
+      // Traducir roles sin filtrar ni limitar la cantidad
+      const translatedRoles = activeRoles.map(role => ({
+        _id: role._id,
+        role: translateRole(role.role),
+        originalRole: role.role,
+        status: role.status
+      }))
+      
+      // Ordenar roles en el orden requerido: Administrador, Supervisor, Socializador, Solo Lectura
+      const roleOrder = ['Administrador', 'Coordinador de Zona', 'Coordinador de Campo', 'Supervisor', 'Socializador', 'Solo Lectura']
+      translatedRoles.sort((a, b) => {
+        const indexA = roleOrder.indexOf(a.role)
+        const indexB = roleOrder.indexOf(b.role)
+        // Si no está en el orden, ponerlo al final
+        if (indexA === -1) return 1
+        if (indexB === -1) return -1
+        return indexA - indexB
+      })
+      
+      setRoles(translatedRoles)
+    } catch {
+      // Error silencioso
+    } finally {
+      setLoadingRoles(false)
+    }
+  }
 
   // Submit wrapper para transformar coordinatorId según jerarquía
   const handleFormSubmit = (formData: ReturnType<SocializerFormData['toFormData']>) => {
-    const payload: FormPayload = { ...formData }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload: any = { ...formData }
+    
+    console.log('Form data before transform:', formData)
+    
     const selectedRoleObj = roles.find(r => r._id === payload.roleId)
-    const roleToCheck = normalizeRoleValue(
-      selectedRoleObj?.originalRole || selectedRoleObj?.role || ''
-    )
+    const roleToCheck = selectedRoleObj?.originalRole?.toLowerCase() || selectedRoleObj?.role?.toLowerCase() || ''
+    
+    console.log('Role to check:', roleToCheck)
+    console.log('User role:', userRole)
+    console.log('Payload before mapping:', payload)
     
     // Agregar automáticamente el campo de coordinador según el rol del usuario logueado
     if (userRole === 'supervisor') {
       // El supervisor crea socializadores y debe asignarse automáticamente
       if (!payload.assignedSupervisor || payload.assignedSupervisor === '') {
         payload.assignedSupervisor = user?.profile?._id
+        console.log('Auto-assigned supervisor (profile ID):', user?.profile?._id)
       }
     } else if (userRole === 'fieldcoordinator') {
       // El coordinador de campo crea supervisores y debe asignarse automáticamente
       if (!payload.assignedFieldCoordinator || payload.assignedFieldCoordinator === '') {
         payload.assignedFieldCoordinator = user?.profile?._id
+        console.log('Auto-assigned fieldCoordinator (profile ID):', user?.profile?._id)
       }
     } else if (userRole === 'zonecoordinator') {
       // El coordinador de zona crea campos y debe asignarse automáticamente
       if (!payload.assignedZoneCoordinator || payload.assignedZoneCoordinator === '') {
         payload.assignedZoneCoordinator = user?.profile?._id
+        console.log('Auto-assigned zoneCoordinator (profile ID):', user?.profile?._id)
       }
     }
     
@@ -330,18 +369,23 @@ export function SocializerForm({
     if (roleToCheck === 'socializer' || roleToCheck === 'socializador') {
       // Socializador -> asignar supervisor
       if (payload.assignedSupervisor) {
+        console.log('Mapping assignedSupervisor:', payload.assignedSupervisor)
         payload.supervisorId = payload.assignedSupervisor
         delete payload.assignedSupervisor
+      } else {
+        console.warn('No assignedSupervisor found in payload!')
       }
     } else if (roleToCheck === 'supervisor') {
       // Supervisor -> asignar coordinador de campo
       if (payload.assignedFieldCoordinator) {
+        console.log('Mapping assignedFieldCoordinator:', payload.assignedFieldCoordinator)
         payload.fieldCoordinatorId = payload.assignedFieldCoordinator
         delete payload.assignedFieldCoordinator
       }
     } else if (roleToCheck === 'fieldcoordinator') {
       // Coordinador de Campo -> asignar coordinador de zona
       if (payload.assignedZoneCoordinator) {
+        console.log('Mapping assignedZoneCoordinator:', payload.assignedZoneCoordinator)
         payload.zoneCoordinatorId = payload.assignedZoneCoordinator
         delete payload.assignedZoneCoordinator
       }
@@ -353,6 +397,7 @@ export function SocializerForm({
     delete payload.assignedSupervisor
     delete payload.assignedZoneCoordinator
     
+    console.log('Final payload:', payload)
     onSubmit(payload)
   }
 
@@ -463,31 +508,30 @@ export function SocializerForm({
             })}
           />
 
-          {/* Rol - Solo visible en modo creación */}
-          {!isEditMode && (
-            <>
-              <Select
-                id="roleId"
-                label="Rol"
-                placeholder="Seleccione un rol"
-                options={roleOptions}
-                disabled={isLoading || loadingRoles || (userRole === 'supervisor' && !isEditMode)}
-                required
-                error={errors.roleId?.message}
-                {...register('roleId', {
-                  required: 'Debe seleccionar un rol',
-                })}
-              />
-              {userRole === 'supervisor' && !isEditMode && (
-                <span className="form-group__hint">
-                  El rol se asigna automáticamente como Socializador.
-                </span>
-              )}
-            </>
+          {/* Rol */}
+          <Select
+            id="roleId"
+            label="Rol"
+            placeholder="Seleccione un rol"
+            options={roles.map((role) => ({
+              value: role._id,
+              label: role.role,
+            }))}
+            disabled={isLoading || loadingRoles || (userRole === 'supervisor' && !isEditMode)}
+            required
+            error={errors.roleId?.message}
+            {...register('roleId', {
+              required: 'Debe seleccionar un rol',
+            })}
+          />
+          {userRole === 'supervisor' && !isEditMode && (
+            <span className="form-group__hint">
+              El rol se asigna automáticamente como Socializador.
+            </span>
           )}
 
-          {/* Campos jerárquicos dinámicos según configuración - Solo visible en modo creación */}
-          {!isEditMode && visibleHierarchyFields.map((hierarchyField) => {
+          {/* Campos jerárquicos dinámicos según configuración */}
+          {getVisibleFieldsForRole(userRole, selectedRole).map((hierarchyField) => {
             const isAutoSelected = getAutoSelectField(userRole) === hierarchyField.fieldKey
             const dataSource = hierarchyField.dataSourceField === 'zoneCoordinators' 
               ? zoneCoordinators 

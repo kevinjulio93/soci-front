@@ -13,8 +13,16 @@ class AuthService {
   async login(credentials: LoginCredentials): Promise<User> {
     const response: LoginResponse = await apiService.login(credentials)
 
-    // La respuesta del backend tiene la estructura: { user: { id, email, role, token, abilities } }
+    // La respuesta del backend tiene la estructura: { user: { id/_id, email, role, token, abilities } }
     let user = response.user
+    
+    // Si el backend envía _id en lugar de id, mapear correctamente
+    if (!user.id && (user as any)._id) {
+      user = {
+        ...user,
+        id: (user as any)._id
+      }
+    }
 
     // Validar si el usuario está deshabilitado
     if (user.status === 'disabled') {
@@ -68,10 +76,28 @@ class AuthService {
   }
 
   restoreSession(): User | null {
-    const user = storageService.getUser()
+    let user = storageService.getUser()
+    const token = storageService.getToken()
+    
+    // Debe haber tanto usuario como token
+    if (!user || !token) {
+      // Si falta alguno, limpiar todo para evitar estados inconsistentes
+      if (user || token) {
+        storageService.clear()
+      }
+      return null
+    }
+    
+    // Si el backend envía _id en lugar de id, mapear correctamente
+    if (!user.id && (user as any)._id) {
+      user = {
+        ...user,
+        id: (user as any)._id
+      }
+    }
     
     // Validar si el usuario está deshabilitado al restaurar sesión
-    if (user && user.status === 'disabled') {
+    if (user.status === 'disabled') {
       // Limpiar sesión si el usuario está deshabilitado
       storageService.clear()
       return null
@@ -127,7 +153,7 @@ class AuthService {
 
   /**
    * Determina el dashboard a mostrar basado en el rol del usuario
-   * 'root', 'admin', 'coordinador' o 'readonly' → /admin/dashboard
+   * 'root', 'admin', coordinadores, 'supervisor' o 'readonly' → /admin/dashboard
    * 'socializer' → /sociologist/dashboard
    * Otros roles → /sociologist/dashboard (por defecto)
    */
@@ -136,8 +162,9 @@ class AuthService {
     
     const roleType = user.role?.role?.toLowerCase()
     
-    // Si es root, admin, coordinador o readonly, mostrar admin dashboard
-    if (roleType === 'root' || roleType === 'admin' || roleType === 'coordinador' || roleType === 'coordinator' || roleType === 'readonly') {
+    // Si es root, admin, cualquier tipo de coordinador, supervisor o readonly, mostrar admin dashboard
+    const adminRoles = ['root', 'admin', 'coordinador', 'coordinator', 'zonecoordinator', 'fieldcoordinator', 'supervisor', 'readonly']
+    if (adminRoles.includes(roleType || '')) {
       return '/admin/dashboard'
     }
     
@@ -146,13 +173,13 @@ class AuthService {
   }
 
   /**
-   * Verifica si el usuario es admin, root, coordinador o readonly
+   * Verifica si el usuario es admin, root, coordinador, supervisor o readonly
    */
   isAdminOrRoot(user: User | null): boolean {
     if (!user) return false
     const roleType = user.role?.role?.toLowerCase()
-    const isAdmin = roleType === 'root' || roleType === 'admin' || roleType === 'coordinador' || roleType === 'coordinator' || roleType === 'readonly'
-    return isAdmin
+    const adminRoles = ['root', 'admin', 'coordinador', 'coordinator', 'zonecoordinator', 'fieldcoordinator', 'supervisor', 'readonly']
+    return adminRoles.includes(roleType || '')
   }
 
   /**

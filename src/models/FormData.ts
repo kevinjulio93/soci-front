@@ -38,6 +38,9 @@ export class SocializerFormData {
   password: string
   roleId: string
   coordinator?: string
+  assignedSupervisor?: string
+  assignedFieldCoordinator?: string
+  assignedZoneCoordinator?: string
   status: 'enabled' | 'disabled'
 
   constructor(
@@ -48,6 +51,9 @@ export class SocializerFormData {
     password: string = '',
     roleId: string = '',
     coordinator: string = '',
+    assignedSupervisor: string = '',
+    assignedFieldCoordinator: string = '',
+    assignedZoneCoordinator: string = '',
     status: 'enabled' | 'disabled' = 'enabled'
   ) {
     this.fullName = fullName
@@ -57,6 +63,9 @@ export class SocializerFormData {
     this.password = password
     this.roleId = roleId
     this.coordinator = coordinator
+    this.assignedSupervisor = assignedSupervisor
+    this.assignedFieldCoordinator = assignedFieldCoordinator
+    this.assignedZoneCoordinator = assignedZoneCoordinator
     this.status = status
   }
 
@@ -69,6 +78,9 @@ export class SocializerFormData {
       password: this.password,
       roleId: this.roleId,
       coordinator: this.coordinator,
+      assignedSupervisor: this.assignedSupervisor,
+      assignedFieldCoordinator: this.assignedFieldCoordinator,
+      assignedZoneCoordinator: this.assignedZoneCoordinator,
       status: this.status,
     }
   }
@@ -86,6 +98,9 @@ export class SocializerFormData {
       data.password || '',
       data.roleId || '',
       data.coordinator || '',
+      data.assignedSupervisor || '',
+      data.assignedFieldCoordinator || '',
+      data.assignedZoneCoordinator || '',
       data.status || 'enabled'
     )
   }

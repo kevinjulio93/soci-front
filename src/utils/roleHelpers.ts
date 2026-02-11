@@ -6,13 +6,12 @@
 // Mapeo de roles a español
 const ROLE_TRANSLATIONS: Record<string, string> = {
   'admin': 'Administrador',
-  'coordinator': 'Supervisor',
-  'coordinador': 'Supervisor',
+  'coordinator': 'Coordinador',
   'supervisor': 'Supervisor',
   'socializer': 'Socializador',
-  'socializador': 'Socializador',
   'readonly': 'Solo Lectura',
-  'root': 'Root'
+  'zonecoordinator': 'Coordinador de Zona',
+  'fieldcoordinator': 'Coordinador de Campo',
 }
 
 /**
@@ -35,7 +34,8 @@ export const isAdminRole = (role: string): boolean => {
  */
 export const isCoordinatorRole = (role: string): boolean => {
   const normalized = role.toLowerCase()
-  return normalized === 'coordinator' || normalized === 'coordinador' || normalized === 'supervisor'
+  return normalized === 'coordinator' || normalized === 'coordinador' || 
+         normalized === 'zonecoordinator' || normalized === 'fieldcoordinator'
 }
 
 /**
@@ -44,6 +44,15 @@ export const isCoordinatorRole = (role: string): boolean => {
 export const isSocializerRole = (role: string): boolean => {
   const normalized = role.toLowerCase()
   return normalized === 'socializer' || normalized === 'socializador'
+}
+
+/**
+ * Verifica si un rol tiene permisos de escritura
+ * readonly no puede crear, editar ni eliminar
+ */
+export const hasWritePermissions = (role: string): boolean => {
+  const normalized = role.toLowerCase()
+  return normalized !== 'readonly'
 }
 
 /**

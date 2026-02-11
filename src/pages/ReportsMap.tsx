@@ -12,6 +12,7 @@ import { Sidebar, DateInput } from '../components'
 import { apiService } from '../services/api.service'
 import { ROUTES, EXTERNAL_URLS, MESSAGES, MAP_CONFIG } from '../constants'
 import { notificationService } from '../services/notification.service'
+import { useAuth } from '../contexts/AuthContext'
 import { 
   filterRespondentsWithLocation, 
   calculateMapCenter, 
@@ -19,6 +20,7 @@ import {
   extractCoordinates,
   formatDateES 
 } from '../utils'
+import { getTodayISO } from '../utils/dateHelpers'
 import type { RespondentData } from '../models/ApiResponses'
 import 'leaflet/dist/leaflet.css'
 import '../styles/Dashboard.scss'
@@ -235,12 +237,13 @@ type FilterType = 'all' | 'successful' | 'unsuccessful' | 'defensores'
 
 export default function ReportsMap() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [allRespondents, setAllRespondents] = useState<RespondentData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<FilterType>('all')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [startDate, setStartDate] = useState(getTodayISO())
+  const [endDate, setEndDate] = useState(getTodayISO())
   const [useFilters, setUseFilters] = useState(false)
   const [showRejectionBreakdown, setShowRejectionBreakdown] = useState(false)
   const [stats, setStats] = useState({
@@ -249,6 +252,12 @@ export default function ReportsMap() {
     unsuccessful: 0,
     defensores: 0,
   })
+
+  // Verificar si el usuario puede ver datos de rechazo (solo admin, no supervisores)
+  const canViewUnsuccessful = useMemo(() => {
+    const userRole = user?.role?.role?.toLowerCase() || ''
+    return userRole !== 'supervisor'
+  }, [user?.role?.role])
 
   // Calcular estadísticas de motivos de rechazo
   const rejectionStats = useMemo(() => {
@@ -329,15 +338,18 @@ export default function ReportsMap() {
       setIsLoading(true)
       const response = await apiService.getReportsBySocializerAndDate(startDate, endDate)
 
-
-      // La respuesta tiene estructura: { data: { report: [...] } }
-      // Cada elemento en report tiene allSurveys: RespondentData[]
+      // La respuesta tiene estructura:
+      // {
+      //   dateRange: { startDate, endDate },
+      //   totalSocializers: number,
+      //   resumen: { totalEncuestas, totalExitosas, totalNoExitosas, ... },
+      //   report: [{ socializerName, totalSurveys, allSurveys: RespondentData[] }, ...]
+      // }
       const report = response.data?.report || []
-      
-      
+
       // Extraer todas las encuestas de todos los socializadores
-      const allSurveys: RespondentData[] = report.flatMap((socializer: any) => 
-        socializer.allSurveys || []
+      const allSurveys: RespondentData[] = report.flatMap((socializer: { allSurveys?: unknown[] }) =>
+        Array.isArray(socializer.allSurveys) ? socializer.allSurveys : []
       )
 
       const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)
@@ -518,6 +530,7 @@ export default function ReportsMap() {
               <div className="stat-card__value">{stats.successful}</div>
               <div className="stat-card__label">Exitosas</div>
             </div>
+            {canViewUnsuccessful && (
             <div 
               className={`stat-card stat-card--danger ${filter === 'unsuccessful' ? 'stat-card--active' : ''}`}
               onClick={handleUnsuccessfulClick}
@@ -536,6 +549,7 @@ export default function ReportsMap() {
               <div className="stat-card__value">{stats.unsuccessful}</div>
               <div className="stat-card__label">No Exitosas</div>
             </div>
+            )}
             <div 
               className={`stat-card ${filter === 'defensores' ? 'stat-card--active' : ''}`}
               onClick={handleDefensoresClick}

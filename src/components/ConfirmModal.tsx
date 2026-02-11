@@ -3,6 +3,7 @@
  * Modal genérico para confirmar acciones destructivas
  */
 
+import { useCallback, useMemo } from 'react'
 import '../styles/Modal.scss'
 
 interface ConfirmModalProps {
@@ -30,11 +31,11 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   if (!isOpen) return null
 
-  const handleConfirm = () => {
+  const handleConfirm = useCallback(() => {
     onConfirm()
-  }
+  }, [onConfirm])
 
-  const getIconByVariant = () => {
+  const iconByVariant = useMemo(() => {
     switch (variant) {
       case 'danger':
         return (
@@ -61,7 +62,7 @@ export function ConfirmModal({
           </svg>
         )
     }
-  }
+  }, [variant])
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -69,7 +70,7 @@ export function ConfirmModal({
         <div className="modal-header modal-header--confirm">
           <div className="modal-header__title-group">
             <div className={`confirm-icon confirm-icon--${variant}`}>
-              {getIconByVariant()}
+              {iconByVariant}
             </div>
             <h2 className="modal-header__title">{title}</h2>
           </div>
