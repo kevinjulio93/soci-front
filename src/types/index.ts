@@ -148,6 +148,7 @@ export interface CreateRespondentRequest {
   identification: string
   email?: string
   phone?: string
+  facebook?: string
   address?: string
   gender?: string
   ageRange?: string
@@ -164,6 +165,7 @@ export interface UpdateRespondentRequest {
   identification?: string
   email?: string
   phone?: string
+  facebook?: string
   address?: string
   gender?: string
   ageRange?: string

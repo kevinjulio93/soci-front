@@ -376,6 +376,18 @@ export function SurveyForm({
                     })}
                   />
                 </div>
+
+                <div className="survey-form__col">
+                  <Input
+                    id="facebookUsername"
+                    type="text"
+                    label="Usuario de Facebook"
+                    placeholder="Ej: nombre.apellido"
+                    disabled={isLoading}
+                    error={errors.facebookUsername?.message}
+                    {...register('facebookUsername')}
+                  />
+                </div>
               </div>
 
               {/* Address */}
@@ -476,20 +488,37 @@ export function SurveyForm({
             </div>
           )}
 
-          {/* Defensor de la Patria - Checkbox - Solo mostrar si está dispuesto */}
+          {/* Defensor de la Patria y Casa Vinculada - Checkboxes lado a lado - Solo mostrar si está dispuesto */}
           {willingToRespond && (
-            <div className="form-group">
-              <div className="form-group__checkbox-wrapper">
-                <input
-                  id="defendorDePatria"
-                  type="checkbox"
-                  className="form-group__checkbox"
-                  disabled={isLoading}
-                  {...register('defendorDePatria')}
-                />
-                <label htmlFor="defendorDePatria" className="form-group__checkbox-label">
-                  Defensor de la Patria
-                </label>
+            <div className="survey-form__row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div className="form-group">
+                <div className="form-group__checkbox-wrapper">
+                  <input
+                    id="defendorDePatria"
+                    type="checkbox"
+                    className="form-group__checkbox"
+                    disabled={isLoading}
+                    {...register('defendorDePatria')}
+                  />
+                  <label htmlFor="defendorDePatria" className="form-group__checkbox-label">
+                    Defensor de la Patria
+                  </label>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <div className="form-group__checkbox-wrapper">
+                  <input
+                    id="isLinkedHouse"
+                    type="checkbox"
+                    className="form-group__checkbox"
+                    disabled={isLoading}
+                    {...register('isLinkedHouse')}
+                  />
+                  <label htmlFor="isLinkedHouse" className="form-group__checkbox-label">
+                    Casa Vinculada
+                  </label>
+                </div>
               </div>
             </div>
           )}

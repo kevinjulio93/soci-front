@@ -49,6 +49,7 @@ export const API_ENDPOINTS = {
   RESPONDENTS_REPORTS_COMPLETE: '/respondents/reports/complete',
   DASHBOARD_ADMIN: (startDate: string, endDate: string, usuariosDependientes: string) =>
     `/dashboard001?fecha_inicio=${encodeURIComponent(startDate)}&fecha_fin=${encodeURIComponent(endDate)}&usuarios_dependientes=${encodeURIComponent(usuariosDependientes)}`,
+  DASHBOARD_002: '/dashboard002',
   
   // Socializers
   SOCIALIZERS: '/socializers',

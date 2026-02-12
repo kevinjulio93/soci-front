@@ -80,6 +80,87 @@ type TopSocializerStats = {
   unsuccessfulSurveys: number
 }
 
+type Dashboard002Params = {
+  page?: number
+  perPage?: number
+  startDate?: string
+  endDate?: string
+  q?: string
+  surveyStatus?: 'successful' | 'unsuccessful'
+  willingToRespond?: boolean
+  isPatriaDefender?: boolean
+  department?: string
+  city?: string
+  region?: string
+  neighborhood?: string
+  gender?: string
+  ageRange?: string
+  stratum?: string
+  idType?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+}
+
+type Dashboard002Survey = {
+  _id: string
+  willingToRespond: boolean
+  surveyStatus: 'successful' | 'unsuccessful'
+  recordingAuthorization: boolean
+  fullName: string
+  idType?: string
+  identification?: string
+  email?: string
+  phone?: string
+  address?: string
+  ageRange?: string
+  region: string
+  department: string
+  city?: string
+  gender?: string
+  stratum?: number
+  neighborhood?: string
+  isPatriaDefender: boolean
+  location: {
+    type: 'Point'
+    coordinates: [number, number]
+  }
+  autor: {
+    _id: string
+    email: string
+    role: string
+  }
+  createdAt: string
+  updatedAt: string
+  audioFileKey?: string
+  socializer: {
+    _id: string
+    fullName: string
+    idNumber: string
+    phone: string
+  }
+  rejectionReason?: {
+    value: string
+    label: string
+  }
+  noResponseReason?: {
+    value: string
+    label: string
+  }
+  visitAddress?: string
+}
+
+type Dashboard002Response = {
+  message: string
+  data: {
+    currentPage: number
+    itemsPerPage: number
+    totalItems: number
+    totalPages: number
+    filters: Record<string, unknown>
+    surveys: Dashboard002Survey[]
+  }
+}
+
 class ApiService {
   private baseUrl: string
 
@@ -520,6 +601,49 @@ class ApiService {
     const url = `${API_ENDPOINTS.RESPONDENTS_REPORTS_COMPLETE}?${params.toString()}`
 
     const response = await this.get<any>(url)
+    
+    return response
+  }
+
+  /**
+   * Obtiene datos del dashboard002 con filtros avanzados
+   * Nuevo endpoint para reportes con múltiples parámetros de filtrado
+   */
+  async getDashboard002Report(params: Dashboard002Params): Promise<Dashboard002Response> {
+    const queryParams = new URLSearchParams()
+    
+    // Parámetros de paginación
+    if (params.page) queryParams.append('page', params.page.toString())
+    if (params.perPage) queryParams.append('perPage', params.perPage.toString())
+    
+    // Parámetros de fecha
+    if (params.startDate) queryParams.append('startDate', params.startDate)
+    if (params.endDate) queryParams.append('endDate', params.endDate)
+    
+    // Parámetros de búsqueda y estado
+    if (params.q) queryParams.append('q', params.q)
+    if (params.surveyStatus) queryParams.append('surveyStatus', params.surveyStatus)
+    if (params.willingToRespond !== undefined) queryParams.append('willingToRespond', params.willingToRespond.toString())
+    if (params.isPatriaDefender !== undefined) queryParams.append('isPatriaDefender', params.isPatriaDefender.toString())
+    
+    // Parámetros de ubicación
+    if (params.department) queryParams.append('department', params.department)
+    if (params.city) queryParams.append('city', params.city)
+    if (params.region) queryParams.append('region', params.region)
+    if (params.neighborhood) queryParams.append('neighborhood', params.neighborhood)
+    
+    // Parámetros demográficos
+    if (params.gender) queryParams.append('gender', params.gender)
+    if (params.ageRange) queryParams.append('ageRange', params.ageRange)
+    if (params.stratum) queryParams.append('stratum', params.stratum)
+    if (params.idType) queryParams.append('idType', params.idType)
+    
+    // Parámetros de ordenamiento
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy)
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder)
+    
+    const url = `${API_ENDPOINTS.DASHBOARD_002}?${queryParams.toString()}`
+    const response = await this.get<Dashboard002Response>(url)
     
     return response
   }

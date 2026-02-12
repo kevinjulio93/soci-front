@@ -24,6 +24,7 @@ export interface SurveyFormData {
   identification: string
   email: string
   phone: string
+  facebookUsername: string
   address: string
   gender: 'Masculino' | 'Femenino' | 'Otro' | 'Prefiero no decir' | ''
   ageRange: '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65+' | ''
@@ -33,6 +34,7 @@ export interface SurveyFormData {
   stratum: '1' | '2' | '3' | '4' | '5' | '6' | ''
   neighborhood: string
   defendorDePatria: boolean
+  isLinkedHouse: boolean
 }
 
 export interface SurveyFormProps {

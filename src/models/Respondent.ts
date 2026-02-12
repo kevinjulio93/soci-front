@@ -23,6 +23,7 @@ export interface RespondentDTO {
   identification?: string
   email?: string
   phone?: string
+  facebookUsername?: string
   address?: string
   gender?: string
   ageRange?: string
@@ -35,6 +36,7 @@ export interface RespondentDTO {
   longitude?: number
   defendorDePatria?: boolean
   isPatriaDefender?: boolean
+  isLinkedHouse?: boolean
   status?: string
   createdAt?: string
   updatedAt?: string
@@ -51,6 +53,7 @@ export class Respondent {
   private _identification: string
   private _email: string
   private _phone: string
+  private _facebookUsername: string
   private _address: string
   private _gender: Gender
   private _ageRange: AgeRange
@@ -62,6 +65,7 @@ export class Respondent {
   private _latitude: number
   private _longitude: number
   private _defendorDePatria: boolean
+  private _isLinkedHouse: boolean
 
   constructor(
     willingToRespond: boolean = false,
@@ -74,6 +78,7 @@ export class Respondent {
     identification: string = '',
     email: string = '',
     phone: string = '',
+    facebookUsername: string = '',
     address: string = '',
     gender: Gender = '',
     ageRange: AgeRange = '',
@@ -84,7 +89,8 @@ export class Respondent {
     neighborhood: string = '',
     latitude: number = 0,
     longitude: number = 0,
-    defendorDePatria: boolean = false
+    defendorDePatria: boolean = false,
+    isLinkedHouse: boolean = false
   ) {
     this._willingToRespond = willingToRespond
     this._recordingAuthorization = recordingAuthorization
@@ -96,6 +102,7 @@ export class Respondent {
     this._identification = identification
     this._email = email
     this._phone = phone
+    this._facebookUsername = facebookUsername
     this._address = address
     this._gender = gender
     this._ageRange = ageRange
@@ -107,6 +114,7 @@ export class Respondent {
     this._latitude = latitude
     this._longitude = longitude
     this._defendorDePatria = defendorDePatria
+    this._isLinkedHouse = isLinkedHouse
   }
 
   // Getters
@@ -120,6 +128,7 @@ export class Respondent {
   get identification(): string { return this._identification }
   get email(): string { return this._email }
   get phone(): string { return this._phone }
+  get facebookUsername(): string { return this._facebookUsername }
   get address(): string { return this._address }
   get gender(): Gender { return this._gender }
   get ageRange(): AgeRange { return this._ageRange }
@@ -131,6 +140,7 @@ export class Respondent {
   get latitude(): number { return this._latitude }
   get longitude(): number { return this._longitude }
   get defendorDePatria(): boolean { return this._defendorDePatria }
+  get isLinkedHouse(): boolean { return this._isLinkedHouse }
 
   // Método estático para crear desde DTO del backend
   static fromDTO(dto: RespondentDTO): Respondent {
@@ -147,6 +157,7 @@ export class Respondent {
       dto.identification || '',
       dto.email || '',
       dto.phone || '',
+      dto.facebookUsername || '',
       dto.address || '',
       (dto.gender || '') as Gender,
       (dto.ageRange || '') as AgeRange,
@@ -157,7 +168,8 @@ export class Respondent {
       dto.neighborhood || '',
       dto.latitude || 0,
       dto.longitude || 0,
-      dto.defendorDePatria || dto.isPatriaDefender || false
+      dto.defendorDePatria || dto.isPatriaDefender || false,
+      dto.isLinkedHouse || false
     )
   }
 
@@ -173,6 +185,7 @@ export class Respondent {
     identification: string
     email: string
     phone: string
+    facebookUsername: string
     address: string
     gender: Gender
     ageRange: AgeRange
@@ -184,6 +197,7 @@ export class Respondent {
     latitude: number
     longitude: number
     defendorDePatria: boolean
+    isLinkedHouse: boolean
   } {
     return {
       willingToRespond: this._willingToRespond ? 'true' : 'false',
@@ -196,6 +210,7 @@ export class Respondent {
       identification: this._identification,
       email: this._email,
       phone: this._phone,
+      facebookUsername: this._facebookUsername,
       address: this._address,
       gender: this._gender,
       ageRange: this._ageRange,
@@ -207,6 +222,7 @@ export class Respondent {
       latitude: this._latitude,
       longitude: this._longitude,
       defendorDePatria: this._defendorDePatria,
+      isLinkedHouse: this._isLinkedHouse,
     }
   }
 
@@ -222,6 +238,7 @@ export class Respondent {
     identification: string
     email?: string
     phone?: string
+    facebook?: string
     address?: string
     gender?: string
     ageRange?: string
@@ -233,6 +250,7 @@ export class Respondent {
     latitude?: number
     longitude?: number
     defendorDePatria?: boolean
+    isLinkedHouse?: boolean
     isPatriaDefender?: boolean
     rejectionReason?: string
   } {
@@ -248,6 +266,7 @@ export class Respondent {
       identification: this._identification,
       email: this._email || undefined,
       phone: this._phone || undefined,
+      facebook: this._facebookUsername || undefined,
       address: this._address || undefined,
       gender: this._gender || undefined,
       ageRange: this._ageRange || undefined,
@@ -260,6 +279,7 @@ export class Respondent {
       latitude: this._latitude,
       longitude: this._longitude,
       defendorDePatria: this._defendorDePatria,
+      isLinkedHouse: this._isLinkedHouse,
       isPatriaDefender: this._defendorDePatria,
     }
   }
@@ -285,6 +305,7 @@ export class Respondent {
     identification: string
     email: string
     phone: string
+    facebookUsername: string
     address: string
     gender: Gender
     ageRange: AgeRange
@@ -296,6 +317,7 @@ export class Respondent {
     latitude: number
     longitude: number
     defendorDePatria: boolean
+    isLinkedHouse: boolean
   }): Respondent {
     return new Respondent(
       data.willingToRespond,
@@ -308,6 +330,7 @@ export class Respondent {
       data.identification,
       data.email,
       data.phone,
+      data.facebookUsername,
       data.address,
       data.gender,
       data.ageRange,
@@ -318,7 +341,8 @@ export class Respondent {
       data.neighborhood,
       data.latitude,
       data.longitude,
-      data.defendorDePatria
+      data.defendorDePatria,
+      data.isLinkedHouse
     )
   }
 }

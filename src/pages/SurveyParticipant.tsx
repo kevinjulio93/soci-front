@@ -5,7 +5,7 @@
  */
 
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SurveyForm, DashboardHeader, PageHeader, SuccessModal } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { useAudioRecorderContext } from '../contexts/AudioRecorderContext'
@@ -50,12 +50,14 @@ export default function SurveyParticipant() {
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [showWhatsAppQR, setShowWhatsAppQR] = useState(false)
+  const stoppedForNoConsentRef = useRef(false)
 
   const editMode = location.state?.editMode || false
   const respondentId = location.state?.respondentId
 
   const {
     isRecording,
+    audioBlob,
     startRecording,
     stopRecording,
     clearRecording,
@@ -104,12 +106,23 @@ export default function SurveyParticipant() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, respondentId])
 
-  // Iniciar/detener grabación según el consentimiento de grabación
-  const handleWillingToRespondChange = (audioConsent: boolean) => {
-    if (audioConsent && !editMode && !isRecording) {
+  // Iniciar grabación automáticamente al abrir la encuesta (solo una vez, si no es edición)
+  useEffect(() => {
+    if (!editMode) {
+      clearRecording()
+      stoppedForNoConsentRef.current = false
       startRecording()
-    } else if (!audioConsent && isRecording) {
-      stopRecording()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editMode])
+
+  // Detener grabación cuando el usuario NO autoriza
+  const handleWillingToRespondChange = (audioConsent: boolean) => {
+    if (!audioConsent) {
+      stoppedForNoConsentRef.current = true
+      if (isRecording) {
+        stopRecording()
+      }
     }
   }
 
@@ -134,15 +147,17 @@ export default function SurveyParticipant() {
     try {
       setIsSubmitting(true)
 
-      // Detener grabación si está activa y no está en modo edición, y obtener el blob
+      // Detener grabación si está activa y obtener el blob
       let recordedBlob: Blob | null = null
       const audioConsent = String(data.audioRecordingConsent) === 'true'
-      if (isRecording && !editMode && audioConsent) {
-        recordedBlob = await stopRecording()
-      } else if (isRecording && !audioConsent) {
-        // Detener y descartar la grabación si no hay consentimiento
-        await stopRecording()
-        clearRecording()
+      const recordedWithoutConsent = !editMode && (!audioConsent || stoppedForNoConsentRef.current)
+
+      if (!editMode) {
+        if (isRecording) {
+          recordedBlob = await stopRecording()
+        } else if (audioBlob) {
+          recordedBlob = audioBlob
+        }
       }
 
       // Obtener ubicación actual
@@ -243,16 +258,30 @@ export default function SurveyParticipant() {
         notificationService.success(MESSAGES.RESPONDENT_CREATE_SUCCESS)
       }
 
-      // Subir audio solo si hay consentimiento, hay blob grabado y es modo creación
-      if (recordedBlob && !editMode && createdRespondentId && audioConsent) {
+      // Subir audio como evidencia si fue grabado SIN consentimiento
+      if (recordedBlob && !editMode && createdRespondentId && recordedWithoutConsent) {
+        try {
+          await apiService.uploadAudio(createdRespondentId, recordedBlob)
+          notificationService.info('Grabación guardada como evidencia de rechazo')
+        } catch {
+          // Error silencioso en la subida de audio
+        } finally {
+          clearRecording()
+        }
+      } 
+      // O subir audio si hay consentimiento
+      else if (recordedBlob && !editMode && createdRespondentId && audioConsent) {
         try {
           await apiService.uploadAudio(createdRespondentId, recordedBlob)
         } catch {
           // Error silencioso en la subida de audio
         } finally {
-          // Limpiar audio de memoria después de intentar subirlo
           clearRecording()
         }
+      } 
+      // Si no hay consentimiento y no hay grabación, solo limpiar
+      else if (!audioConsent) {
+        clearRecording()
       }
 
       // Mostrar modal de éxito y QR si es defensor de la patria

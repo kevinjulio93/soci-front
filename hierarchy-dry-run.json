@@ -1,0 +1,105 @@
+{
+  "api_url": "http://localhost:3000/api/v1",
+  "created_at": "2026-02-12T03:40:58.330Z",
+  "total_users": 11,
+  "users": [
+    {
+      "type": "Admin",
+      "name": "Admin Test",
+      "email": "admin.test@soci.app",
+      "password": "AdminTest123!",
+      "id": "admin-1",
+      "level": 0
+    },
+    {
+      "type": "Coordinador de Zona",
+      "name": "Coordinador Zona 1",
+      "email": "zone.coordinator.1@soci.app",
+      "password": "ZoneCoord1Test123!",
+      "id": "zone-coord-1",
+      "level": 1,
+      "parentName": "Admin Test"
+    },
+    {
+      "type": "Coordinador de Campo",
+      "name": "Coordinador Campo - Zona 1",
+      "email": "field.coordinator.zone1@soci.app",
+      "password": "FieldCoord1Test123!",
+      "id": "field-coord-1",
+      "level": 2,
+      "parentName": "Coordinador Zona 1"
+    },
+    {
+      "type": "Supervisor",
+      "name": "Supervisor - Zona 1",
+      "email": "supervisor.zone1@soci.app",
+      "password": "Supervisor1Test123!",
+      "id": "supervisor-1",
+      "level": 3,
+      "parentName": "Coordinador Campo - Zona 1"
+    },
+    {
+      "type": "Socializador",
+      "name": "Socializador - Zona 1 #1",
+      "email": "socializer.zone1_1@soci.app",
+      "password": "Socializer1_1Test123!",
+      "id": "socializer-1-1",
+      "level": 4,
+      "parentName": "Supervisor - Zona 1"
+    },
+    {
+      "type": "Socializador",
+      "name": "Socializador - Zona 1 #2",
+      "email": "socializer.zone1_2@soci.app",
+      "password": "Socializer1_2Test123!",
+      "id": "socializer-1-2",
+      "level": 4,
+      "parentName": "Supervisor - Zona 1"
+    },
+    {
+      "type": "Coordinador de Zona",
+      "name": "Coordinador Zona 2",
+      "email": "zone.coordinator.2@soci.app",
+      "password": "ZoneCoord2Test123!",
+      "id": "zone-coord-2",
+      "level": 1,
+      "parentName": "Admin Test"
+    },
+    {
+      "type": "Coordinador de Campo",
+      "name": "Coordinador Campo - Zona 2",
+      "email": "field.coordinator.zone2@soci.app",
+      "password": "FieldCoord2Test123!",
+      "id": "field-coord-2",
+      "level": 2,
+      "parentName": "Coordinador Zona 2"
+    },
+    {
+      "type": "Supervisor",
+      "name": "Supervisor - Zona 2",
+      "email": "supervisor.zone2@soci.app",
+      "password": "Supervisor2Test123!",
+      "id": "supervisor-2",
+      "level": 3,
+      "parentName": "Coordinador Campo - Zona 2"
+    },
+    {
+      "type": "Socializador",
+      "name": "Socializador - Zona 2 #1",
+      "email": "socializer.zone2_1@soci.app",
+      "password": "Socializer2_1Test123!",
+      "id": "socializer-2-1",
+      "level": 4,
+      "parentName": "Supervisor - Zona 2"
+    },
+    {
+      "type": "Socializador",
+      "name": "Socializador - Zona 2 #2",
+      "email": "socializer.zone2_2@soci.app",
+      "password": "Socializer2_2Test123!",
+      "id": "socializer-2-2",
+      "level": 4,
+      "parentName": "Supervisor - Zona 2"
+    }
+  ]
+}
