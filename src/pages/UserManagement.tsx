@@ -293,8 +293,8 @@ export function UserManagement() {
   }
 
   // Manejar eliminación - abrir modal
-  const handleDelete = (id: string, name: string) => {
-    setUserToDelete({ id, name })
+  const handleDelete = (_id: string, name: string) => {
+    setUserToDelete({ id: _id, name })
     setDeleteModalOpen(true)
   }
 
@@ -323,15 +323,15 @@ export function UserManagement() {
   }
 
   // Manejar edición - usar user._id de la estructura de la lista
-  const handleEdit = (userData: Socializer) => {
-    const userId = userData.user?._id || userData._id
+  const handleEdit = (_userData: Socializer) => {
+    const userId = _userData.user?._id || _userData._id
     navigate(ROUTES.ADMIN_SOCIALIZERS_EDIT(userId))
   }
 
   // Manejar visualización de ubicación
-  const handleViewLocation = (userData: Socializer) => {
-    if (userData.user?._id) {
-      setSelectedUser(userData)
+  const handleViewLocation = (_userData: Socializer) => {
+    if (_userData.user?._id) {
+      setSelectedUser(_userData)
       setLocationModalOpen(true)
     } else {
       notificationService.error(MESSAGES.LOCATION_UNAVAILABLE)
@@ -344,8 +344,8 @@ export function UserManagement() {
   }
 
   // Manejar cambio de página
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+  const handlePageChange = (_page: number) => {
+    setCurrentPage(_page)
   }
 
   // Abrir formulario para nuevo usuario

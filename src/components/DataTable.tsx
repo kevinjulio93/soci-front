@@ -37,7 +37,7 @@ interface DataTableProps<T> {
   onSelectionChange?: (selectedIds: Set<string>) => void
 }
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T = Record<string, unknown>>({
   columns,
   data,
   currentPage,
