@@ -17,7 +17,8 @@ import {
 } from '../constants'
 import { Respondent } from '../models/Respondent'
 import type { SurveyFormData, SurveyFormProps } from './types'
-import { colombiaApiService, type Region, type Department, type City } from '../services/colombia-api.service'
+import { colombiaApiService, type Department, type City } from '../services/colombia-api.service'
+import { getDepartmentsByZone, getMunicipalitiesByZoneAndDepartment } from '../constants/zones'
 import { Input } from './Input'
 import { Select } from './Select'
 import '../styles/SurveyForm.scss'
@@ -30,12 +31,10 @@ export function SurveyForm({
   initialData,
   onWillingToRespondChange,
 }: SurveyFormProps) {
-  const [regions, setRegions] = useState<Region[]>([])
+  const ACTIVE_ZONE = 'zona1'
   const [departments, setDepartments] = useState<Department[]>([])
   const [cities, setCities] = useState<City[]>([])
-  const [selectedRegion, setSelectedRegion] = useState<number | null>(null)
   const [selectedDepartment, setSelectedDepartment] = useState<number | null>(null)
-  const [loadingRegions, setLoadingRegions] = useState(false)
   const [loadingDepartments, setLoadingDepartments] = useState(false)
   const [loadingCities, setLoadingCities] = useState(false)
 
@@ -79,67 +78,41 @@ export function SurveyForm({
     }
   }, [initialData, reset, setValue])
 
-  // Cargar regiones al montar el componente (solo Caribe)
+  // Cargar departamentos de la zona activa desde la API de Colombia
   useEffect(() => {
-    const loadRegions = async () => {
-      setLoadingRegions(true)
-      const data = await colombiaApiService.getRegions()
-      // Filtrar solo la región Caribe
-      const filteredRegions = data.filter(region => region.name.toLowerCase() === 'caribe')
-      setRegions(filteredRegions)
-      console.log(regions, loadingRegions)
-      
-      // Auto-seleccionar región Caribe
-      if (filteredRegions.length > 0) {
-        const caribeRegion = filteredRegions[0]
-        setSelectedRegion(caribeRegion.id)
-        setValue('region', caribeRegion.name)
+    const loadDepartments = async () => {
+      setLoadingDepartments(true)
+      const zoneDepts = getDepartmentsByZone(ACTIVE_ZONE)
+      const allDepts = await colombiaApiService.getDepartments()
+      const filtered = allDepts.filter(dept =>
+        zoneDepts.some(zd => dept.name.toLowerCase() === zd.toLowerCase())
+      )
+      setDepartments(filtered)
+
+      // Auto-seleccionar si solo hay un departamento
+      if (filtered.length === 1) {
+        setSelectedDepartment(filtered[0].id)
+        setValue('department', filtered[0].name)
       }
-      
-      setLoadingRegions(false)
+
+      setLoadingDepartments(false)
     }
-    loadRegions()
+    loadDepartments()
   }, [])
 
-  // Cargar departamentos cuando se selecciona una región (solo Atlántico)
-  useEffect(() => {
-    if (selectedRegion) {
-      const loadDepartments = async () => {
-        setLoadingDepartments(true)
-        const data = await colombiaApiService.getDepartmentsByRegion(selectedRegion)
-        // Filtrar solo el departamento de Atlántico
-        const filteredDepartments = data.filter(dept => 
-          dept.name.toLowerCase() === 'atlántico' || dept.name.toLowerCase() === 'atlantico'
-        )
-        setDepartments(filteredDepartments)
-        
-        // Auto-seleccionar departamento de Atlántico
-        if (filteredDepartments.length > 0) {
-          const atlanticoDept = filteredDepartments[0]
-          setSelectedDepartment(atlanticoDept.id)
-          setValue('department', atlanticoDept.name)
-        }
-        
-        setLoadingDepartments(false)
-      }
-      loadDepartments()
-    } else {
-      setDepartments([])
-      setCities([])
-    }
-  }, [selectedRegion])
-
-  // Cargar ciudades cuando se selecciona un departamento (solo Barranquilla y Soledad)
+  // Cargar ciudades filtradas por zona cuando se selecciona un departamento
   useEffect(() => {
     if (selectedDepartment) {
       const loadCities = async () => {
         setLoadingCities(true)
-        const data = await colombiaApiService.getCitiesByDepartment(selectedDepartment)
-        // Filtrar solo Barranquilla y Soledad
-        const filteredCities = data.filter(city => 
-          city.name.toLowerCase() === 'barranquilla' || city.name.toLowerCase() === 'soledad'
+        const dept = departments.find(d => d.id === selectedDepartment)
+        const deptName = dept?.name || ''
+        const zoneMunicipalities = getMunicipalitiesByZoneAndDepartment(ACTIVE_ZONE, deptName)
+        const allCities = await colombiaApiService.getCitiesByDepartment(selectedDepartment)
+        const filtered = allCities.filter(city =>
+          zoneMunicipalities.some(zm => city.name.toLowerCase() === zm.toLowerCase())
         )
-        setCities(filteredCities)
+        setCities(filtered)
         setLoadingCities(false)
       }
       loadCities()
@@ -462,7 +435,7 @@ export function SurveyForm({
                       value: dept.name,
                       label: dept.name,
                     }))}
-                    disabled={isLoading || loadingDepartments || !selectedRegion}
+                    disabled={isLoading || loadingDepartments}
                     required={willingToRespond}
                     error={errors.department?.message}
                     {...register('department', {
