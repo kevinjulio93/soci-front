@@ -1,6 +1,9 @@
 # Etapa 1: Build
 FROM node:20-alpine AS builder
 
+# Argumentos de build
+ARG BUILD_ENV=production
+
 # Establecer directorio de trabajo
 WORKDIR /app
 
@@ -10,11 +13,11 @@ COPY package*.json ./
 # Instalar dependencias
 RUN npm ci --legacy-peer-deps
 
-# Copiar el resto del código (incluye .env.production)
+# Copiar el resto del código
 COPY . .
 
-# Build de producción (usa .env.production automáticamente)
-RUN npm run build
+# Build con el ambiente especificado
+RUN npm run build:${BUILD_ENV}
 
 # Etapa 2: Producción con PM2
 FROM node:20-alpine
