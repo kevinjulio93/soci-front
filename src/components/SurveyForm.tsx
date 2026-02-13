@@ -18,7 +18,8 @@ import {
 import { Respondent } from '../models/Respondent'
 import type { SurveyFormData, SurveyFormProps } from './types'
 import { colombiaApiService, type Region, type Department, type City } from '../services/colombia-api.service'
-import { Input, Select } from './index'
+import { Input } from './Input'
+import { Select } from './Select'
 import '../styles/SurveyForm.scss'
 
 export function SurveyForm({
@@ -41,12 +42,12 @@ export function SurveyForm({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     watch,
     setValue,
     reset,
   } = useForm<SurveyFormData>({
-    mode: 'onBlur',
+    mode: 'onChange',
     defaultValues: initialData || {
       ...new Respondent().toFormData(),
       willingToRespond: undefined as any, // Sin valor inicial para que el campo esté oculto
@@ -397,8 +398,11 @@ export function SurveyForm({
                 label="Dirección"
                 placeholder="Calle # Carrera # Apartamento"
                 disabled={isLoading}
+                required={willingToRespond}
                 error={errors.address?.message}
-                {...register('address')}
+                {...register('address', {
+                  required: willingToRespond ? 'La dirección es requerida' : false,
+                })}
               />
 
               {/* Gender and Stratum - Row */}
@@ -410,8 +414,11 @@ export function SurveyForm({
                     placeholder="Seleccione género"
                     options={GENDER_OPTIONS}
                     disabled={isLoading}
+                    required={willingToRespond}
                     error={errors.gender?.message}
-                    {...register('gender')}
+                    {...register('gender', {
+                      required: willingToRespond ? 'El género es requerido' : false,
+                    })}
                   />
                 </div>
 
@@ -422,8 +429,11 @@ export function SurveyForm({
                     placeholder="Seleccione estrato"
                     options={STRATUM_OPTIONS}
                     disabled={isLoading}
+                    required={willingToRespond}
                     error={errors.stratum?.message}
-                    {...register('stratum')}
+                    {...register('stratum', {
+                      required: willingToRespond ? 'El estrato es requerido' : false,
+                    })}
                   />
                 </div>
               </div>
@@ -453,8 +463,11 @@ export function SurveyForm({
                       label: dept.name,
                     }))}
                     disabled={isLoading || loadingDepartments || !selectedRegion}
+                    required={willingToRespond}
                     error={errors.department?.message}
-                    {...register('department')}
+                    {...register('department', {
+                      required: willingToRespond ? 'El departamento es requerido' : false,
+                    })}
                     onChange={handleDepartmentChange}
                   />
                 </div>
@@ -469,8 +482,11 @@ export function SurveyForm({
                       label: city.name,
                     }))}
                     disabled={isLoading || loadingCities || !selectedDepartment}
+                    required={willingToRespond}
                     error={errors.city?.message}
-                    {...register('city')}
+                    {...register('city', {
+                      required: willingToRespond ? 'La ciudad es requerida' : false,
+                    })}
                   />
                 </div>
               </div>
@@ -482,8 +498,11 @@ export function SurveyForm({
                 label="Barrio"
                 placeholder="Ej: Prado, Villa Country"
                 disabled={isLoading}
+                required={willingToRespond}
                 error={errors.neighborhood?.message}
-                {...register('neighborhood')}
+                {...register('neighborhood', {
+                  required: willingToRespond ? 'El barrio es requerido' : false,
+                })}
               />
             </div>
           )}
@@ -527,7 +546,7 @@ export function SurveyForm({
           <button
             type="submit"
             className="survey-form__button"
-            disabled={isLoading}
+            disabled={isLoading || !isValid}
           >
             {isLoading ? 'Guardando visita...' : 'Guardar visita'}
           </button>

@@ -23,6 +23,7 @@ export const ROUTES = {
   ADMIN_REPORTS_REALTIME: '/admin/reports/realtime',
   ADMIN_REPORTS_GENERATE: '/admin/reports/generate',
   ADMIN_REPORTS_MAP: '/admin/reports/map',
+  ADMIN_REPORTS_SOCIALIZERS: '/admin/reports/socializers',
   
   // Encuestas
   SURVEY_PARTICIPANT: (surveyId: string) => `/survey/${surveyId}/participant`,

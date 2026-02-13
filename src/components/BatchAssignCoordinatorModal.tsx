@@ -4,7 +4,8 @@
 
 import { useState, useEffect } from 'react'
 import { apiService } from '../services/api.service'
-import { Select, Textarea } from './index'
+import { Select } from './Select'
+import { Textarea } from './Textarea'
 import '../styles/Modal.scss'
 
 interface BatchAssignCoordinatorModalProps {

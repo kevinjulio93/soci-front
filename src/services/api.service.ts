@@ -161,6 +161,34 @@ type Dashboard002Response = {
   }
 }
 
+type Dashboard003Socializador = {
+  socializadorId: string
+  socializador: string
+  intervenciones: number
+  exitosas: number
+  noExitosas: number
+  defensoresDeLaPatria: number
+}
+
+type Dashboard003Response = {
+  periodo: {
+    inicio: string
+    fin: string
+  }
+  filtros: {
+    municipio: string | null
+  }
+  totalSocializadores: number
+  resumen: {
+    totalIntervenciones: number
+    totalExitosas: number
+    totalNoExitosas: number
+    totalDefensores: number
+  }
+  socializadores: Dashboard003Socializador[]
+  timestamp: string
+}
+
 class ApiService {
   private baseUrl: string
 
@@ -240,6 +268,38 @@ class ApiService {
 
   private async get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'GET' })
+  }
+
+  private async downloadFile(endpoint: string, defaultFilename: string): Promise<void> {
+    const url = `${this.baseUrl}${endpoint}`
+    const token = localStorage.getItem('soci_token')
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['x-access-token'] = token
+    }
+
+    const response = await fetch(url, { method: 'GET', headers })
+    if (!response.ok) {
+      throw await this.buildError(response)
+    }
+
+    const disposition = response.headers.get('Content-Disposition')
+    let filename = defaultFilename
+    if (disposition) {
+      const match = disposition.match(/filename="?([^"]+)"?/)
+      if (match?.[1]) filename = match[1]
+    }
+
+    const blob = await response.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = filename
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(blobUrl)
   }
 
   private async post<T>(endpoint: string, body?: unknown): Promise<T> {
@@ -646,6 +706,89 @@ class ApiService {
     const response = await this.get<Dashboard002Response>(url)
     
     return response
+  }
+
+  /**
+   * Obtiene datos del dashboard003 - Resumen por socializador
+   */
+  async getDashboard003Report(params: {
+    fecha_inicio: string
+    fecha_fin: string
+    municipio?: string
+  }): Promise<Dashboard003Response> {
+    const queryParams = new URLSearchParams()
+    queryParams.append('fecha_inicio', params.fecha_inicio)
+    queryParams.append('fecha_fin', params.fecha_fin)
+    if (params.municipio?.trim()) {
+      queryParams.append('municipio', params.municipio.trim())
+    }
+    const url = `${API_ENDPOINTS.DASHBOARD_003}?${queryParams.toString()}`
+    return this.get<Dashboard003Response>(url)
+  }
+
+  /**
+   * Exportar Dashboard001 a Excel
+   */
+  async exportDashboard001(params: {
+    fecha_inicio: string
+    fecha_fin: string
+    usuarios_dependientes?: string
+  }): Promise<void> {
+    const queryParams = new URLSearchParams()
+    queryParams.append('fecha_inicio', params.fecha_inicio)
+    queryParams.append('fecha_fin', params.fecha_fin)
+    if (params.usuarios_dependientes) {
+      queryParams.append('usuarios_dependientes', params.usuarios_dependientes)
+    }
+    const endpoint = `${API_ENDPOINTS.DASHBOARD_001_EXPORT}?${queryParams.toString()}`
+    const filename = `dashboard001_${params.fecha_inicio}_${params.fecha_fin}.xlsx`
+    return this.downloadFile(endpoint, filename)
+  }
+
+  /**
+   * Exportar Dashboard002 a Excel
+   */
+  async exportDashboard002(params: Dashboard002Params): Promise<void> {
+    const queryParams = new URLSearchParams()
+    if (params.startDate) queryParams.append('startDate', params.startDate)
+    if (params.endDate) queryParams.append('endDate', params.endDate)
+    if (params.q) queryParams.append('q', params.q)
+    if (params.surveyStatus) queryParams.append('surveyStatus', params.surveyStatus)
+    if (params.willingToRespond !== undefined) queryParams.append('willingToRespond', params.willingToRespond.toString())
+    if (params.isPatriaDefender !== undefined) queryParams.append('isPatriaDefender', params.isPatriaDefender.toString())
+    if (params.department) queryParams.append('department', params.department)
+    if (params.city) queryParams.append('city', params.city)
+    if (params.region) queryParams.append('region', params.region)
+    if (params.neighborhood) queryParams.append('neighborhood', params.neighborhood)
+    if (params.gender) queryParams.append('gender', params.gender)
+    if (params.ageRange) queryParams.append('ageRange', params.ageRange)
+    if (params.stratum) queryParams.append('stratum', params.stratum)
+    if (params.idType) queryParams.append('idType', params.idType)
+    if (params.sortBy) queryParams.append('sortBy', params.sortBy)
+    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder)
+    const endpoint = `${API_ENDPOINTS.DASHBOARD_002_EXPORT}?${queryParams.toString()}`
+    const filename = `dashboard002_${params.startDate || ''}_${params.endDate || ''}.xlsx`
+    return this.downloadFile(endpoint, filename)
+  }
+
+  /**
+   * Exportar Dashboard003 a Excel
+   */
+  async exportDashboard003(params: {
+    fecha_inicio: string
+    fecha_fin: string
+    municipio?: string
+  }): Promise<void> {
+    const queryParams = new URLSearchParams()
+    queryParams.append('fecha_inicio', params.fecha_inicio)
+    queryParams.append('fecha_fin', params.fecha_fin)
+    if (params.municipio?.trim()) {
+      queryParams.append('municipio', params.municipio.trim())
+    }
+    const endpoint = `${API_ENDPOINTS.DASHBOARD_003_EXPORT}?${queryParams.toString()}`
+    const muni = params.municipio?.trim() ? `_${params.municipio.trim()}` : ''
+    const filename = `dashboard003_${params.fecha_inicio}_${params.fecha_fin}${muni}.xlsx`
+    return this.downloadFile(endpoint, filename)
   }
 }
 

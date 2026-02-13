@@ -217,9 +217,22 @@ export default function AdminDashboard() {
     loadDashboardData()
   }
 
-  const handleExportCSV = () => {
-    console.log('Exportando CSV con filtros:', filters)
-    // TODO: Implementar lógica de exportación CSV
+  const handleExportExcel = async () => {
+    if (!filters.startDate || !filters.endDate) {
+      notificationService.warning('Por favor seleccione un rango de fechas')
+      return
+    }
+    try {
+      const usuariosDependientes = resolveUsuariosDependientes()
+      await apiService.exportDashboard001({
+        fecha_inicio: filters.startDate,
+        fecha_fin: filters.endDate,
+        usuarios_dependientes: usuariosDependientes,
+      })
+      notificationService.success('Archivo Excel descargado exitosamente')
+    } catch (error) {
+      notificationService.handleApiError(error, 'Error al exportar el reporte')
+    }
   }
 
   return (
@@ -320,12 +333,12 @@ export default function AdminDashboard() {
               
               <button 
                 className="btn btn--outline btn--with-icon"
-                onClick={handleExportCSV}
+                onClick={handleExportExcel}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                Exportar CSV
+                Exportar Excel
               </button>
             </div>
           </div>

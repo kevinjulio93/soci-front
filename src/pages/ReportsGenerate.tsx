@@ -253,71 +253,34 @@ export default function ReportsGenerate() {
 
   const handlePageChange = (page: number) => generateReport(page)
 
-  const exportToCSV = () => {
-    if (reportData.length === 0) {
-      notificationService.warning('No hay datos para exportar')
+  const exportToExcel = async () => {
+    if (!filters.startDate || !filters.endDate) {
+      notificationService.warning('Por favor seleccione un rango de fechas')
       return
     }
-    const headers = [
-      'N°',
-      'Nombre Completo',
-      'Identificación',
-      'Email',
-      'Teléfono',
-      'Género',
-      'Edad',
-      'Estrato',
-      'Departamento',
-      'Ciudad',
-      'Región',
-      'Barrio',
-      'Defensor Patria',
-      'Estado Encuesta',
-      'Dispuesto Responder',
-      'Socializer',
-      'Fecha Creación',
-    ]
-    const rows: string[][] = reportData.map((item, idx) => [
-      (idx + 1).toString(),
-      item.fullName,
-      item.identification || '',
-      item.email || '',
-      item.phone || '',
-      item.gender || '',
-      item.ageRange || '',
-      item.stratum ? item.stratum.toString() : '',
-      item.department || '',
-      item.city || '',
-      item.region || '',
-      item.neighborhood || '',
-      item.isPatriaDefender ? 'Sí' : 'No',
-      item.surveyStatus === 'successful' ? 'Exitosa' : 'No Exitosa',
-      item.willingToRespond ? 'Sí' : 'No',
-      item.socializer?.fullName || '',
-      new Date(item.createdAt).toLocaleString('es-CO', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    ])
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-    ].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.setAttribute('href', URL.createObjectURL(blob))
-    link.setAttribute(
-      'download',
-      `reporte_encuestas_${filters.startDate}_${filters.endDate}.csv`
-    )
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    notificationService.success('Archivo CSV descargado exitosamente')
+    try {
+      await apiService.exportDashboard002({
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        q: filters.q || undefined,
+        surveyStatus: (filters.surveyStatus as 'successful' | 'unsuccessful') || undefined,
+        willingToRespond: filters.willingToRespond ? filters.willingToRespond === 'true' : undefined,
+        isPatriaDefender: filters.isPatriaDefender ? filters.isPatriaDefender === 'true' : undefined,
+        department: filters.department || undefined,
+        city: filters.city || undefined,
+        region: filters.region || undefined,
+        neighborhood: filters.neighborhood || undefined,
+        gender: filters.gender || undefined,
+        ageRange: filters.ageRange || undefined,
+        stratum: filters.stratum || undefined,
+        idType: filters.idType || undefined,
+        sortBy: filters.sortBy || undefined,
+        sortOrder: (filters.sortOrder as 'asc' | 'desc') || undefined,
+      })
+      notificationService.success('Archivo Excel descargado exitosamente')
+    } catch (err) {
+      notificationService.handleApiError(err, 'Error al exportar el reporte')
+    }
   }
 
   const clearFilters = () => {
@@ -423,9 +386,9 @@ export default function ReportsGenerate() {
                   {hasData && (
                     <button
                       className="btn btn--secondary btn--sm"
-                      onClick={exportToCSV}
+                      onClick={exportToExcel}
                       disabled={isGenerating}
-                      title="Exportar a CSV"
+                      title="Exportar a Excel"
                     >
                       <svg
                         width="16"
@@ -444,7 +407,7 @@ export default function ReportsGenerate() {
                         <polyline points="7 10 12 15 17 10" />
                         <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
-                      Exportar CSV
+                      Exportar Excel
                     </button>
                   )}
                   <button
@@ -548,7 +511,7 @@ export default function ReportsGenerate() {
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 onGenerate={() => generateReport(1)}
-                onExportCSV={exportToCSV}
+                onExportCSV={exportToExcel}
                 onClear={clearFilters}
                 isGenerating={isGenerating}
                 hasData={hasData}

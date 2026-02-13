@@ -3,7 +3,9 @@
  * Se puede abrir/cerrar mediante un botón toggle
  */
 
-import { DateInput, Select, Input } from './index'
+import { DateInput } from './DateInput'
+import { Select } from './Select'
+import { Input } from './Input'
 import { getTodayISO } from '../utils/dateHelpers'
 import { useState } from 'react'
 
@@ -362,7 +364,7 @@ export function ReportFilterPanel({
               disabled={isGenerating || !hasData}
               style={{ flex: 1 }}
             >
-              📥 Exportar CSV
+              📥 Exportar Excel
             </button>
             <button
               className="btn btn--secondary"

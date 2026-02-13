@@ -14,6 +14,7 @@ import Reports from '../pages/Reports'
 import ReportsRealtime from '../pages/ReportsRealtime'
 import ReportsGenerate from '../pages/ReportsGenerate'
 import ReportsMap from '../pages/ReportsMap'
+import ReportsSocializers from '../pages/ReportsSocializers'
 import { ProtectedRoute } from '../components'
 import { ROUTES } from '../constants'
 
@@ -103,6 +104,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute requireAdminRole>
         <ReportsMap />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: ROUTES.ADMIN_REPORTS_SOCIALIZERS,
+    element: (
+      <ProtectedRoute requireAdminRole>
+        <ReportsSocializers />
       </ProtectedRoute>
     ),
   },

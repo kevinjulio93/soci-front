@@ -593,25 +593,16 @@
     
     // Estilos para scrollbar webkit (Chrome, Safari, Edge)
     &::-webkit-scrollbar {
-      height: 10px;
-
-      @media (max-width: 768px) {
-        height: 6px;
-      }
+      height: 0;
+      width: 0;
     }
     
     &::-webkit-scrollbar-track {
-      background: $color-background;
-      border-radius: $border-radius-sm;
+      background: transparent;
     }
     
     &::-webkit-scrollbar-thumb {
-      background: rgba($color-primary, 0.4);
-      border-radius: $border-radius-sm;
-      
-      &:hover {
-        background: rgba($color-primary, 0.6);
-      }
+      background: transparent;
     }
   }
 
@@ -811,11 +802,11 @@
   justify-content: center;
   padding: $spacing-3xl $spacing-2xl;
   text-align: center;
-  min-height: 400px;
+  min-height: 100%;
+  height: 100%;
 
   @media (max-width: 768px) {
     padding: $spacing-2xl $spacing-lg;
-    min-height: 300px;
   }
 
   @media (max-width: 480px) {
@@ -2824,32 +2815,30 @@
   min-width: 44px;
   height: 44px;
   padding: 0 0.85rem;
-  border: 2px solid #4a7c6f;
+  border: none;
   border-radius: $border-radius-md;
-  background: $color-white;
+  background: #eef622;
   cursor: pointer;
-  color: #4a7c6f;
+  color: $color-dark-text;
   font-size: 0.82rem;
   font-weight: $font-weight-semibold;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
   &:hover {
-    background: #4a7c6f;
-    color: $color-white;
-    border-color: #3d6b5f;
-    box-shadow: 0 2px 8px rgba(74, 124, 111, 0.3);
+    background: #d9e01e;
+    color: $color-dark-text;
+    box-shadow: 0 2px 8px rgba(222, 224, 30, 0.3);
     transform: translateY(-1px);
   }
 
   &--active {
-    background: #4a7c6f;
-    border-color: #3d6b5f;
-    color: $color-white;
-    box-shadow: 0 2px 8px rgba(74, 124, 111, 0.25);
+    background: #d9e01e;
+    color: $color-dark-text;
+    box-shadow: 0 2px 8px rgba(222, 224, 30, 0.25);
 
     &:hover {
-      background: #3d6b5f;
+      background: #c4cc1a;
     }
   }
 
@@ -3034,7 +3023,7 @@
     transition: background-color 0.2s;
 
     &:hover:not(:disabled) {
-      background: darken(#4a7c6f, 8%);
+      background: color.adjust(#4a7c6f, $lightness: -8%);
     }
 
     &:disabled {
@@ -4196,6 +4185,7 @@ input[type="date"].form-group__input {
 .rg-table-wrapper {
   flex: 1;
   overflow: auto;
+  height: 100%;
 }
 
 .rg-table-loading {
@@ -4205,6 +4195,8 @@ input[type="date"].form-group__input {
   justify-content: center;
   padding: 4rem 2rem;
   color: $color-light-text;
+  height: 100%;
+  min-height: 100%;
 
   &__spinner {
     width: 40px;
@@ -4234,6 +4226,8 @@ input[type="date"].form-group__input {
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
+  height: 100%;
+  min-height: 100%;
 
   &__icon {
     color: #ccc;
@@ -4269,3 +4263,231 @@ input[type="date"].form-group__input {
   }
 }
 
+// =============================================
+// OTP MODAL
+// =============================================
+
+.otp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: $spacing-lg;
+}
+
+.otp-modal {
+  background: $color-white;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 420px;
+  width: 100%;
+  padding: $spacing-2xl;
+  animation: slideUp 0.3s ease-out;
+
+  &__header {
+    text-align: center;
+    margin-bottom: $spacing-2xl;
+  }
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: $font-weight-bold;
+    color: $color-dark-text;
+    margin: 0 0 $spacing-sm;
+  }
+
+  &__subtitle {
+    font-size: 0.95rem;
+    color: $color-light-text;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  &__form {
+    margin-bottom: $spacing-xl;
+  }
+
+  &__input-group {
+    margin-bottom: $spacing-lg;
+  }
+
+  &__label {
+    display: block;
+    font-weight: $font-weight-semibold;
+    color: $color-dark-text;
+    margin-bottom: $spacing-sm;
+    font-size: 0.9rem;
+  }
+
+  &__input {
+    width: 100%;
+    padding: $spacing-md $spacing-lg;
+    border: 2px solid $color-border;
+    border-radius: $border-radius-md;
+    font-size: 1.5rem;
+    letter-spacing: 0.5rem;
+    text-align: center;
+    font-weight: $font-weight-semibold;
+    font-family: 'Courier New', monospace;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #4a7c6f;
+      background: rgba(74, 124, 111, 0.05);
+    }
+
+    &:disabled {
+      background: $color-background;
+      color: $color-light-text;
+      cursor: not-allowed;
+    }
+  }
+
+  &__hint {
+    font-size: 0.75rem;
+    color: #999;
+    margin: $spacing-xs 0 0;
+  }
+
+  &__timer {
+    margin-bottom: $spacing-lg;
+  }
+
+  &__progress {
+    width: 100%;
+    height: 4px;
+    background: $color-border;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: $spacing-sm;
+  }
+
+  &__progress-bar {
+    height: 100%;
+    transition: width 0.3s linear;
+  }
+
+  &__timer-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: $color-light-text;
+  }
+
+  &__timer-value {
+    font-weight: $font-weight-bold;
+    color: #4a7c6f;
+    font-family: 'Courier New', monospace;
+
+    &--warning {
+      color: #e74c3c;
+      animation: pulse 1s ease-in-out infinite;
+    }
+  }
+
+  &__verify-btn {
+    width: 100%;
+    margin-bottom: $spacing-md;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+  }
+
+  &__resend-btn {
+    width: 100%;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__bypass-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid #eee;
+    color: $color-light-text;
+
+    &:hover:not(:disabled) {
+      background: #f9f9f9;
+      border-color: $color-border;
+    }
+  }
+
+  &__cancel-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid $color-border;
+    color: $color-light-text;
+
+    &:hover:not(:disabled) {
+      background: $color-background;
+    }
+  }
+
+  &__warning {
+    margin: $spacing-md 0 0;
+    padding: $spacing-md;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: $border-radius-md;
+    color: #856404;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+// OTP Spinner
+.otp-modal__spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid $color-border;
+  border-top-color: #4a7c6f;
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: otpSpin 0.8s linear infinite;
+}
+
+@keyframes otpSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

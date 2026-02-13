@@ -76,3 +76,8 @@ export const LOCALE_CONFIG = {
     minute: '2-digit' as const,
   },
 } as const
+
+export const OTP_CONFIG = {
+  // Permitir al usuario omitir la verificación por SMS
+  ALLOW_SKIP: import.meta.env.VITE_OTP_ALLOW_SKIP !== 'false', // true por defecto
+} as const

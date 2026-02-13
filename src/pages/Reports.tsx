@@ -88,13 +88,34 @@ export default function Reports() {
                 </div>
                 <h3 className="reports-menu__title">Generar Reporte Tabular</h3>
                 <p className="reports-menu__description">
-                  Crea reportes personalizados por rango de fechas y socializador, exporta en CSV
+                  Crea reportes personalizados por rango de fechas y socializador, exporta en Excel
                 </p>
                 <div className="reports-menu__badge reports-menu__badge--secondary">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
                   Exportable
+                </div>
+              </Link>
+
+              <Link 
+                to={ROUTES.ADMIN_REPORTS_SOCIALIZERS}
+                className={`reports-menu__card ${isActive(ROUTES.ADMIN_REPORTS_SOCIALIZERS) ? 'reports-menu__card--active' : ''}`}
+              >
+                <div className="reports-menu__icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="reports-menu__title">Resumen por Socializador</h3>
+                <p className="reports-menu__description">
+                  Resumen de intervenciones, exitosas, no exitosas y defensores agrupados por socializador
+                </p>
+                <div className="reports-menu__badge reports-menu__badge--secondary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+                  </svg>
+                  Agrupado
                 </div>
               </Link>
             </div>

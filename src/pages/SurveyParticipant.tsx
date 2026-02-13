@@ -7,6 +7,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { SurveyForm, DashboardHeader, PageHeader, SuccessModal } from '../components'
+import OTPModal from '../components/OTPModal'
 import { useAuth } from '../contexts/AuthContext'
 import { useAudioRecorderContext } from '../contexts/AudioRecorderContext'
 import { apiService } from '../services/api.service'
@@ -15,6 +16,7 @@ import { indexedDBService } from '../services/indexedDB.service'
 import { Respondent } from '../models/Respondent'
 import { useOnlineStatus, useLogout } from '../hooks'
 import { MESSAGES, TITLES, DESCRIPTIONS, ROUTES, EXTERNAL_URLS } from '../constants'
+import { OTP_CONFIG } from '../constants/config'
 import '../styles/SurveyForm.scss'
 import '../styles/Dashboard.scss'
 
@@ -50,6 +52,10 @@ export default function SurveyParticipant() {
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [showWhatsAppQR, setShowWhatsAppQR] = useState(false)
+  const [showOTPModal, setShowOTPModal] = useState(false)
+  const [otpPhoneNumber, setOtpPhoneNumber] = useState('')
+  const [otpRespondentId, setOtpRespondentId] = useState('')
+  const [isDefensorDePatria, setIsDefensorDePatria] = useState(false)
   const stoppedForNoConsentRef = useRef(false)
 
   const editMode = location.state?.editMode || false
@@ -194,9 +200,18 @@ export default function SurveyParticipant() {
       }
       const reasonLabel = getNoResponseReasonLabel()
 
+      // Formatear teléfono con código de Colombia
+      const formatPhone = (phone: string): string => {
+        const cleaned = phone.replace(/[\s\-()]/g, '')
+        if (cleaned.startsWith('+57')) return cleaned
+        if (cleaned.startsWith('57') && cleaned.length > 10) return `+${cleaned}`
+        return `+57${cleaned}`
+      }
+
       // Crear instancia de Respondent usando POO con ubicación
       const respondent = Respondent.fromFormData({
         ...data,
+        phone: data.phone ? formatPhone(data.phone) : '',
         willingToRespond,
         latitude,
         longitude,
@@ -284,12 +299,20 @@ export default function SurveyParticipant() {
         clearRecording()
       }
 
-      // Mostrar modal de éxito y QR si es defensor de la patria
-      if (data.defendorDePatria && !editMode) {
+      // Guardar si es defensor para usarlo después del OTP
+      const esDefensor = data.defendorDePatria && !editMode
+      setIsDefensorDePatria(esDefensor)
+
+      // Si tiene teléfono y se creó el respondent, mostrar OTP para verificar
+      if (data.phone && !editMode && createdRespondentId) {
+        setOtpRespondentId(createdRespondentId)
+        setOtpPhoneNumber(data.phone)
+        setShowOTPModal(true)
+      } else if (esDefensor) {
+        // Sin teléfono pero es defensor → mostrar QR directo
         setShowWhatsAppQR(true)
         setShowSuccessModal(true)
       } else {
-        // Retornar al dashboard si no es defensor de la patria
         navigate(ROUTES.DASHBOARD)
       }
     } catch (err) {
@@ -344,6 +367,34 @@ export default function SurveyParticipant() {
         </section>
       </main>
 
+      {/* OTP Modal - se muestra inmediatamente al guardar */}
+      <OTPModal
+        isOpen={showOTPModal}
+        respondentId={otpRespondentId}
+        phoneNumber={otpPhoneNumber}
+        allowSkip={OTP_CONFIG.ALLOW_SKIP}
+        onVerified={() => {
+          setShowOTPModal(false)
+          notificationService.success('Teléfono verificado correctamente.')
+          if (isDefensorDePatria) {
+            setShowWhatsAppQR(true)
+            setShowSuccessModal(true)
+          } else {
+            navigate(ROUTES.DASHBOARD)
+          }
+        }}
+        onClose={() => {
+          setShowOTPModal(false)
+          if (isDefensorDePatria) {
+            setShowWhatsAppQR(true)
+            setShowSuccessModal(true)
+          } else {
+            navigate(ROUTES.DASHBOARD)
+          }
+        }}
+      />
+
+      {/* QR Modal - se muestra si es defensor de la patria */}
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={() => {
