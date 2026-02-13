@@ -31,7 +31,7 @@ export function SurveyForm({
   initialData,
   onWillingToRespondChange,
 }: SurveyFormProps) {
-  const ACTIVE_ZONE = 'zona1'
+  const ACTIVE_ZONE = import.meta.env.VITE_ACTIVE_ZONE || 'zona1'
   const [departments, setDepartments] = useState<Department[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [selectedDepartment, setSelectedDepartment] = useState<number | null>(null)
