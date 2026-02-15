@@ -339,13 +339,18 @@ export function SurveyForm({
                     id="phone"
                     type="tel"
                     label="Teléfono"
-                    placeholder="Ej: 300 123 4567"
+                    placeholder="Ej: 3001234567"
                     disabled={isLoading}
                     error={errors.phone?.message}
                     {...register('phone', {
+                      required: 'El teléfono es obligatorio',
                       pattern: {
-                        value: /^[0-9\s-+()]*$/,
-                        message: 'Por favor ingresa un teléfono válido',
+                        value: /^[0-9]+$/,
+                        message: 'El teléfono solo debe contener números',
+                      },
+                      maxLength: {
+                        value: 10,
+                        message: 'El teléfono debe tener máximo 10 dígitos',
                       },
                     })}
                   />
