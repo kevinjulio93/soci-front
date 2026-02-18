@@ -92,62 +92,47 @@ export function SocializerForm({
     return (item.fullName || item.user?.fullName || '') as string
   }
 
-  const loadHierarchyOptions = useCallback(async (role: string, parentCoordinatorId?: string) => {
+  const loadHierarchyOptions = useCallback(async (role: string) => {
     try {
       const normalizedRole = normalizeRoleValue(role)
       
-      // Si no hay usuario logueado o no tiene profile, no cargar
+      // Si no hay usuario logueado, no cargar
       if (!user?.id) return
 
+      setLoadingCoordinators(true)
+
       if (normalizedRole === 'socializer' || normalizedRole === 'socializador') {
-        setLoadingCoordinators(true)
-        // Si hay un coordinador de campo seleccionado, filtrar supervisores por ese coordinador
-        if (parentCoordinatorId) {
-          const supervisors = await apiService.getSubordinatesByRole(parentCoordinatorId, 'supervisor')
-          setCoordinators(supervisors)
-        } else {
-          // Si no hay coordinador de campo, usar el usuario logueado
-          const supervisors = await apiService.getSubordinatesByRole(user.id, 'supervisor')
-          setCoordinators(supervisors)
-        }
+        // Socializador -> cargar supervisores
+        const supervisors = await apiService.getSupervisors()
+        setCoordinators(supervisors)
         return
       }
 
       if (normalizedRole === 'supervisor') {
-        setLoadingCoordinators(true)
-        // Si hay un coordinador de zona seleccionado, filtrar coordinadores de campo por ese coordinador
-        if (parentCoordinatorId) {
-          const fieldCoords = await apiService.getSubordinatesByRole(parentCoordinatorId, 'fieldcoordinator')
-          setFieldCoordinators(fieldCoords)
-        } else {
-          // Si no hay coordinador de zona, usar el usuario logueado
-          const fieldCoords = await apiService.getSubordinatesByRole(user.id, 'fieldcoordinator')
-          setFieldCoordinators(fieldCoords)
-        }
+        // Supervisor -> cargar coordinadores de campo
+        const fieldCoords = await apiService.getFieldCoordinators()
+        setFieldCoordinators(fieldCoords)
         return
       }
 
       if (normalizedRole === 'fieldcoordinator' || normalizedRole === 'coordinador de campo') {
-        if (zoneCoordinators.length > 0) return
-        setLoadingCoordinators(true)
-        // Usar endpoint con jerarquía para obtener solo coordinadores de zona permitidos
-        const zoneCoords = await apiService.getSubordinatesByRole(user.id, 'zonecoordinator')
+        // Coordinador de campo -> cargar coordinadores de zona
+        const zoneCoords = await apiService.getZoneCoordinators()
         setZoneCoordinators(zoneCoords)
         return
       }
 
+      // zonecoordinator y otros no necesitan dropdown de superior
       return
     } catch {
       // Error silencioso
     } finally {
       setLoadingCoordinators(false)
     }
-  }, [user?.id, zoneCoordinators.length])
+  }, [user?.id])
 
   // Watch role changes to show/hide coordinator field
   const watchedRoleId = watch('roleId')
-  const watchedFieldCoordinator = watch('assignedFieldCoordinator')
-  const watchedZoneCoordinator = watch('assignedZoneCoordinator')
 
   const roleOptions = useMemo(() => roles.map((role) => ({
     value: role._id,
@@ -278,30 +263,7 @@ export function SocializerForm({
     loadHierarchyOptions(selectedRole)
   }, [selectedRole, loadHierarchyOptions])
 
-  // Recargar supervisores cuando cambie el coordinador de campo seleccionado
-  useEffect(() => {
-    const normalizedRole = normalizeRoleValue(selectedRole)
-    if ((normalizedRole === 'socializer' || normalizedRole === 'socializador') && watchedFieldCoordinator) {
-      // Limpiar selección de supervisor actual
-      setValue('assignedSupervisor', '')
-      // Recargar supervisores filtrados por el coordinador de campo
-      loadHierarchyOptions(selectedRole, watchedFieldCoordinator)
-    }
-  }, [watchedFieldCoordinator, selectedRole, loadHierarchyOptions, setValue])
 
-  // Recargar coordinadores de campo cuando cambie el coordinador de zona seleccionado
-  useEffect(() => {
-    const normalizedRole = normalizeRoleValue(selectedRole)
-    if (normalizedRole === 'supervisor' && watchedZoneCoordinator) {
-      // Limpiar selección de coordinador de campo actual
-      setValue('assignedFieldCoordinator', '')
-      // Limpiar supervisores también
-      setValue('assignedSupervisor', '')
-      setCoordinators([])
-      // Recargar coordinadores de campo filtrados por el coordinador de zona
-      loadHierarchyOptions(selectedRole, watchedZoneCoordinator)
-    }
-  }, [watchedZoneCoordinator, selectedRole, loadHierarchyOptions, setValue])
 
   // Submit wrapper para transformar coordinatorId según jerarquía
   const handleFormSubmit = (formData: ReturnType<SocializerFormData['toFormData']>) => {

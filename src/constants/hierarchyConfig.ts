@@ -19,18 +19,16 @@ export interface RoleHierarchyConfig {
 
 /**
  * Configuración de jerarquía por rol del usuario logueado
- * Define qué campos ve cada rol y en qué orden
+ * Solo muestra el dropdown del superior inmediato:
+ *   socializer     -> supervisor
+ *   supervisor     -> coordinador de campo
+ *   fieldcoordinator -> coordinador de zona
+ *   zonecoordinator -> (ninguno, es tope)
  */
 export const ROLE_HIERARCHY_CONFIG: Record<string, RoleHierarchyConfig> = {
   admin: {
     visibleFields: [
-      {
-        role: 'zonecoordinator',
-        fieldKey: '',
-        label: '',
-        dataSourceField: 'zoneCoordinators',
-        loadHierarchyRole: '',
-      },
+      // Coordinador de campo requiere coordinador de zona
       {
         role: 'fieldcoordinator',
         fieldKey: 'assignedZoneCoordinator',
@@ -38,13 +36,7 @@ export const ROLE_HIERARCHY_CONFIG: Record<string, RoleHierarchyConfig> = {
         dataSourceField: 'zoneCoordinators',
         loadHierarchyRole: 'zonecoordinator',
       },
-      {
-        role: 'supervisor',
-        fieldKey: 'assignedZoneCoordinator',
-        label: 'Coordinador de Zona',
-        dataSourceField: 'zoneCoordinators',
-        loadHierarchyRole: 'zonecoordinator',
-      },
+      // Supervisor requiere coordinador de campo
       {
         role: 'supervisor',
         fieldKey: 'assignedFieldCoordinator',
@@ -52,20 +44,7 @@ export const ROLE_HIERARCHY_CONFIG: Record<string, RoleHierarchyConfig> = {
         dataSourceField: 'fieldCoordinators',
         loadHierarchyRole: 'fieldcoordinator',
       },
-      {
-        role: 'socializer',
-        fieldKey: 'assignedZoneCoordinator',
-        label: 'Coordinador de Zona',
-        dataSourceField: 'zoneCoordinators',
-        loadHierarchyRole: 'zonecoordinator',
-      },
-      {
-        role: 'socializer',
-        fieldKey: 'assignedFieldCoordinator',
-        label: 'Coordinador de Campo',
-        dataSourceField: 'fieldCoordinators',
-        loadHierarchyRole: 'fieldcoordinator',
-      },
+      // Socializador requiere supervisor
       {
         role: 'socializer',
         fieldKey: 'assignedSupervisor',
@@ -77,68 +56,12 @@ export const ROLE_HIERARCHY_CONFIG: Record<string, RoleHierarchyConfig> = {
     creatableRoles: ['readonly', 'zonecoordinator', 'fieldcoordinator', 'supervisor', 'socializer'],
   },
   readonly: {
-    visibleFields: [
-      {
-        role: 'zonecoordinator',
-        fieldKey: '',
-        label: '',
-        dataSourceField: 'zoneCoordinators',
-        loadHierarchyRole: '',
-      },
-      {
-        role: 'fieldcoordinator',
-        fieldKey: 'assignedZoneCoordinator',
-        label: 'Coordinador de Zona',
-        dataSourceField: 'zoneCoordinators',
-        loadHierarchyRole: 'zonecoordinator',
-      },
-      {
-        role: 'supervisor',
-        fieldKey: 'assignedZoneCoordinator',
-        label: 'Coordinador de Zona',
-        dataSourceField: 'zoneCoordinators',
-        loadHierarchyRole: 'zonecoordinator',
-      },
-      {
-        role: 'supervisor',
-        fieldKey: 'assignedFieldCoordinator',
-        label: 'Coordinador de Campo',
-        dataSourceField: 'fieldCoordinators',
-        loadHierarchyRole: 'fieldcoordinator',
-      },
-      {
-        role: 'socializer',
-        fieldKey: 'assignedZoneCoordinator',
-        label: 'Coordinador de Zona',
-        dataSourceField: 'zoneCoordinators',
-        loadHierarchyRole: 'zonecoordinator',
-      },
-      {
-        role: 'socializer',
-        fieldKey: 'assignedFieldCoordinator',
-        label: 'Coordinador de Campo',
-        dataSourceField: 'fieldCoordinators',
-        loadHierarchyRole: 'fieldcoordinator',
-      },
-      {
-        role: 'socializer',
-        fieldKey: 'assignedSupervisor',
-        label: 'Supervisor',
-        dataSourceField: 'supervisors',
-        loadHierarchyRole: 'supervisor',
-      },
-    ],
+    visibleFields: [],
     creatableRoles: [],
   },
   zonecoordinator: {
     visibleFields: [
-      {
-        role: 'fieldcoordinator',
-        fieldKey: 'assignedZoneCoordinator',
-        label: 'Coordinador de Zona',
-        dataSourceField: 'zoneCoordinators',
-        loadHierarchyRole: 'zonecoordinator',
-      },
+      // Supervisor requiere coordinador de campo (bajo este coord. de zona)
       {
         role: 'supervisor',
         fieldKey: 'assignedFieldCoordinator',
@@ -146,13 +69,7 @@ export const ROLE_HIERARCHY_CONFIG: Record<string, RoleHierarchyConfig> = {
         dataSourceField: 'fieldCoordinators',
         loadHierarchyRole: 'fieldcoordinator',
       },
-      {
-        role: 'socializer',
-        fieldKey: 'assignedFieldCoordinator',
-        label: 'Coordinador de Campo',
-        dataSourceField: 'fieldCoordinators',
-        loadHierarchyRole: 'fieldcoordinator',
-      },
+      // Socializador requiere supervisor
       {
         role: 'socializer',
         fieldKey: 'assignedSupervisor',
@@ -166,13 +83,7 @@ export const ROLE_HIERARCHY_CONFIG: Record<string, RoleHierarchyConfig> = {
   },
   fieldcoordinator: {
     visibleFields: [
-      {
-        role: 'supervisor',
-        fieldKey: 'assignedFieldCoordinator',
-        label: 'Coordinador de Campo',
-        dataSourceField: 'fieldCoordinators',
-        loadHierarchyRole: 'fieldcoordinator',
-      },
+      // Socializador requiere supervisor (bajo este coord. de campo)
       {
         role: 'socializer',
         fieldKey: 'assignedSupervisor',
