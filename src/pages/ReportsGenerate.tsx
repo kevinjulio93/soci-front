@@ -250,7 +250,19 @@ export default function ReportsGenerate() {
         sortOrder: filters.sortOrder,
       }
       const response = await apiService.getDashboard002Report(params)
-      setReportData(response.data.surveys || [])
+      // Sanitize: city/department may arrive as populated objects from the API
+      const extractStr = (val: unknown): string | undefined => {
+        if (!val) return undefined
+        if (typeof val === 'string') return val
+        if (typeof val === 'object' && val !== null && 'name' in val) return (val as { name: string }).name
+        return undefined
+      }
+      const sanitized = (response.data.surveys || []).map((s) => ({
+        ...s,
+        city: extractStr(s.city),
+        department: extractStr(s.department) ?? s.department,
+      }))
+      setReportData(sanitized)
       setCurrentPage(response.data.currentPage)
       setTotalItems(response.data.totalItems)
       setTotalPages(response.data.totalPages)

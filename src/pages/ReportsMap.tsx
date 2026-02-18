@@ -349,7 +349,9 @@ export default function ReportsMap() {
 
       // Extraer todas las encuestas de todos los socializadores
       const allSurveys: RespondentData[] = report.flatMap((socializer: { allSurveys?: unknown[] }) =>
-        Array.isArray(socializer.allSurveys) ? socializer.allSurveys : []
+        Array.isArray(socializer.allSurveys)
+          ? socializer.allSurveys.map((s) => new RespondentData(s))
+          : []
       )
 
       const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)

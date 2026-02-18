@@ -48,6 +48,16 @@ export function SurveyDetailModal({
 }: SurveyDetailModalProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioError, setAudioError] = useState(false)
+
+  // Helper function to extract string value from either string or object
+  const getStringValue = (value: unknown): string => {
+    if (!value) return ''
+    if (typeof value === 'string') return value
+    if (typeof value === 'object' && value !== null && 'name' in value) {
+      return (value as { name: string }).name
+    }
+    return 'N/A'
+  }
   const [audioDuration, setAudioDuration] = useState<number | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -300,11 +310,11 @@ export function SurveyDetailModal({
               </div>
               <div className="detail-item">
                 <span className="detail-item__label">Departamento:</span>
-                <span className="detail-item__value">{survey.department || 'N/A'}</span>
+                <span className="detail-item__value">{getStringValue(survey.department) || 'N/A'}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-item__label">Ciudad:</span>
-                <span className="detail-item__value">{survey.city || 'N/A'}</span>
+                <span className="detail-item__value">{getStringValue(survey.city) || 'N/A'}</span>
               </div>
               <div className="detail-item">
                 <span className="detail-item__label">Barrio:</span>
@@ -350,7 +360,7 @@ export function SurveyDetailModal({
                           <strong>{survey.fullName}</strong>
                           <br />
                           {survey.neighborhood && `${survey.neighborhood}, `}
-                          {survey.city}
+                          {getStringValue(survey.city)}
                         </Popup>
                       </Marker>
                     </MapContainer>

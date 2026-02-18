@@ -97,6 +97,15 @@ export class RespondentData {
   public facebookUsername?: string
 
   constructor(data: any) {
+    // Helper: extract a plain string from a value that may be a populated DB object
+    const extractString = (val: any): string | undefined => {
+      if (!val) return undefined
+      if (typeof val === 'string') return val
+      // Populated municipality/department object → use .name
+      if (typeof val === 'object' && val.name) return val.name
+      return undefined
+    }
+
     this._id = data._id
     this.fullName = data.fullName
     this.idType = data.idType
@@ -110,8 +119,8 @@ export class RespondentData {
     this.gender = data.gender
     this.ageRange = data.ageRange
     this.region = data.region
-    this.department = data.department
-    this.city = data.city
+    this.department = extractString(data.department)
+    this.city = extractString(data.city)
     this.stratum = data.stratum
     this.neighborhood = data.neighborhood
     this.latitude = data.latitude
@@ -128,7 +137,7 @@ export class RespondentData {
     this.visitAddress = data.visitAddress
     this.surveyStatus = data.surveyStatus
     this.isPatriaDefender = data.isPatriaDefender
-    this.municipality = data.municipality
+    this.municipality = extractString(data.municipality)
     this.recordingAuthorization = data.recordingAuthorization
     this.isLinkedHouse = data.isLinkedHouse
     this.facebookUsername = data.facebookUsername
