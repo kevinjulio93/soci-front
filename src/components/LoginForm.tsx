@@ -8,17 +8,19 @@ import { useForm } from 'react-hook-form'
 import { LoginFormData } from '../models/FormData'
 import type { LoginFormProps } from './types'
 import { Input } from './Input'
+import { useSafeRegister } from '../hooks/useSafeRegister'
 import '../styles/Login.scss'
 
 export function LoginForm({ onSubmit, isLoading = false, error }: LoginFormProps) {
   const {
-    register,
+    register: _register,
     handleSubmit,
     formState: { errors },
   } = useForm<ReturnType<LoginFormData['toFormData']>>({
     mode: 'onBlur',
     defaultValues: new LoginFormData().toFormData(),
   })
+  const register = useSafeRegister(_register)
 
   return (
     <div className="login">

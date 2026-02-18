@@ -10,6 +10,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string
   required?: boolean
   className?: string
+  ref?: React.Ref<HTMLInputElement>
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -18,6 +19,7 @@ export const Input: React.FC<InputProps> = ({
   required = false,
   className = '',
   id,
+  ref,
   ...props
 }) => {
   const inputId = id || `input-${label?.replace(/\s+/g, '-').toLowerCase()}`
@@ -32,6 +34,7 @@ export const Input: React.FC<InputProps> = ({
       )}
       <input
         id={inputId}
+        ref={ref}
         className={`form-group__input ${error ? 'form-group__input--error' : ''}`}
         {...props}
       />

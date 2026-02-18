@@ -16,6 +16,7 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options: readonly SelectOption[]
   placeholder?: string
   className?: string
+  ref?: React.Ref<HTMLSelectElement>
 }
 
 export const Select: React.FC<SelectProps> = ({
@@ -26,6 +27,7 @@ export const Select: React.FC<SelectProps> = ({
   placeholder = 'Seleccione una opción',
   className = '',
   id,
+  ref,
   ...props
 }) => {
   const selectId = id || `select-${label?.replace(/\s+/g, '-').toLowerCase()}`
@@ -41,6 +43,7 @@ export const Select: React.FC<SelectProps> = ({
       <div className="form-group__select-wrapper">
         <select
           id={selectId}
+          ref={ref}
           className={`form-group__input ${error ? 'form-group__input--error' : ''}`}
           {...props}
         >

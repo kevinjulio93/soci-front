@@ -20,6 +20,7 @@ import type { SurveyFormData, SurveyFormProps } from './types'
 import { apiService, type ZoneDepartmentEntry, type ZoneMunicipalityItem } from '../services/api.service'
 import { Input } from './Input'
 import { Select } from './Select'
+import { useSafeRegister } from '../hooks/useSafeRegister'
 import '../styles/SurveyForm.scss'
 
 export function SurveyForm({
@@ -38,7 +39,7 @@ export function SurveyForm({
   const [loadingDepartments, setLoadingDepartments] = useState(false)
 
   const {
-    register,
+    register: _register,
     handleSubmit,
     formState: { errors, isValid },
     watch,
@@ -52,6 +53,7 @@ export function SurveyForm({
       audioRecordingConsent: undefined as any, // Sin valor inicial para que el campo esté oculto
     },
   })
+  const register = useSafeRegister(_register)
 
   // Watch willingToRespond to show/hide noResponseReason field
   const willingToRespondValue = watch('willingToRespond')
@@ -484,8 +486,8 @@ export function SurveyForm({
                     error={errors.department?.message}
                     {...register('department', {
                       required: willingToRespond ? 'El departamento es requerido' : false,
+                      onChange: handleDepartmentChange,
                     })}
-                    onChange={handleDepartmentChange}
                   />
                 </div>
                 
@@ -503,8 +505,8 @@ export function SurveyForm({
                     error={errors.city?.message}
                     {...register('city', {
                       required: willingToRespond ? 'El municipio es requerido' : false,
+                      onChange: handleCityChange,
                     })}
-                    onChange={handleCityChange}
                   />
                 </div>
               </div>

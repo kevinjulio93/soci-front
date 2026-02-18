@@ -12,6 +12,7 @@ import type { SocializerFormProps } from './types'
 import { Input } from './Input'
 import { Select } from './Select'
 import { translateRole } from '../utils'
+import { useSafeRegister } from '../hooks/useSafeRegister'
 import { getHierarchyConfig, getVisibleFieldsForRole, getAutoSelectField } from '../constants/hierarchyConfig'
 import '../styles/SurveyForm.scss'
 
@@ -69,7 +70,7 @@ export function SocializerForm({
   const [selectedRole, setSelectedRole] = useState<string>('')
 
   const {
-    register,
+    register: _register,
     handleSubmit,
     formState: { errors },
     reset,
@@ -79,6 +80,7 @@ export function SocializerForm({
     mode: 'onBlur',
     defaultValues: initialData || new SocializerFormData().toFormData(),
   })
+  const register = useSafeRegister(_register)
 
   // Helper para obtener email de la nueva estructura de API
   const getCoordinatorEmail = (item: CoordinatorData): string => {
