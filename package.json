@@ -12,6 +12,7 @@
     "build:zona3": "tsc -b && vite build --mode production.zona3",
     "build:zona4": "tsc -b && vite build --mode production.zona4",
     "build:zona5": "tsc -b && vite build --mode production.zona5",
+    "build:zonaf": "tsc -b && vite build --mode production.zonaf",
     "lint": "eslint .",
     "preview": "vite preview",
     "preview:dev": "vite preview --mode development",
