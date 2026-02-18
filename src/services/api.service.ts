@@ -541,7 +541,10 @@ class ApiService {
 
     const response = await this.post<any>(API_ENDPOINTS.USERS_CREATE_WITH_PROFILE, requestBody)
     
-    return new CreateSocializerResponse(response.message, new SocializerData(response.data))
+    // The create endpoint returns { data: { profile: {..., user: {...}}, userId } }
+    // Normalize to the structure SocializerData expects (list/hierarchy format)
+    const profileData = response.data?.profile || response.data
+    return new CreateSocializerResponse(response.message, new SocializerData(profileData))
   }
 
   async deleteSocializer(id: string): Promise<DeleteSocializerResponse> {
