@@ -83,4 +83,11 @@ export const API_ENDPOINTS = {
   // Location
   LOCATIONS: '/locations',
   LOCATION_LATEST: (userId: string) => `/locations/${userId}/latest`,
+
+  // Zones
+  ZONES_DEPARTMENTS: (zoneNumber: number) => `/zones/${zoneNumber}/departments`,
+
+  // Departments and Municipalities
+  DEPARTMENTS: '/departments',
+  DEPARTMENTS_MUNICIPALITIES: (departmentId: string) => `/departments/${departmentId}/municipalities`,
 } as const

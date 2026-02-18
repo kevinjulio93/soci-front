@@ -30,7 +30,9 @@ export interface SurveyFormData {
   ageRange: '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65+' | ''
   region: string
   department: string
+  departmentId: string
   city: string
+  municipioCode: string
   stratum: '1' | '2' | '3' | '4' | '5' | '6' | ''
   neighborhood: string
   defendorDePatria: boolean

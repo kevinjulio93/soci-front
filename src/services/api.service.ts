@@ -89,6 +89,8 @@ type Dashboard002Params = {
   surveyStatus?: 'successful' | 'unsuccessful'
   willingToRespond?: boolean
   isPatriaDefender?: boolean
+  isVerified?: boolean
+  isLinkedHouse?: boolean
   department?: string
   city?: string
   region?: string
@@ -120,6 +122,8 @@ type Dashboard002Survey = {
   stratum?: number
   neighborhood?: string
   isPatriaDefender: boolean
+  isVerified: boolean
+  isLinkedHouse: boolean
   location: {
     type: 'Point'
     coordinates: [number, number]
@@ -187,6 +191,35 @@ type Dashboard003Response = {
   }
   socializadores: Dashboard003Socializador[]
   timestamp: string
+}
+
+export type ZoneDepartmentItem = {
+  _id: string
+  departmentId: string
+  name: string
+  code: string
+  mpio: string
+}
+
+export type ZoneMunicipalityItem = {
+  _id: string
+  name: string
+  departmentId: string
+  code: string
+  mpio: string
+}
+
+export type ZoneDepartmentEntry = {
+  department: ZoneDepartmentItem
+  municipalities: ZoneMunicipalityItem[]
+}
+
+export type ZoneDepartmentsResponse = {
+  zone: {
+    name: string
+    zoneNumber: number
+  }
+  departments: ZoneDepartmentEntry[]
 }
 
 class ApiService {
@@ -685,6 +718,8 @@ class ApiService {
     if (params.surveyStatus) queryParams.append('surveyStatus', params.surveyStatus)
     if (params.willingToRespond !== undefined) queryParams.append('willingToRespond', params.willingToRespond.toString())
     if (params.isPatriaDefender !== undefined) queryParams.append('isPatriaDefender', params.isPatriaDefender.toString())
+    if (params.isVerified !== undefined) queryParams.append('isVerified', params.isVerified.toString())
+    if (params.isLinkedHouse !== undefined) queryParams.append('isLinkedHouse', params.isLinkedHouse.toString())
     
     // Parámetros de ubicación
     if (params.department) queryParams.append('department', params.department)
@@ -756,6 +791,8 @@ class ApiService {
     if (params.surveyStatus) queryParams.append('surveyStatus', params.surveyStatus)
     if (params.willingToRespond !== undefined) queryParams.append('willingToRespond', params.willingToRespond.toString())
     if (params.isPatriaDefender !== undefined) queryParams.append('isPatriaDefender', params.isPatriaDefender.toString())
+    if (params.isVerified !== undefined) queryParams.append('isVerified', params.isVerified.toString())
+    if (params.isLinkedHouse !== undefined) queryParams.append('isLinkedHouse', params.isLinkedHouse.toString())
     if (params.department) queryParams.append('department', params.department)
     if (params.city) queryParams.append('city', params.city)
     if (params.region) queryParams.append('region', params.region)
@@ -769,6 +806,29 @@ class ApiService {
     const endpoint = `${API_ENDPOINTS.DASHBOARD_002_EXPORT}?${queryParams.toString()}`
     const filename = `dashboard002_${params.startDate || ''}_${params.endDate || ''}.xlsx`
     return this.downloadFile(endpoint, filename)
+  }
+
+  /**
+   * Obtener departamentos y municipios de una zona
+   */
+  async getZoneDepartments(zoneNumber: number): Promise<ZoneDepartmentsResponse> {
+    return this.get<ZoneDepartmentsResponse>(API_ENDPOINTS.ZONES_DEPARTMENTS(zoneNumber))
+  }
+
+  /**
+   * Obtener todos los departamentos disponibles
+   */
+  async getDepartments(): Promise<ZoneDepartmentItem[]> {
+    const response = await this.get<{ data: ZoneDepartmentItem[] }>(API_ENDPOINTS.DEPARTMENTS)
+    return response.data || []
+  }
+
+  /**
+   * Obtener municipios de un departamento
+   */
+  async getMunicipalitiesByDepartment(departmentId: string): Promise<ZoneMunicipalityItem[]> {
+    const response = await this.get<{ data: ZoneMunicipalityItem[] }>(API_ENDPOINTS.DEPARTMENTS_MUNICIPALITIES(departmentId))
+    return response.data || []
   }
 
   /**

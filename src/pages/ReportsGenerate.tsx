@@ -34,6 +34,8 @@ interface ReportItem {
   stratum?: number
   neighborhood?: string
   isPatriaDefender: boolean
+  isVerified: boolean
+  isLinkedHouse: boolean
   location: { type: 'Point'; coordinates: [number, number] }
   autor: { _id: string; email: string; role: string }
   createdAt: string
@@ -126,19 +128,24 @@ const TABLE_COLUMNS: ReportTableColumn<ReportItem>[] = [
     ),
   },
   {
-    key: 'response',
-    label: 'Respuesta',
+    key: 'verified',
+    label: 'Verificado',
     minWidth: '100px',
     align: 'center',
     render: (item) => (
-      <span
-        className={`rg-status-badge ${
-          item.willingToRespond
-            ? 'rg-status-badge--success'
-            : 'rg-status-badge--error'
-        }`}
-      >
-        {item.willingToRespond ? 'Sí' : 'No'}
+      <span style={{ color: item.isVerified ? '#0066cc' : '#999' }}>
+        {item.isVerified ? '✓ Sí' : '—'}
+      </span>
+    ),
+  },
+  {
+    key: 'visited',
+    label: 'Casa Visitada',
+    minWidth: '120px',
+    align: 'center',
+    render: (item) => (
+      <span style={{ color: item.isLinkedHouse ? '#0066cc' : '#999' }}>
+        {item.isLinkedHouse ? '✓ Sí' : '—'}
       </span>
     ),
   },
@@ -225,6 +232,12 @@ export default function ReportsGenerate() {
         isPatriaDefender: filters.isPatriaDefender
           ? filters.isPatriaDefender === 'true'
           : undefined,
+        isVerified: filters.isVerified
+          ? filters.isVerified === 'true'
+          : undefined,
+        isLinkedHouse: filters.isLinkedHouse
+          ? filters.isLinkedHouse === 'true'
+          : undefined,
         department: filters.department || undefined,
         city: filters.city || undefined,
         region: filters.region || undefined,
@@ -266,6 +279,8 @@ export default function ReportsGenerate() {
         surveyStatus: (filters.surveyStatus as 'successful' | 'unsuccessful') || undefined,
         willingToRespond: filters.willingToRespond ? filters.willingToRespond === 'true' : undefined,
         isPatriaDefender: filters.isPatriaDefender ? filters.isPatriaDefender === 'true' : undefined,
+        isVerified: filters.isVerified ? filters.isVerified === 'true' : undefined,
+        isLinkedHouse: filters.isLinkedHouse ? filters.isLinkedHouse === 'true' : undefined,
         department: filters.department || undefined,
         city: filters.city || undefined,
         region: filters.region || undefined,

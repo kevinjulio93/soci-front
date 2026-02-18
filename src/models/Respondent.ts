@@ -29,6 +29,7 @@ export interface RespondentDTO {
   ageRange?: string
   region?: string
   department?: string
+  municipality?: string
   city?: string
   stratum?: number
   neighborhood?: string

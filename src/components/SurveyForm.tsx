@@ -17,8 +17,7 @@ import {
 } from '../constants'
 import { Respondent } from '../models/Respondent'
 import type { SurveyFormData, SurveyFormProps } from './types'
-import { colombiaApiService, type Department, type City } from '../services/colombia-api.service'
-import { getDepartmentsByZone, getMunicipalitiesByZoneAndDepartment } from '../constants/zones'
+import { apiService, type ZoneDepartmentEntry, type ZoneMunicipalityItem } from '../services/api.service'
 import { Input } from './Input'
 import { Select } from './Select'
 import '../styles/SurveyForm.scss'
@@ -32,11 +31,11 @@ export function SurveyForm({
   onWillingToRespondChange,
 }: SurveyFormProps) {
   const ACTIVE_ZONE = import.meta.env.VITE_ACTIVE_ZONE || 'zona1'
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [cities, setCities] = useState<City[]>([])
-  const [selectedDepartment, setSelectedDepartment] = useState<number | null>(null)
+  const ZONE_NUMBER = parseInt(ACTIVE_ZONE.replace('zona', ''), 10) || 1
+  const [zoneDepartments, setZoneDepartments] = useState<ZoneDepartmentEntry[]>([])
+  const [cities, setCities] = useState<ZoneMunicipalityItem[]>([])
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null)
   const [loadingDepartments, setLoadingDepartments] = useState(false)
-  const [loadingCities, setLoadingCities] = useState(false)
 
   const {
     register,
@@ -78,54 +77,92 @@ export function SurveyForm({
     }
   }, [initialData, reset, setValue])
 
-  // Cargar departamentos de la zona activa desde la API de Colombia
+  // Cargar departamentos y municipios de la zona activa desde el backend
   useEffect(() => {
     const loadDepartments = async () => {
       setLoadingDepartments(true)
-      const zoneDepts = getDepartmentsByZone(ACTIVE_ZONE)
-      const allDepts = await colombiaApiService.getDepartments()
-      const filtered = allDepts.filter(dept =>
-        zoneDepts.some(zd => dept.name.toLowerCase() === zd.toLowerCase())
-      )
-      setDepartments(filtered)
+      try {
+        const response = await apiService.getZoneDepartments(ZONE_NUMBER)
+        setZoneDepartments(response.departments)
 
-      // Auto-seleccionar si solo hay un departamento
-      if (filtered.length === 1) {
-        setSelectedDepartment(filtered[0].id)
-        setValue('department', filtered[0].name)
+        // Auto-seleccionar si solo hay un departamento
+        if (response.departments.length === 1) {
+          const only = response.departments[0]
+          setSelectedDepartmentId(only.department._id)
+          setCities(only.municipalities)
+          setValue('department', only.department.name)
+          setValue('departmentId', only.department._id)
+          // Auto-seleccionar si solo hay un municipio
+          if (only.municipalities.length === 1) {
+            const onlyMuni = only.municipalities[0]
+            setValue('city', onlyMuni.name)
+            setValue('municipioCode', onlyMuni._id)
+          }
+        }
+      } catch {
+        setZoneDepartments([])
+      } finally {
+        setLoadingDepartments(false)
       }
-
-      setLoadingDepartments(false)
     }
     loadDepartments()
   }, [])
 
-  // Cargar ciudades filtradas por zona cuando se selecciona un departamento
+  // Restaurar selección de departamento en modo edición
   useEffect(() => {
-    if (selectedDepartment) {
-      const loadCities = async () => {
-        setLoadingCities(true)
-        const dept = departments.find(d => d.id === selectedDepartment)
-        const deptName = dept?.name || ''
-        const zoneMunicipalities = getMunicipalitiesByZoneAndDepartment(ACTIVE_ZONE, deptName)
-        const allCities = await colombiaApiService.getCitiesByDepartment(selectedDepartment)
-        const filtered = allCities.filter(city =>
-          zoneMunicipalities.some(zm => city.name.toLowerCase() === zm.toLowerCase())
-        )
-        setCities(filtered)
-        setLoadingCities(false)
-      }
-      loadCities()
+    if (!initialData?.departmentId || zoneDepartments.length === 0) return
+    const entry = zoneDepartments.find(e => e.department._id === initialData.departmentId)
+    if (!entry) return
+    // setTimeout asegura que corre después del reset() del efecto de initialData
+    setTimeout(() => {
+      setSelectedDepartmentId(entry.department._id)
+      setValue('department', entry.department.name)
+      setValue('departmentId', entry.department._id)
+    }, 0)
+  }, [zoneDepartments, initialData?.departmentId])
+
+  // Restaurar selección de municipio una vez que cities está poblado
+  useEffect(() => {
+    if (!initialData?.departmentId || cities.length === 0) return
+    
+    // Buscar municipio: primero por _id, luego por nombre como fallback
+    let selectedMuni = undefined
+    if (initialData.municipioCode) {
+      selectedMuni = cities.find(m => m._id === initialData.municipioCode)
+    }
+    if (!selectedMuni && initialData.city) {
+      // Fallback: buscar por nombre si no se encontró por ID
+      selectedMuni = cities.find(m => m.name === initialData.city)
+    }
+    if (selectedMuni) {
+      setValue('city', selectedMuni.name)
+      setValue('municipioCode', selectedMuni._id)
+    }
+  }, [cities, initialData?.departmentId, initialData?.municipioCode, initialData?.city])
+
+  // Actualizar ciudades cuando cambia el departamento seleccionado
+  useEffect(() => {
+    if (selectedDepartmentId) {
+      const entry = zoneDepartments.find(e => e.department._id === selectedDepartmentId)
+      setCities(entry?.municipalities || [])
     } else {
       setCities([])
     }
-  }, [selectedDepartment])
+  }, [selectedDepartmentId, zoneDepartments])
 
   const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
-    const department = departments.find(d => d.name === value)
-    setSelectedDepartment(department ? department.id : null)
+    const entry = zoneDepartments.find(e => e.department.name === value)
+    setSelectedDepartmentId(entry ? entry.department._id : null)
+    setValue('departmentId', entry ? entry.department._id : '')
     setValue('city', '')
+    setValue('municipioCode', '')
+  }
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value
+    const muni = cities.find(c => c.name === value)
+    setValue('municipioCode', muni ? muni._id : '')
   }
 
   return (
@@ -427,8 +464,10 @@ export function SurveyForm({
                 {...register('ageRange')}
               />
 
-              {/* Region (hidden) and Department */}
+              {/* Region (hidden), departmentId (hidden), municipioCode (hidden) */}
               <input type="hidden" {...register('region')} />
+              <input type="hidden" {...register('departmentId')} />
+              <input type="hidden" {...register('municipioCode')} />
               
               <div className="survey-form__row">
                 <div className="survey-form__col">
@@ -436,9 +475,9 @@ export function SurveyForm({
                     id="department"
                     label="Departamento"
                     placeholder="Seleccione departamento"
-                    options={departments.map((dept) => ({
-                      value: dept.name,
-                      label: dept.name,
+                    options={zoneDepartments.map((entry) => ({
+                      value: entry.department.name,
+                      label: entry.department.name,
                     }))}
                     disabled={isLoading || loadingDepartments}
                     required={willingToRespond}
@@ -453,18 +492,19 @@ export function SurveyForm({
                 <div className="survey-form__col">
                   <Select
                     id="city"
-                    label="Ciudad"
-                    placeholder="Seleccione ciudad"
+                    label="Municipio"
+                    placeholder="Seleccione municipio"
                     options={cities.map((city) => ({
                       value: city.name,
                       label: city.name,
                     }))}
-                    disabled={isLoading || loadingCities || !selectedDepartment}
+                    disabled={isLoading || !selectedDepartmentId}
                     required={willingToRespond}
                     error={errors.city?.message}
                     {...register('city', {
-                      required: willingToRespond ? 'La ciudad es requerida' : false,
+                      required: willingToRespond ? 'El municipio es requerido' : false,
                     })}
+                    onChange={handleCityChange}
                   />
                 </div>
               </div>

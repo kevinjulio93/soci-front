@@ -91,6 +91,10 @@ export class RespondentData {
   public visitAddress?: string
   public surveyStatus?: string
   public isPatriaDefender?: boolean
+  public municipality?: string
+  public recordingAuthorization?: boolean
+  public isLinkedHouse?: boolean
+  public facebookUsername?: string
 
   constructor(data: any) {
     this._id = data._id
@@ -124,6 +128,10 @@ export class RespondentData {
     this.visitAddress = data.visitAddress
     this.surveyStatus = data.surveyStatus
     this.isPatriaDefender = data.isPatriaDefender
+    this.municipality = data.municipality
+    this.recordingAuthorization = data.recordingAuthorization
+    this.isLinkedHouse = data.isLinkedHouse
+    this.facebookUsername = data.facebookUsername
   }
 }
 

@@ -7,7 +7,8 @@ import { DateInput } from './DateInput'
 import { Select } from './Select'
 import { Input } from './Input'
 import { getTodayISO } from '../utils/dateHelpers'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { apiService, type ZoneDepartmentEntry, type ZoneMunicipalityItem } from '../services/api.service'
 
 export interface ReportFilters {
   startDate: string
@@ -16,6 +17,8 @@ export interface ReportFilters {
   surveyStatus: '' | 'successful' | 'unsuccessful'
   willingToRespond: '' | 'true' | 'false'
   isPatriaDefender: '' | 'true' | 'false'
+  isVerified: '' | 'true' | 'false'
+  isLinkedHouse: '' | 'true' | 'false'
   department: string
   city: string
   region: string
@@ -35,6 +38,8 @@ export const INITIAL_FILTERS: ReportFilters = {
   surveyStatus: '',
   willingToRespond: '',
   isPatriaDefender: '',
+  isVerified: '',
+  isLinkedHouse: '',
   department: '',
   city: '',
   region: '',
@@ -70,9 +75,53 @@ export function ReportFilterPanel({
   isGenerating,
   hasData,
 }: ReportFilterPanelProps) {
+  const ACTIVE_ZONE = import.meta.env.VITE_ACTIVE_ZONE || 'zona1'
+  const ZONE_NUMBER = parseInt(ACTIVE_ZONE.replace('zona', ''), 10) || 1
+  
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [zoneDepartments, setZoneDepartments] = useState<ZoneDepartmentEntry[]>([])
+  const [municipalities, setMunicipalities] = useState<ZoneMunicipalityItem[]>([])
+  const [loadingDepts, setLoadingDepts] = useState(false)
 
   const canGenerate = !!filters.startDate && !!filters.endDate && !isGenerating
+
+  // Cargar departamentos y municipios de la zona activa
+  useEffect(() => {
+    const loadDepartments = async () => {
+      setLoadingDepts(true)
+      try {
+        const response = await apiService.getZoneDepartments(ZONE_NUMBER)
+        setZoneDepartments(response.departments)
+      } catch {
+        setZoneDepartments([])
+      } finally {
+        setLoadingDepts(false)
+      }
+    }
+    loadDepartments()
+  }, [])
+
+  // Actualizar municipios cuando cambia el departamento seleccionado
+  useEffect(() => {
+    if (!filters.department) {
+      setMunicipalities([])
+      return
+    }
+    
+    // Buscar el departamento seleccionado en la data ya cargada
+    const selectedDept = zoneDepartments.find(d => d.department._id === filters.department)
+    if (selectedDept) {
+      setMunicipalities(selectedDept.municipalities)
+    } else {
+      setMunicipalities([])
+    }
+  }, [filters.department, zoneDepartments])
+
+  const handleDepartmentChange = (value: string) => {
+    onFilterChange('department', value)
+    // Limpiar ciudad al cambiar departamento
+    onFilterChange('city', '')
+  }
 
   return (
     <>
@@ -196,6 +245,32 @@ export function ReportFilterPanel({
                 ]}
               />
             </div>
+            <div className="rg-panel__field">
+              <Select
+                label="Verificado"
+                value={filters.isVerified}
+                onChange={(e) => onFilterChange('isVerified', e.target.value as ReportFilters['isVerified'])}
+                disabled={isGenerating}
+                options={[
+                  { value: '', label: 'Todos' },
+                  { value: 'true', label: 'Verificado' },
+                  { value: 'false', label: 'No Verificado' },
+                ]}
+              />
+            </div>
+            <div className="rg-panel__field">
+              <Select
+                label="Casa Visitada"
+                value={filters.isLinkedHouse}
+                onChange={(e) => onFilterChange('isLinkedHouse', e.target.value as ReportFilters['isLinkedHouse'])}
+                disabled={isGenerating}
+                options={[
+                  { value: '', label: 'Todos' },
+                  { value: 'true', label: 'Sí' },
+                  { value: 'false', label: 'No' },
+                ]}
+              />
+            </div>
           </div>
 
           {/* Filtros Avanzados */}
@@ -308,21 +383,33 @@ export function ReportFilterPanel({
                 <div className="rg-panel__subsection">
                   <h4 className="rg-panel__subsection-title">📍 Ubicación</h4>
                   <div className="rg-panel__field">
-                    <Input
+                    <Select
                       label="Departamento"
                       value={filters.department}
-                      onChange={(e) => onFilterChange('department', e.target.value)}
-                      placeholder="ej: Atlántico"
-                      disabled={isGenerating}
+                      onChange={(e) => handleDepartmentChange(e.target.value)}
+                      disabled={isGenerating || loadingDepts}
+                      options={[
+                        { value: '', label: 'Todos' },
+                        ...zoneDepartments.map((entry) => ({
+                          value: entry.department._id,
+                          label: entry.department.name,
+                        })),
+                      ]}
                     />
                   </div>
                   <div className="rg-panel__field">
-                    <Input
-                      label="Ciudad"
+                    <Select
+                      label="Municipio"
                       value={filters.city}
                       onChange={(e) => onFilterChange('city', e.target.value)}
-                      placeholder="ej: Barranquilla"
-                      disabled={isGenerating}
+                      disabled={isGenerating || !filters.department}
+                      options={[
+                        { value: '', label: 'Todos' },
+                        ...municipalities.map((muni) => ({
+                          value: muni._id,
+                          label: muni.name,
+                        })),
+                      ]}
                     />
                   </div>
                   <div className="rg-panel__field">

@@ -37,7 +37,9 @@ interface SurveyParticipantData {
   ageRange: '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65+' | ''
   region: string
   department: string
+  departmentId: string
   city: string
+  municipioCode: string
   stratum: '1' | '2' | '3' | '4' | '5' | '6' | ''
   neighborhood: string
   defendorDePatria: boolean
@@ -101,7 +103,24 @@ export default function SurveyParticipant() {
       
       // Usar directamente response.data (debería tener todas las propiedades)
       const respondent = Respondent.fromDTO(response.data)
-      setInitialData(respondent.toFormData() as unknown as SurveyParticipantData)
+      const formData = respondent.toFormData()
+
+      // El backend puede devolver department/municipality como ID string o como objeto poblado
+      const extractId = (val: unknown): string => {
+        if (!val) return ''
+        if (typeof val === 'string') return val
+        if (typeof val === 'object' && val !== null && '_id' in val) return (val as { _id: string })._id
+        return ''
+      }
+
+      setInitialData({
+        ...formData,
+        // Restaurar IDs de MongoDB para department y municipality
+        departmentId: extractId(response.data.department),
+        municipioCode: extractId(response.data.municipality),
+        // Mantener los nombres originales del city como fallback para búsqueda
+        // (en SurveyForm se restaurarán correctamente, estos aquí son de respaldo)
+      } as unknown as SurveyParticipantData)
     } catch (err) {
       notificationService.handleApiError(err, MESSAGES.RESPONDENT_LOAD_ERROR)
     } finally {
@@ -244,7 +263,11 @@ export default function SurveyParticipant() {
       }
 
       // Convertir a DTO para enviar al backend
-      const respondentDTO = respondent.toDTO()
+      const respondentDTO = {
+        ...respondent.toDTO(),
+        department: data.departmentId || undefined,
+        municipality: data.municipioCode || undefined,
+      }
 
       // Si está offline, guardar localmente
       if (!isOnline) {
