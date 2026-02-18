@@ -21,7 +21,7 @@ import {
   formatDateES 
 } from '../utils'
 import { getTodayISO } from '../utils/dateHelpers'
-import type { RespondentData } from '../models/ApiResponses'
+import { RespondentData } from '../models/ApiResponses'
 import 'leaflet/dist/leaflet.css'
 import '../styles/Dashboard.scss'
 
