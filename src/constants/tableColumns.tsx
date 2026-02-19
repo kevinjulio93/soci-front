@@ -6,7 +6,7 @@
 import type { TableColumn } from '../components'
 import type { RespondentData } from '../models/ApiResponses'
 import type { Survey, Socializer } from '../types'
-import { getAvatarColor, getInitials, getFirstName, translateRole, getRejectionReasonLabel } from '../utils'
+import { getAvatarColor, getInitials, translateRole, getRejectionReasonLabel } from '../utils'
 
 export const getSurveysTableColumns = (
   formatDate: (dateString: string) => string,
