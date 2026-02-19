@@ -586,6 +586,7 @@
     -webkit-overflow-scrolling: touch; // Smooth scrolling en iOS
     position: relative;
     display: block; // Asegurar que sea un bloque
+    overscroll-behavior-x: contain; // Prevenir scroll de página en Windows
     
     @media (max-width: 768px) {
       border-radius: 0;
@@ -593,17 +594,27 @@
     
     // Estilos para scrollbar webkit (Chrome, Safari, Edge)
     &::-webkit-scrollbar {
-      height: 0;
-      width: 0;
+      height: 8px;
+      background: $color-border;
     }
     
     &::-webkit-scrollbar-track {
-      background: transparent;
+      background: $color-background;
+      border-radius: 4px;
     }
     
     &::-webkit-scrollbar-thumb {
-      background: transparent;
+      background: $color-secondary;
+      border-radius: 4px;
+      
+      &:hover {
+        background: color.adjust($color-secondary, $lightness: -10%);
+      }
     }
+    
+    // Styles para scrollbar en Firefox
+    scrollbar-width: thin;
+    scrollbar-color: $color-secondary $color-background;
   }
 
   // Element: .survey-table__header
@@ -2897,7 +2908,29 @@
 // Table
 .rg-table-container {
   flex: 1;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: $color-secondary $color-background;
+  
+  &::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: $color-background;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $color-secondary;
+    border-radius: 4px;
+    
+    &:hover {
+      background: color.adjust($color-secondary, $lightness: -10%);
+    }
+  }
 }
 
 .rg-table {
@@ -4184,8 +4217,30 @@ input[type="date"].form-group__input {
 // =============================================
 .rg-table-wrapper {
   flex: 1;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: $color-secondary $color-background;
+  
+  &::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: $color-background;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $color-secondary;
+    border-radius: 4px;
+    
+    &:hover {
+      background: color.adjust($color-secondary, $lightness: -10%);
+    }
+  }
 }
 
 .rg-table-loading {

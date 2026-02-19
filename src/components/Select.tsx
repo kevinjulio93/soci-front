@@ -40,23 +40,30 @@ export const Select: React.FC<SelectProps> = ({
           {required && <span className="form-group__required">*</span>}
         </label>
       )}
-      <div className="form-group__select-wrapper">
-        <select
-          id={selectId}
-          ref={ref}
-          className={`form-group__input ${error ? 'form-group__input--error' : ''}`}
-          {...props}
-        >
-          {placeholder && <option value="">{placeholder}</option>}
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
+      <div className="searchable-select">
+        <div className="searchable-select__native-wrapper">
+          <select
+            id={selectId}
+            ref={ref}
+            className={`searchable-select__trigger ${error ? 'searchable-select__trigger--error' : ''}`}
+            {...props}
+          >
+            {placeholder && <option value="">{placeholder}</option>}
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
         </select>
-        <svg className="form-group__select-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
+          <svg
+            className="searchable-select__chevron searchable-select__chevron--native"
+            width="16" height="16" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
       </div>
       {error && <span className="form-group__error">{error}</span>}
     </div>

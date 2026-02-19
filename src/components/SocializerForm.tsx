@@ -11,9 +11,10 @@ import { useAuth } from '../contexts/AuthContext'
 import type { SocializerFormProps } from './types'
 import { Input } from './Input'
 import { Select } from './Select'
+import { SearchableSelect } from './SearchableSelect'
 import { translateRole } from '../utils'
 import { useSafeRegister } from '../hooks/useSafeRegister'
-import { getHierarchyConfig, getVisibleFieldsForRole, getAutoSelectField } from '../constants/hierarchyConfig'
+import { getHierarchyConfig, getVisibleFieldsForRole, getAutoSelectField, getEditHierarchyField, type HierarchyLevel } from '../constants/hierarchyConfig'
 import '../styles/SurveyForm.scss'
 
 interface CoordinatorData {
@@ -68,6 +69,8 @@ export function SocializerForm({
   const [zoneCoordinators, setZoneCoordinators] = useState<CoordinatorData[]>([])
   const [loadingCoordinators, setLoadingCoordinators] = useState(false)
   const [selectedRole, setSelectedRole] = useState<string>('')
+  const [editHierarchyField, setEditHierarchyField] = useState<HierarchyLevel | null>(null)
+  const [editFormReady, setEditFormReady] = useState(!isEditMode)
 
   const {
     register: _register,
@@ -140,8 +143,8 @@ export function SocializerForm({
   })), [roles])
 
   const visibleHierarchyFields = useMemo(() => (
-    isEditMode ? [] : getVisibleFieldsForRole(userRole, selectedRole)
-  ), [isEditMode, userRole, selectedRole])
+    getVisibleFieldsForRole(userRole, selectedRole)
+  ), [userRole, selectedRole])
 
   const loadRoles = useCallback(async () => {
     try {
@@ -188,10 +191,37 @@ export function SocializerForm({
 
   // Actualizar valores del formulario cuando cambien los datos iniciales
   useEffect(() => {
-    if (initialData) {
+    if (!initialData) return
+
+    if (isEditMode && initialData.roleId) {
+      // Esperar a que los roles estén cargados para resolver el nombre del rol
+      const role = roles.find(r => r._id === initialData.roleId)
+      if (!role) return // Los roles aún no han cargado, el effect re-ejecutará cuando carguen
+
+      const roleValue = role.originalRole || role.role || ''
+      setSelectedRole(roleValue)
+
+      const editField = getEditHierarchyField(roleValue)
+      setEditHierarchyField(editField || null)
+
+      if (editField) {
+        // Cargar opciones del padre PRIMERO, luego inicializar el formulario
+        setEditFormReady(false)
+        loadHierarchyOptions(editField.loadHierarchyRole).then(() => {
+          // Reset DESPUÉS de que las opciones estén cargadas para que el select
+          // ya tenga las opciones cuando se establece el valor
+          reset(initialData)
+          setEditFormReady(true)
+        })
+      } else {
+        reset(initialData)
+        setEditFormReady(true)
+      }
+    } else {
+      // Modo creación: reset inmediato
       reset(initialData)
     }
-  }, [initialData, reset])
+  }, [initialData, reset, isEditMode, roles, loadHierarchyOptions])
 
   // Auto-seleccionar coordinador cuando el usuario es supervisor o fieldcoordinator
   useEffect(() => {
@@ -226,19 +256,14 @@ export function SocializerForm({
     }
   }, [userRole, user?.profile?._id, user?.id, isEditMode, initialData, setValue, coordinators])
 
-  // Update selectedRole when roleId changes
+  // Update selectedRole when roleId changes (solo en modo creación)
   useEffect(() => {
-    if (watchedRoleId) {
+    if (!isEditMode && watchedRoleId) {
       const role = roles.find(r => r._id === watchedRoleId)
       const roleValue = role?.originalRole || role?.role || ''
       setSelectedRole(roleValue)
-      
-      // Si el usuario es supervisor y el rol es socializador, cargar supervisores
-      if (userRole === 'supervisor' && (roleValue === 'socializer' || roleValue === 'socializador')) {
-        loadHierarchyOptions(roleValue)
-      }
     }
-  }, [watchedRoleId, roles, userRole, loadHierarchyOptions])
+  }, [watchedRoleId, roles, isEditMode])
 
   useEffect(() => {
     loadRoles()
@@ -258,12 +283,26 @@ export function SocializerForm({
   }, [roles, userRole, isEditMode, initialData, setValue])
 
 
+  // Cargar opciones de jerarquía cuando cambia el rol seleccionado (solo en modo creación)
   useEffect(() => {
-    if (!selectedRole) return
-    loadHierarchyOptions(selectedRole)
-  }, [selectedRole, loadHierarchyOptions])
+    if (!isEditMode && selectedRole) {
+      loadHierarchyOptions(selectedRole)
+    }
+  }, [selectedRole, loadHierarchyOptions, isEditMode])
 
+  // Registrar validación para campos de jerarquía (SearchableSelect usa setValue, no register en JSX)
+  useEffect(() => {
+    const fields = isEditMode && editHierarchyField
+      ? [editHierarchyField]
+      : visibleHierarchyFields
 
+    fields.forEach((field) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      _register(field.fieldKey as any, {
+        required: `Debe seleccionar un ${field.label.toLowerCase()}`,
+      })
+    })
+  }, [_register, isEditMode, editHierarchyField, visibleHierarchyFields])
 
   // Submit wrapper para transformar coordinatorId según jerarquía
   const handleFormSubmit = (formData: ReturnType<SocializerFormData['toFormData']>) => {
@@ -319,6 +358,22 @@ export function SocializerForm({
     delete payload.assignedZoneCoordinator
     
     onSubmit(payload)
+  }
+
+  // En modo edición, mostrar cargando hasta que todo esté listo
+  if (isEditMode && !editFormReady) {
+    return (
+      <div className="survey-form">
+        <div className="survey-form__container">
+          <div className="survey-form__header">
+            <h2 className="survey-form__title">Editar Usuario</h2>
+          </div>
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+            <p>Cargando datos del formulario...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -451,46 +506,87 @@ export function SocializerForm({
             </>
           )}
 
-          {/* Campos jerárquicos dinámicos según configuración - Solo visible en modo creación */}
-          {!isEditMode && visibleHierarchyFields.map((hierarchyField) => {
-            const isAutoSelected = getAutoSelectField(userRole) === hierarchyField.fieldKey
-            const dataSource = hierarchyField.dataSourceField === 'zoneCoordinators' 
-              ? zoneCoordinators 
-              : hierarchyField.dataSourceField === 'fieldCoordinators' 
-              ? fieldCoordinators 
-              : coordinators
-
-            return (
-              <div key={hierarchyField.fieldKey}>
-                <Select
-                  id={hierarchyField.fieldKey}
-                  label={hierarchyField.label}
-                  placeholder={`Seleccione un ${hierarchyField.label.toLowerCase()}`}
-                  options={dataSource.map((item) => ({
-                    value: item._id,
-                    label: `${getCoordinatorFullName(item)} - ${getCoordinatorEmail(item)}`,
-                  }))}
-                  disabled={isLoading || isAutoSelected}
-                  required
-                  error={errors[hierarchyField.fieldKey as keyof typeof errors]?.message}
+          {/* Campos jerárquicos dinámicos según configuración */}
+          {isEditMode && editHierarchyField ? (
+            // En modo edición: mostrar solo el campo del padre directo
+            <div>
+              <SearchableSelect
+                id={editHierarchyField.fieldKey}
+                label={editHierarchyField.label}
+                placeholder={`Seleccione un ${editHierarchyField.label.toLowerCase()}`}
+                searchPlaceholder="Buscar por nombre o email..."
+                options={
+                  editHierarchyField.dataSourceField === 'zoneCoordinators'
+                    ? zoneCoordinators.map((item) => ({
+                        value: item._id,
+                        label: `${getCoordinatorFullName(item)} - ${getCoordinatorEmail(item)}`,
+                      }))
+                    : editHierarchyField.dataSourceField === 'fieldCoordinators'
+                    ? fieldCoordinators.map((item) => ({
+                        value: item._id,
+                        label: `${getCoordinatorFullName(item)} - ${getCoordinatorEmail(item)}`,
+                      }))
+                    : coordinators.map((item) => ({
+                        value: item._id,
+                        label: `${getCoordinatorFullName(item)} - ${getCoordinatorEmail(item)}`,
+                      }))
+                }
+                disabled={isLoading}
+                required
+                name={editHierarchyField.fieldKey}
+                value={watch(editHierarchyField.fieldKey as 'assignedSupervisor' | 'assignedFieldCoordinator' | 'assignedZoneCoordinator') || ''}
+                onChange={(val) => {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  {...register(hierarchyField.fieldKey as any, {
-                    required: `Debe seleccionar un ${hierarchyField.label.toLowerCase()}`,
-                  })}
-                />
-                {dataSource.length === 0 && !loadingCoordinators && (
-                  <span className="form-group__hint">
-                    No hay {hierarchyField.label.toLowerCase()}s disponibles. Por favor, cree uno primero.
-                  </span>
-                )}
-                {isAutoSelected && (
-                  <span className="form-group__hint">
-                    Este campo se rellena automáticamente con tu {hierarchyField.label.toLowerCase()} actual.
-                  </span>
-                )}
-              </div>
-            )
-          })}
+                  setValue(editHierarchyField.fieldKey as any, val, { shouldValidate: true })
+                }}
+                error={errors[editHierarchyField.fieldKey as keyof typeof errors]?.message}
+              />
+            </div>
+          ) : !isEditMode ? (
+            // En modo creación: mostrar campos según la configuración
+            visibleHierarchyFields.map((hierarchyField) => {
+              const isAutoSelected = getAutoSelectField(userRole) === hierarchyField.fieldKey
+              const dataSource = hierarchyField.dataSourceField === 'zoneCoordinators' 
+                ? zoneCoordinators 
+                : hierarchyField.dataSourceField === 'fieldCoordinators' 
+                ? fieldCoordinators 
+                : coordinators
+
+              return (
+                <div key={hierarchyField.fieldKey}>
+                  <SearchableSelect
+                    id={hierarchyField.fieldKey}
+                    label={hierarchyField.label}
+                    placeholder={`Seleccione un ${hierarchyField.label.toLowerCase()}`}
+                    searchPlaceholder="Buscar por nombre o email..."
+                    options={dataSource.map((item) => ({
+                      value: item._id,
+                      label: `${getCoordinatorFullName(item)} - ${getCoordinatorEmail(item)}`,
+                    }))}
+                    disabled={isLoading || isAutoSelected}
+                    required
+                    name={hierarchyField.fieldKey}
+                    value={watch(hierarchyField.fieldKey as 'assignedSupervisor' | 'assignedFieldCoordinator' | 'assignedZoneCoordinator') || ''}
+                    onChange={(val) => {
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      setValue(hierarchyField.fieldKey as any, val, { shouldValidate: true })
+                    }}
+                    error={errors[hierarchyField.fieldKey as keyof typeof errors]?.message}
+                  />
+                  {dataSource.length === 0 && !loadingCoordinators && (
+                    <span className="form-group__hint">
+                      No hay {hierarchyField.label.toLowerCase()}s disponibles. Por favor, cree uno primero.
+                    </span>
+                  )}
+                  {isAutoSelected && (
+                    <span className="form-group__hint">
+                      Este campo se rellena automáticamente con tu {hierarchyField.label.toLowerCase()} actual.
+                    </span>
+                  )}
+                </div>
+              )
+            })
+          ) : null}
 
           {/* Estado */}
           <Select

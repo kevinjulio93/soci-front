@@ -87,6 +87,13 @@
   padding: $spacing-xl;
   border-bottom: 1px solid #e5e7eb;
 
+  // Element: .modal-header__content
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+  }
+
   // Element: .modal-header__actions
   &__actions {
     display: flex;
@@ -122,6 +129,24 @@
   font-weight: $font-weight-bold;
   color: $color-text;
   margin: 0;
+}
+
+// Block: .modal-badge
+.modal-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  white-space: nowrap;
+
+  // Modifier: .modal-badge--verified
+  &--verified {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
 }
 
 // Block: .modal-close

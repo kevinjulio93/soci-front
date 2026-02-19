@@ -2,7 +2,7 @@
  * UserManagement - Página para gestionar usuarios del sistema (CRUD completo)
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Sidebar, SocializerForm, DataTable, LocationModal, ConfirmModal } from '../components'
 import { apiService } from '../services/api.service'
@@ -67,7 +67,7 @@ type SocializerApi = {
   updatedAt: string
 }
 
-const ITEMS_PER_PAGE = 10
+const PAGE_SIZE_OPTIONS = [20, 50, 100]
 
 const getRoleName = (role: EditUserData['role'] | undefined): string => {
   if (!role) return ''
@@ -79,24 +79,33 @@ const getRoleId = (role: EditUserData['role'] | undefined): string => {
   return typeof role === 'string' ? role : role._id
 }
 
-const getCoordinatorId = (roleName: string, parentProfile?: ParentCoordinatorProfile): string => {
-  if (!parentProfile) return ''
+/**
+ * Mapea el coordinador padre al campo correcto del formulario según el rol
+ * Devuelve un objeto con el campo específico (assignedSupervisor, assignedFieldCoordinator, etc.)
+ */
+const mapParentCoordinatorToFormField = (roleName: string, parentProfile?: ParentCoordinatorProfile): Record<string, string> => {
+  if (!parentProfile?._id) return {}
 
   const normalizedRole = roleName.toLowerCase()
+  const parentId = parentProfile._id
 
   if (normalizedRole === 'socializer' || normalizedRole === 'socializador') {
-    return parentProfile._id || ''
+    return { assignedSupervisor: parentId }
   }
 
   if (normalizedRole === 'supervisor') {
-    return parentProfile._id || ''
+    return { assignedFieldCoordinator: parentId }
   }
 
-  if (normalizedRole === 'fieldcoordinator') {
-    return parentProfile.zoneCoordinator || parentProfile._id || ''
+  if (normalizedRole === 'fieldcoordinator' || normalizedRole === 'coordinador de campo') {
+    return { assignedZoneCoordinator: parentId }
   }
 
-  return ''
+  if (normalizedRole === 'zonecoordinator' || normalizedRole === 'coordinador de zona') {
+    return { assignedAdmin: parentId }
+  }
+
+  return {}
 }
 
 const normalizeRole = (role: unknown): EditUserData['role'] => {
@@ -165,6 +174,10 @@ export function UserManagement() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [itemsPerPage, setItemsPerPage] = useState(PAGE_SIZE_OPTIONS[0])
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   // Determinar si estamos en modo formulario
   const isNewMode = location.pathname === ROUTES.ADMIN_SOCIALIZERS_NEW
@@ -177,11 +190,11 @@ export function UserManagement() {
   )
 
   // Cargar usuarios con jerarquía
-  const loadUsers = useCallback(async (page: number) => {
+  const loadUsers = useCallback(async (page: number, search?: string, perPage?: number) => {
     try {
       setIsLoading(true)
       setError(null)
-      const response = await apiService.getUsersHierarchy(page, ITEMS_PER_PAGE)
+      const response = await apiService.getUsersHierarchy(page, perPage || itemsPerPage, search)
       
       // Transformar SocializerData[] a Socializer[] para que funcione con la tabla
       const transformedData: Socializer[] = response.data.map((item) => mapToTableUser(item))
@@ -196,7 +209,7 @@ export function UserManagement() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [itemsPerPage])
 
   // Cargar usuario para edición
   const loadUserForEdit = useCallback(async (userId: string) => {
@@ -221,22 +234,45 @@ export function UserManagement() {
     }
   }, [])
 
-  // Cargar al montar y cuando cambie la página
+  // Debounce de búsqueda
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+    }, 400)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [searchTerm])
+
+  // Cargar al montar y cuando cambie la búsqueda o itemsPerPage
   useEffect(() => {
     if (!showForm) {
-      loadUsers(currentPage)
+      setCurrentPage(1)
+      loadUsers(1, debouncedSearch)
     }
+  }, [debouncedSearch, itemsPerPage, showForm, loadUsers])
+
+  // Cargar cuando cambie la página
+  useEffect(() => {
+    if (!showForm) {
+      loadUsers(currentPage, debouncedSearch)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, showForm, loadUsers])
 
   // Cargar usuario cuando estamos en modo edición
   useEffect(() => {
-    if (isEditMode && id && id !== editingUser?._id) {
+    if (isEditMode && id) {
+      // Siempre recargar datos frescos al entrar en modo edición
+      setEditingUser(null)
       loadUserForEdit(id)
-    } else if (isNewMode && editingUser) {
+    } else if (!isEditMode) {
+      // Limpiar datos de edición al salir del modo edición
       setEditingUser(null)
       setFormError(null)
     }
-  }, [id, isEditMode, isNewMode, loadUserForEdit, editingUser])
+  }, [id, isEditMode, loadUserForEdit])
 
   // Manejar creación/edición
   const handleSubmit = async (data: SocializerFormData) => {
@@ -368,7 +404,9 @@ export function UserManagement() {
     const parentCoordinatorProfile = userProfile.profile as ParentCoordinatorProfile | undefined
     const roleId = getRoleId(editingUser.role)
     const roleName = getRoleName(editingUser.role)
-    const coordinator = getCoordinatorId(roleName, parentCoordinatorProfile)
+    
+    // Mapear el coordinador padre al campo correcto del formulario según el rol
+    const parentFormField = mapParentCoordinatorToFormField(roleName, parentCoordinatorProfile)
 
     return {
       fullName: userProfile.fullName || '',
@@ -377,9 +415,9 @@ export function UserManagement() {
       email: editingUser.email || '',
       password: '',
       roleId,
-      coordinator,
       status: (userProfile.status as 'enabled' | 'disabled') || (editingUser.status as 'enabled' | 'disabled') || 'enabled',
-    }
+      ...parentFormField, // Incluir los campos del padre mapeados correctamente
+    } as SocializerFormData
   }, [editingUser])
 
   return (
@@ -404,14 +442,76 @@ export function UserManagement() {
           {error && (
             <div className="alert alert--error">
               <p>{error}</p>
-              <button onClick={() => loadUsers(currentPage)} className="btn btn--small">
+              <button onClick={() => loadUsers(currentPage, debouncedSearch)} className="btn btn--small">
                 Reintentar
               </button>
             </div>
           )}
 
           {!showForm && !isReadOnly && (
-            <div className="dashboard-layout__actions">
+            <div className="dashboard-layout__actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '400px' }}>
+                <svg
+                  width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, email o identificación..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.75rem 0.6rem 2.5rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    style={{
+                      position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
+                      color: '#999', fontSize: '1.1rem', lineHeight: 1,
+                    }}
+                    title="Limpiar búsqueda"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <label htmlFor="perPage" style={{ fontSize: '0.8rem', color: '#666', whiteSpace: 'nowrap' }}>Mostrar</label>
+                <select
+                  id="perPage"
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  style={{
+                    padding: '0.5rem 0.5rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '0.85rem',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    background: '#fff',
+                  }}
+                >
+                  {PAGE_SIZE_OPTIONS.map(size => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+              </div>
               <button
                 className="btn btn--primary"
                 onClick={handleNewUser}
@@ -425,15 +525,93 @@ export function UserManagement() {
             </div>
           )}
 
+          {!showForm && isReadOnly && (
+            <div className="dashboard-layout__actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '400px' }}>
+                <svg
+                  width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, email o identificación..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.6rem 0.75rem 0.6rem 2.5rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                />
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    style={{
+                      position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
+                      color: '#999', fontSize: '1.1rem', lineHeight: 1,
+                    }}
+                    title="Limpiar búsqueda"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <label htmlFor="perPageRo" style={{ fontSize: '0.8rem', color: '#666', whiteSpace: 'nowrap' }}>Mostrar</label>
+                <select
+                  id="perPageRo"
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  style={{
+                    padding: '0.5rem 0.5rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '0.85rem',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    background: '#fff',
+                  }}
+                >
+                  {PAGE_SIZE_OPTIONS.map(size => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           {showForm && (
             <div className="dashboard-layout__form">
-              <SocializerForm
-                onSubmit={handleSubmit}
-                isLoading={formLoading}
-                error={formError}
-                initialData={initialFormData}
-                isEditMode={isEditMode}
-              />
+              {isEditMode && !editingUser ? (
+                <div className="loading-state" style={{ padding: '2rem', textAlign: 'center' }}>
+                  <p>{formError || 'Cargando datos del usuario...'}</p>
+                  {formError && (
+                    <button onClick={() => id && loadUserForEdit(id)} className="btn btn--small" style={{ marginTop: '0.5rem' }}>
+                      Reintentar
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <SocializerForm
+                  onSubmit={handleSubmit}
+                  isLoading={formLoading}
+                  error={formError}
+                  initialData={initialFormData}
+                  isEditMode={isEditMode}
+                />
+              )}
               <button
                 className="btn btn--secondary"
                 onClick={handleCancelForm}

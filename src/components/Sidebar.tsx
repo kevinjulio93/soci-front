@@ -6,6 +6,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useLogout } from '../hooks'
 import { ROUTES } from '../constants'
+import { translateRole } from '../utils'
 import '../styles/Sidebar.scss'
 
 interface SidebarProps {
@@ -47,7 +48,7 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
           </div>
           <div className="sidebar__user-info">
             <p className="sidebar__user-email">{user?.email}</p>
-            <p className="sidebar__user-role">{user?.role?.role}</p>
+            <p className="sidebar__user-role">{translateRole(user?.role?.role || '')}</p>
           </div>
         </div>
 

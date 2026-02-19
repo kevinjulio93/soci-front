@@ -128,3 +128,53 @@ export function getVisibleFieldsForRole(userRole: string, selectedRole: string):
   const config = getHierarchyConfig(userRole)
   return config.visibleFields.filter(field => field.role === selectedRole)
 }
+
+/**
+ * Obtiene el campo jerárquico para editar (padre directo) de un rol específico
+ * En modo edición, solo mostramos el padre del rol siendo editado
+ */
+export function getEditHierarchyField(roleBeingEdited: string): HierarchyLevel | undefined {
+  const normalizedRole = roleBeingEdited.toLowerCase()
+  
+  if (normalizedRole === 'socializer' || normalizedRole === 'socializador') {
+    return {
+      role: normalizedRole,
+      fieldKey: 'assignedSupervisor',
+      label: 'Supervisor',
+      dataSourceField: 'supervisors',
+      loadHierarchyRole: 'socializer', // Pasar el mismo rol para cargar sus padres
+    }
+  }
+  
+  if (normalizedRole === 'supervisor') {
+    return {
+      role: normalizedRole,
+      fieldKey: 'assignedFieldCoordinator',
+      label: 'Coordinador de Campo',
+      dataSourceField: 'fieldCoordinators',
+      loadHierarchyRole: 'supervisor',
+    }
+  }
+  
+  if (normalizedRole === 'fieldcoordinator' || normalizedRole === 'coordinador de campo') {
+    return {
+      role: normalizedRole,
+      fieldKey: 'assignedZoneCoordinator',
+      label: 'Coordinador de Zona',
+      dataSourceField: 'zoneCoordinators',
+      loadHierarchyRole: 'fieldcoordinator',
+    }
+  }
+  
+  if (normalizedRole === 'zonecoordinator' || normalizedRole === 'coordinador de zona') {
+    return {
+      role: normalizedRole,
+      fieldKey: 'assignedAdmin',
+      label: 'Administrador',
+      dataSourceField: 'zoneCoordinators',
+      loadHierarchyRole: 'zonecoordinator',
+    }
+  }
+  
+  return undefined
+}

@@ -466,8 +466,12 @@ class ApiService {
     return this.get<any>(API_ENDPOINTS.SOCIALIZERS_WITH_LOCATIONS)
   }
 
-  async getUsersHierarchy(page: number = 1, perPage: number = 10): Promise<GetSocializersResponse> {
-    const response = await this.get<any>(`${API_ENDPOINTS.USERS_HIERARCHY}?page=${page}&perPage=${perPage}`)
+  async getUsersHierarchy(page: number = 1, perPage: number = 10, search?: string): Promise<GetSocializersResponse> {
+    let url = `${API_ENDPOINTS.USERS_HIERARCHY}?page=${page}&perPage=${perPage}`
+    if (search && search.trim()) {
+      url += `&search=${encodeURIComponent(search.trim())}`
+    }
+    const response = await this.get<any>(url)
     
     // La respuesta tiene estructura: { data: [], pagination: { page, perPage, total, totalPages } }
     const socializers = response.data.map((item: any) => new SocializerData(item))

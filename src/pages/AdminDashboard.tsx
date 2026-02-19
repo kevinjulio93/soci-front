@@ -271,7 +271,7 @@ export default function AdminDashboard() {
                 required
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                placeholder="mm/dd/yyyy"
+                placeholder="dd/mm/yyyy"
               />
               
               <DateInput
@@ -279,7 +279,7 @@ export default function AdminDashboard() {
                 required
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                placeholder="mm/dd/yyyy"
+                placeholder="dd/mm/yyyy"
               />
 
               {/* Coordinador de Zona - solo admin */}
