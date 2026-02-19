@@ -317,12 +317,18 @@ export function UserManagement() {
       // Navegar de vuelta a la lista
       navigate(ROUTES.ADMIN_SOCIALIZERS)
     } catch (err) {
-      notificationService.handleApiError(err, MESSAGES.USER_SAVE_ERROR)
-      const error = err as { response?: { data?: { message?: string } } }
-      setFormError(
-        error?.response?.data?.message || 
+      // Extraer mensaje del error de API (formato: { message, code })
+      const apiErr = err as { message?: string; code?: string; response?: { data?: { message?: string } } }
+      const errorMessage = 
+        apiErr?.message ||
+        apiErr?.response?.data?.message || 
         MESSAGES.USER_SAVE_ERROR
-      )
+      
+      // No duplicar notificación si ya tenemos mensaje específico del backend
+      if (!apiErr?.message) {
+        notificationService.handleApiError(err, MESSAGES.USER_SAVE_ERROR)
+      }
+      setFormError(errorMessage)
     } finally {
       setFormLoading(false)
     }

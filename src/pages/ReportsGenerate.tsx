@@ -27,7 +27,6 @@ interface ReportItem {
   phone?: string
   address?: string
   ageRange?: string
-  region: string
   department: string
   city?: string
   gender?: string
@@ -99,15 +98,12 @@ const TABLE_COLUMNS: ReportTableColumn<ReportItem>[] = [
   },
   {
     key: 'location',
-    label: 'Ubicación',
+    label: 'Municipio',
     minWidth: '150px',
     render: (item) => (
-      <div>
-        <div className="rg-table__td--small" style={{ color: '#555' }}>
-          {item.city || item.department || 'N/A'}
-        </div>
-        <div style={{ fontSize: '0.75rem', color: '#999' }}>{item.region}</div>
-      </div>
+      <span className="rg-table__td--small" style={{ color: '#555' }}>
+        {item.city || item.department || 'N/A'}
+      </span>
     ),
   },
   {
@@ -140,7 +136,7 @@ const TABLE_COLUMNS: ReportTableColumn<ReportItem>[] = [
   },
   {
     key: 'visited',
-    label: 'Casa Visitada',
+    label: 'Persona adicional',
     minWidth: '120px',
     align: 'center',
     render: (item) => (
@@ -240,7 +236,6 @@ export default function ReportsGenerate() {
           : undefined,
         department: filters.department || undefined,
         city: filters.city || undefined,
-        region: filters.region || undefined,
         neighborhood: filters.neighborhood || undefined,
         gender: filters.gender || undefined,
         ageRange: filters.ageRange || undefined,
@@ -295,7 +290,6 @@ export default function ReportsGenerate() {
         isLinkedHouse: filters.isLinkedHouse ? filters.isLinkedHouse === 'true' : undefined,
         department: filters.department || undefined,
         city: filters.city || undefined,
-        region: filters.region || undefined,
         neighborhood: filters.neighborhood || undefined,
         gender: filters.gender || undefined,
         ageRange: filters.ageRange || undefined,

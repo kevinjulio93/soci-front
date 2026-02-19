@@ -21,7 +21,6 @@ export interface ReportFilters {
   isLinkedHouse: '' | 'true' | 'false'
   department: string
   city: string
-  region: string
   neighborhood: string
   gender: string
   ageRange: string
@@ -42,7 +41,6 @@ export const INITIAL_FILTERS: ReportFilters = {
   isLinkedHouse: '',
   department: '',
   city: '',
-  region: '',
   neighborhood: '',
   gender: '',
   ageRange: '',
@@ -260,7 +258,7 @@ export function ReportFilterPanel({
             </div>
             <div className="rg-panel__field">
               <Select
-                label="Casa Visitada"
+                label="Persona adicional en vivienda"
                 value={filters.isLinkedHouse}
                 onChange={(e) => onFilterChange('isLinkedHouse', e.target.value as ReportFilters['isLinkedHouse'])}
                 disabled={isGenerating}

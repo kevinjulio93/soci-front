@@ -310,7 +310,7 @@ export class Respondent {
     address: string
     gender: Gender
     ageRange: AgeRange
-    region: string
+    region?: string
     department: string
     city: string
     stratum: Stratum
@@ -335,7 +335,7 @@ export class Respondent {
       data.address,
       data.gender,
       data.ageRange,
-      data.region,
+      data.region || '',
       data.department,
       data.city,
       data.stratum,

@@ -366,6 +366,31 @@
   animation: slideDown 0.3s ease-out;
 }
 
+// Error junto al botón de submit
+.survey-form__submit-error {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background-color: $color-error-bg;
+  border: 1px solid $color-error-border;
+  border-radius: $border-radius-lg;
+  padding: $spacing-sm $spacing-md;
+  color: $color-error-text;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  animation: slideDown 0.3s ease-out;
+  margin-bottom: $spacing-sm;
+
+  svg {
+    flex-shrink: 0;
+    color: $color-danger;
+  }
+
+  span {
+    line-height: $line-height-normal;
+  }
+}
+
 // =============================================
 // ANIMATIONS
 // =============================================

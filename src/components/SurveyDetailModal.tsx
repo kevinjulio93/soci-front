@@ -165,12 +165,19 @@ export function SurveyDetailModal({
         <div className="modal-header">
           <div className="modal-header__content">
             <h2 className="modal-title">Detalle de Encuesta</h2>
-            {(survey as any).isVerified && (
+            {survey.isVerified ? (
               <span className="modal-badge modal-badge--verified">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '4px' }}>
                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
                 </svg>
                 Verificada
+              </span>
+            ) : (
+              <span className="modal-badge modal-badge--not-verified">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '4px' }}>
+                  <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z" />
+                </svg>
+                No Verificada
               </span>
             )}
           </div>
@@ -315,15 +322,11 @@ export function SurveyDetailModal({
             <h3 className="detail-section__title">Información de Ubicación</h3>
             <div className="detail-grid">
               <div className="detail-item">
-                <span className="detail-item__label">Región:</span>
-                <span className="detail-item__value">{survey.region || 'N/A'}</span>
-              </div>
-              <div className="detail-item">
                 <span className="detail-item__label">Departamento:</span>
                 <span className="detail-item__value">{getStringValue(survey.department) || 'N/A'}</span>
               </div>
               <div className="detail-item">
-                <span className="detail-item__label">Ciudad:</span>
+                <span className="detail-item__label">Municipio:</span>
                 <span className="detail-item__value">{getStringValue(survey.city) || 'N/A'}</span>
               </div>
               <div className="detail-item">

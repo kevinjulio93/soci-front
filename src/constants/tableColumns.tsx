@@ -17,38 +17,28 @@ export const getSurveysTableColumns = (
     key: 'name',
     header: 'ENCUESTADO',
     render: (survey) => {
-      // Determinar si es una encuesta no respondida
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
       const reason = getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason)
-      const displayName = isUnsuccessful ? '' : getFirstName(survey.fullName)
-      const tooltipText = isUnsuccessful ? reason : survey.fullName
+      
+      if (isUnsuccessful) {
+        return (
+          <span 
+            className="respondent__reason" 
+            style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 600 }}
+            title={reason}
+          >
+            {reason}
+          </span>
+        )
+      }
       
       return (
-        <div className="respondent" title={tooltipText}>
-          <div
-            className="respondent__avatar"
-            style={{ backgroundColor: getAvatarColor(survey.fullName) }}
-            title={tooltipText}
-          >
-            {getInitials(survey.fullName)}
-          </div>
-          <div className="respondent__details" title={tooltipText}>
-            {isUnsuccessful ? (
-              <span 
-                className="respondent__reason" 
-                style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 600, display: 'block' }}
-                title={reason}
-              >
-                {reason}
-              </span>
-            ) : (
-              <span className="respondent__name" title={tooltipText}>{displayName}</span>
-            )}
-          </div>
-        </div>
+        <span className="respondent__name" title={survey.fullName}>
+          {survey.fullName}
+        </span>
       )
     },
-    className: 'survey-table__td--respondent'
+    className: 'survey-table__td--user'
   },
   {
     key: 'author',
@@ -188,38 +178,28 @@ export const getSocializerSurveysTableColumns = (
     key: 'name',
     header: 'ENCUESTADO',
     render: (survey) => {
-      // Determinar si es una encuesta no respondida
       const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
       const reason = getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason)
-      const displayName = isUnsuccessful ? '' : getFirstName(survey.fullName)
-      const tooltipText = isUnsuccessful ? reason : survey.fullName
+      
+      if (isUnsuccessful) {
+        return (
+          <span 
+            className="respondent__reason" 
+            style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 600 }}
+            title={reason}
+          >
+            {reason}
+          </span>
+        )
+      }
       
       return (
-        <div className="respondent" title={tooltipText}>
-          <div
-            className="respondent__avatar"
-            style={{ backgroundColor: getAvatarColor(survey.fullName) }}
-            title={tooltipText}
-          >
-            {getInitials(survey.fullName)}
-          </div>
-          <div className="respondent__details" title={tooltipText}>
-            {isUnsuccessful ? (
-              <span 
-                className="respondent__reason" 
-                style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 600, display: 'block' }}
-                title={reason}
-              >
-                {reason}
-              </span>
-            ) : (
-              <span className="respondent__name" title={tooltipText}>{displayName}</span>
-            )}
-          </div>
-        </div>
+        <span className="respondent__name" title={survey.fullName}>
+          {survey.fullName}
+        </span>
       )
     },
-    className: 'survey-table__td--respondent'
+    className: 'survey-table__td--user'
   },
   {
     key: 'author',
@@ -378,11 +358,11 @@ export const getSocializersTableColumns = (
             {getInitials(socializer.fullName)}
           </div>
           <div className="respondent__details">
-            <span className="respondent__name">{getFirstName(socializer.fullName)}</span>
+            <span className="respondent__name" title={socializer.fullName}>{socializer.fullName}</span>
           </div>
         </div>
       ),
-      className: 'survey-table__td--respondent'
+      className: 'survey-table__td--user'
     },
     {
       key: 'identification',
@@ -549,19 +529,11 @@ export const getRespondentsTableColumns = (
     key: 'name',
     header: 'ENCUESTADO',
     render: (survey) => (
-      <div className="respondent">
-        <div
-          className="respondent__avatar"
-          style={{ backgroundColor: getAvatarColor(survey.title) }}
-        >
-          {getInitials(survey.title)}
-        </div>
-        <div className="respondent__details">
-          <span className="respondent__name">{ survey.title }</span>
-        </div>
-      </div>
+      <span className="respondent__name" title={survey.title}>
+        {survey.title}
+      </span>
     ),
-    className: 'survey-table__td--respondent'
+    className: 'survey-table__td--user'
   },
   {
     key: 'idType',

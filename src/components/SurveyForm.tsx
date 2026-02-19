@@ -466,8 +466,7 @@ export function SurveyForm({
                 {...register('ageRange')}
               />
 
-              {/* Region (hidden), departmentId (hidden), municipioCode (hidden) */}
-              <input type="hidden" {...register('region')} />
+              {/* departmentId (hidden), municipioCode (hidden) */}
               <input type="hidden" {...register('departmentId')} />
               <input type="hidden" {...register('municipioCode')} />
               
@@ -527,7 +526,7 @@ export function SurveyForm({
             </div>
           )}
 
-          {/* Defensor de la Patria y Casa Vinculada - Checkboxes lado a lado - Solo mostrar si está dispuesto */}
+          {/* Defensor de la Patria y Persona adicional en vivienda - Checkboxes lado a lado - Solo mostrar si está dispuesto */}
           {willingToRespond && (
             <div className="survey-form__row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
               <div className="form-group">
@@ -555,7 +554,7 @@ export function SurveyForm({
                     {...register('isLinkedHouse')}
                   />
                   <label htmlFor="isLinkedHouse" className="form-group__checkbox-label">
-                    Casa Vinculada
+                    Persona adicional en vivienda
                   </label>
                 </div>
               </div>

@@ -385,12 +385,6 @@ export function SocializerForm({
           </h2>
         </div>
 
-        {error && (
-          <div className="survey-form__error">
-            <p>{error}</p>
-          </div>
-        )}
-
         <form className="survey-form__form" onSubmit={handleSubmit(handleFormSubmit)}>
           {/* Nombre completo */}
           <Input
@@ -599,6 +593,18 @@ export function SocializerForm({
             disabled={isLoading}
             {...register('status')}
           />
+
+          {/* Error del servidor */}
+          {error && (
+            <div className="survey-form__submit-error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
 
           {/* Botones */}
           <div className="form-group form-group--actions">

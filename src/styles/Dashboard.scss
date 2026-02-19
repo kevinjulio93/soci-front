@@ -762,6 +762,23 @@
       }
     }
 
+    // Modifier: .survey-table__td--user (nombre completo más ancho)
+    // Modifier: .survey-table__td--user (nombre completo más ancho)
+    &--user {
+      padding: $spacing-md $spacing-lg;
+      min-width: 300px;
+      width: 420px;
+      max-width: 500px;
+      white-space: normal;
+
+      @media (max-width: 768px) {
+        min-width: 200px;
+        width: 260px;
+        max-width: 300px;
+        padding: $spacing-xs $spacing-sm;
+      }
+    }
+
     // Modifier: .survey-table__td--date
     &--date {
       color: $color-light-text;
@@ -1021,9 +1038,9 @@
   &__name {
     font-weight: $font-weight-semibold;
     color: $color-dark-text;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
   }
 
   // Element: .respondent__reason

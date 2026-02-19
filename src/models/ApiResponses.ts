@@ -94,6 +94,7 @@ export class RespondentData {
   public municipality?: string
   public recordingAuthorization?: boolean
   public isLinkedHouse?: boolean
+  public isVerified?: boolean
   public facebookUsername?: string
 
   constructor(data: any) {
@@ -120,7 +121,7 @@ export class RespondentData {
     this.ageRange = data.ageRange
     this.region = data.region
     this.department = extractString(data.department)
-    this.city = extractString(data.city)
+    this.city = extractString(data.municipality) || extractString(data.city)
     this.stratum = data.stratum
     this.neighborhood = data.neighborhood
     this.latitude = data.latitude
@@ -140,6 +141,7 @@ export class RespondentData {
     this.municipality = extractString(data.municipality)
     this.recordingAuthorization = data.recordingAuthorization
     this.isLinkedHouse = data.isLinkedHouse
+    this.isVerified = data.isVerified
     this.facebookUsername = data.facebookUsername
   }
 }

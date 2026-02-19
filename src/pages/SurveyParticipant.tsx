@@ -35,7 +35,6 @@ interface SurveyParticipantData {
   address: string
   gender: 'Masculino' | 'Femenino' | 'Otro' | 'Prefiero no decir' | ''
   ageRange: '18-24' | '25-34' | '35-44' | '45-54' | '55-64' | '65+' | ''
-  region: string
   department: string
   departmentId: string
   city: string
@@ -248,7 +247,6 @@ export default function SurveyParticipant() {
           address: '',
           gender: '' as const,
           ageRange: '' as const,
-          region: 'Caribe',
           department: 'Atlántico',
           city: '',
           stratum: '' as const,

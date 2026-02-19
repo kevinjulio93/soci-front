@@ -93,7 +93,6 @@ type Dashboard002Params = {
   isLinkedHouse?: boolean
   department?: string
   city?: string
-  region?: string
   neighborhood?: string
   gender?: string
   ageRange?: string
@@ -731,7 +730,6 @@ class ApiService {
     // Parámetros de ubicación
     if (params.department) queryParams.append('department', params.department)
     if (params.city) queryParams.append('city', params.city)
-    if (params.region) queryParams.append('region', params.region)
     if (params.neighborhood) queryParams.append('neighborhood', params.neighborhood)
     
     // Parámetros demográficos
@@ -802,7 +800,6 @@ class ApiService {
     if (params.isLinkedHouse !== undefined) queryParams.append('isLinkedHouse', params.isLinkedHouse.toString())
     if (params.department) queryParams.append('department', params.department)
     if (params.city) queryParams.append('city', params.city)
-    if (params.region) queryParams.append('region', params.region)
     if (params.neighborhood) queryParams.append('neighborhood', params.neighborhood)
     if (params.gender) queryParams.append('gender', params.gender)
     if (params.ageRange) queryParams.append('ageRange', params.ageRange)
