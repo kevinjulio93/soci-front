@@ -32,7 +32,8 @@ export function SurveyForm({
   onWillingToRespondChange,
 }: SurveyFormProps) {
   const ACTIVE_ZONE = import.meta.env.VITE_ACTIVE_ZONE || 'zona1'
-  const ZONE_NUMBER = parseInt(ACTIVE_ZONE.replace('zona', ''), 10) || 1
+  const ZONE_ALIASES: Record<string, number> = { zonaf: 6 }
+  const ZONE_NUMBER = ZONE_ALIASES[ACTIVE_ZONE] ?? (parseInt(ACTIVE_ZONE.replace('zona', ''), 10) || 1)
   const [zoneDepartments, setZoneDepartments] = useState<ZoneDepartmentEntry[]>([])
   const [cities, setCities] = useState<ZoneMunicipalityItem[]>([])
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null)
@@ -113,8 +114,8 @@ export function SurveyForm({
   // Restaurar selección de departamento en modo edición
   useEffect(() => {
     if (!initialData?.departmentId || zoneDepartments.length === 0) return
-    const entry = zoneDepartments.find(e => e.department._id === initialData.departmentId)
-    if (!entry) return
+    const entry = zoneDepartments.find(e => e?.department?._id === initialData.departmentId)
+    if (!entry?.department) return
     // setTimeout asegura que corre después del reset() del efecto de initialData
     setTimeout(() => {
       setSelectedDepartmentId(entry.department._id)
@@ -145,7 +146,7 @@ export function SurveyForm({
   // Actualizar ciudades cuando cambia el departamento seleccionado
   useEffect(() => {
     if (selectedDepartmentId) {
-      const entry = zoneDepartments.find(e => e.department._id === selectedDepartmentId)
+      const entry = zoneDepartments.find(e => e?.department?._id === selectedDepartmentId)
       setCities(entry?.municipalities || [])
     } else {
       setCities([])
@@ -154,17 +155,38 @@ export function SurveyForm({
 
   const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
-    const entry = zoneDepartments.find(e => e.department.name === value)
-    setSelectedDepartmentId(entry ? entry.department._id : null)
-    setValue('departmentId', entry ? entry.department._id : '')
+    if (!value) {
+      setSelectedDepartmentId(null)
+      setValue('departmentId', '')
+      setValue('city', '')
+      setValue('municipioCode', '')
+      return
+    }
+    const entry = zoneDepartments.find(e => e.department?.name === value)
+    if (!entry?.department) {
+      console.warn('Department not found:', value)
+      setSelectedDepartmentId(null)
+      setValue('departmentId', '')
+      setValue('city', '')
+      setValue('municipioCode', '')
+      return
+    }
+    setSelectedDepartmentId(entry.department._id)
+    setValue('departmentId', entry.department._id)
     setValue('city', '')
     setValue('municipioCode', '')
   }
 
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value
-    const muni = cities.find(c => c.name === value)
-    setValue('municipioCode', muni ? muni._id : '')
+    if (!value) {
+      setValue('municipioCode', '')
+      return
+    }
+    const muni = cities.find(c => c?.name === value)
+    if (muni?._id) {
+      setValue('municipioCode', muni._id)
+    }
   }
 
   return (
@@ -476,11 +498,13 @@ export function SurveyForm({
                     id="department"
                     label="Departamento"
                     placeholder="Seleccione departamento"
-                    options={zoneDepartments.map((entry) => ({
-                      value: entry.department.name,
-                      label: entry.department.name,
-                    }))}
-                    disabled={isLoading || loadingDepartments}
+                    options={zoneDepartments
+                      .filter((entry) => entry?.department?._id)
+                      .map((entry) => ({
+                        value: entry.department.name,
+                        label: entry.department.name,
+                      }))}
+                    disabled={isLoading || loadingDepartments || zoneDepartments.length === 0}
                     required={willingToRespond}
                     error={errors.department?.message}
                     {...register('department', {
@@ -495,11 +519,13 @@ export function SurveyForm({
                     id="city"
                     label="Municipio"
                     placeholder="Seleccione municipio"
-                    options={cities.map((city) => ({
-                      value: city.name,
-                      label: city.name,
-                    }))}
-                    disabled={isLoading || !selectedDepartmentId}
+                    options={cities
+                      .filter((city) => city?._id)
+                      .map((city) => ({
+                        value: city.name,
+                        label: city.name,
+                      }))}
+                    disabled={isLoading || !selectedDepartmentId || cities.length === 0}
                     required={willingToRespond}
                     error={errors.city?.message}
                     {...register('city', {

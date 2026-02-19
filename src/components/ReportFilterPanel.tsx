@@ -74,7 +74,8 @@ export function ReportFilterPanel({
   hasData,
 }: ReportFilterPanelProps) {
   const ACTIVE_ZONE = import.meta.env.VITE_ACTIVE_ZONE || 'zona1'
-  const ZONE_NUMBER = parseInt(ACTIVE_ZONE.replace('zona', ''), 10) || 1
+  const ZONE_ALIASES: Record<string, number> = { zonaf: 6 }
+  const ZONE_NUMBER = ZONE_ALIASES[ACTIVE_ZONE] ?? (parseInt(ACTIVE_ZONE.replace('zona', ''), 10) || 1)
   
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [zoneDepartments, setZoneDepartments] = useState<ZoneDepartmentEntry[]>([])
@@ -107,8 +108,8 @@ export function ReportFilterPanel({
     }
     
     // Buscar el departamento seleccionado en la data ya cargada
-    const selectedDept = zoneDepartments.find(d => d.department._id === filters.department)
-    if (selectedDept) {
+    const selectedDept = zoneDepartments.find(d => d?.department?._id === filters.department)
+    if (selectedDept?.municipalities) {
       setMunicipalities(selectedDept.municipalities)
     } else {
       setMunicipalities([])
@@ -385,13 +386,15 @@ export function ReportFilterPanel({
                       label="Departamento"
                       value={filters.department}
                       onChange={(e) => handleDepartmentChange(e.target.value)}
-                      disabled={isGenerating || loadingDepts}
+                      disabled={isGenerating || loadingDepts || zoneDepartments.length === 0}
                       options={[
                         { value: '', label: 'Todos' },
-                        ...zoneDepartments.map((entry) => ({
-                          value: entry.department._id,
-                          label: entry.department.name,
-                        })),
+                        ...zoneDepartments
+                          .filter((entry) => entry?.department?._id)
+                          .map((entry) => ({
+                            value: entry.department._id,
+                            label: entry.department.name,
+                          })),
                       ]}
                     />
                   </div>
@@ -400,13 +403,15 @@ export function ReportFilterPanel({
                       label="Municipio"
                       value={filters.city}
                       onChange={(e) => onFilterChange('city', e.target.value)}
-                      disabled={isGenerating || !filters.department}
+                      disabled={isGenerating || !filters.department || municipalities.length === 0}
                       options={[
                         { value: '', label: 'Todos' },
-                        ...municipalities.map((muni) => ({
-                          value: muni._id,
-                          label: muni.name,
-                        })),
+                        ...municipalities
+                          .filter((muni) => muni?._id)
+                          .map((muni) => ({
+                            value: muni._id,
+                            label: muni.name,
+                          })),
                       ]}
                     />
                   </div>
