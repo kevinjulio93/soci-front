@@ -60,8 +60,8 @@ export const validateMetricsPermissions = (userRole: string): { canViewUnsuccess
   const roleLower = userRole.toLowerCase()
   
   return {
-    // Solo supervisor NO puede ver no exitosas
-    canViewUnsuccessful: roleLower !== 'supervisor',
+    // Supervisor y socializer NO pueden ver no exitosas
+    canViewUnsuccessful: roleLower !== 'supervisor' && roleLower !== 'socializer',
     // Todos pueden ver desglose diario excepto socializer (ve solo su día)
     canViewDailyBreakdown: roleLower !== 'socializer',
   }
@@ -132,7 +132,7 @@ const calculateRejectionStats = (respondents: RespondentData[]): RejectionStat[]
 
 export const MetricsCard: React.FC<MetricsCardProps> = ({
   viewType: _viewType,
-  showDailyView = false,
+  // showDailyView = false,
   onMetricsLoaded,
   buttonLabel = 'Generar',
   autoLoad = false,
@@ -405,7 +405,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       )}
 
       {/* Vista diaria si es aplicable */}
-      {showDailyView && metrics.dailyStats && metrics.dailyStats.length > 0 && (
+      {/* {showDailyView && metrics.dailyStats && metrics.dailyStats.length > 0 && (
         <div className="daily-metrics">
           <h3 className="daily-metrics__title">Desglose por Día</h3>
           <div className="daily-metrics__grid">
@@ -436,7 +436,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
             ))}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   )
 }

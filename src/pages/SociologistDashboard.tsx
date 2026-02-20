@@ -123,6 +123,7 @@ export default function SociologistDashboard() {
           <MetricsCard 
             viewType="socializer" 
             showDailyView={true}
+            autoLoad={true}
           />
 
           {/* Tabla de encuestas (oculta por ahora, disponible para futura expansión) */}
