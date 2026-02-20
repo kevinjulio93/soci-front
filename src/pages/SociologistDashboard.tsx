@@ -6,13 +6,12 @@
 
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { DashboardHeader, DataTable, PageHeader } from '../components'
+import { DashboardHeader, PageHeader, MetricsCard } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { useSyncStatus, useGeolocationTracking, useLogout } from '../hooks'
-import { ROUTES, getSocializerSurveysTableColumns, MESSAGES } from '../constants'
-import type { RespondentData } from '../models/ApiResponses'
+import { ROUTES, MESSAGES } from '../constants'
 import '../styles/Dashboard.scss'
 
 export default function SociologistDashboard() {
@@ -26,32 +25,18 @@ export default function SociologistDashboard() {
     intervalMs: 30000, // 30 segundos para pruebas
   })
   
-  const [surveys, setSurveys] = useState<RespondentData[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
 
   // Hook centralizado para logout
   const handleLogout = useLogout()
 
-  const loadSurveys = async (page: number) => {
+  const loadData = async () => {
     try {
-      setIsLoading(true)
-      const response = await apiService.getRespondents(page, 10)
-      setSurveys(response.data || [])
-      setTotalPages(response.totalPages || 1)
+      const response = await apiService.getRespondents(1, 10)
       setTotalRecords(response.totalItems || 0)
-      setCurrentPage(page)
     } catch (error) {
       notificationService.handleApiError(error, MESSAGES.LOAD_ERROR)
-    } finally {
-      setIsLoading(false)
     }
-  }
-
-  const loadData = async () => {
-    await loadSurveys(1)
   }
 
   useEffect(() => {
@@ -67,30 +52,6 @@ export default function SociologistDashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSyncing, pendingCount, isOnline])
-
-  const handlePageChange = async (page: number) => {
-    await loadSurveys(page)
-  }
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-CO', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-
-  const handleViewDetails = (id: string) => {
-    // Navegar al formulario en modo edición
-    navigate(ROUTES.SURVEY_PARTICIPANT(id), { 
-      state: { 
-        startRecording: false,
-        editMode: true,
-        respondentId: id
-      } 
-    })
-  }
 
   const handleManualSync = async () => {
     await manualSync()
@@ -158,6 +119,14 @@ export default function SociologistDashboard() {
         </PageHeader>
 
         <section className="dashboard__content">
+          {/* Métricas Diarias del Socializador */}
+          <MetricsCard 
+            viewType="socializer" 
+            showDailyView={true}
+          />
+
+          {/* Tabla de encuestas (oculta por ahora, disponible para futura expansión) */}
+          {/* 
           <DataTable
             columns={getSocializerSurveysTableColumns(formatDate, handleViewDetails)}
             data={surveys}
@@ -176,6 +145,7 @@ export default function SociologistDashboard() {
             emptyStateDescription="Aún no has registrado encuestas. Comienza creando una nueva encuesta."
             getRowKey={(survey) => survey._id}
           />
+          */}
         </section>
       </main>
     </div>

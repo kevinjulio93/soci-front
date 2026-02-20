@@ -23,6 +23,8 @@ interface DataTableProps<T> {
   totalItems: number
   itemsPerPage?: number
   onPageChange: (page: number) => void
+  onItemsPerPageChange?: (perPage: number) => void
+  pageSizeOptions?: number[]
   isLoading?: boolean
   emptyStateIcon?: React.ReactNode
   emptyStateTitle?: string
@@ -45,6 +47,8 @@ export function DataTable<T = Record<string, unknown>>({
   totalItems,
   itemsPerPage = 10,
   onPageChange,
+  onItemsPerPageChange,
+  pageSizeOptions,
   isLoading = false,
   emptyStateIcon,
   emptyStateTitle = 'No hay registros',
@@ -193,6 +197,8 @@ export function DataTable<T = Record<string, unknown>>({
             totalItems={totalItems}
             itemsPerPage={itemsPerPage}
             onPageChange={onPageChange}
+            onItemsPerPageChange={onItemsPerPageChange}
+            pageSizeOptions={pageSizeOptions}
           />
         </div>
       )}

@@ -128,6 +128,15 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           </svg>
         </button>
 
+        {/* Backdrop for mobile */}
+        {isOpen && (
+          <div 
+            className="searchable-select__backdrop"
+            onClick={handleToggle}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Dropdown */}
         {isOpen && (
           <div className="searchable-select__dropdown">

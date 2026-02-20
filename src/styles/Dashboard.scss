@@ -1307,11 +1307,75 @@
   border-top: 1px solid $color-border;
   width: 100%;
 
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: $spacing-lg;
+    align-items: stretch;
+  }
+
   // Element: .pagination__info
   &__info {
     color: $color-light-text;
     font-size: $font-size-sm;
     font-weight: $font-weight-medium;
+
+    @media (max-width: 768px) {
+      display: none; // Hide on mobile to save space
+    }
+  }
+
+  // Element: .pagination__wrapper - Contains per-page selector and controls
+  &__wrapper {
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+
+    @media (max-width: 768px) {
+      flex-direction: column-reverse;
+      gap: $spacing-lg;
+      width: 100%;
+    }
+  }
+
+  // Element: .pagination__per-page - Per page selector container
+  &__per-page {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: center;
+      padding: $spacing-sm 0;
+      border-top: 1px solid $color-border;
+    }
+  }
+
+  // Element: .pagination__per-page-label
+  &__per-page-label {
+    font-size: 0.8rem;
+    color: #666;
+    white-space: nowrap;
+  }
+
+  // Element: .pagination__per-page-select
+  &__per-page-select {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 0.2s;
+
+    &:hover {
+      border-color: #9ca3af;
+    }
+
+    &:focus {
+      border-color: #4f46e5;
+    }
   }
 
   // Element: .pagination__controls
@@ -1319,6 +1383,12 @@
     display: flex;
     gap: $spacing-xs;
     align-items: center;
+
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
   }
 
   // Element: .pagination__btn
@@ -1629,6 +1699,50 @@
       .btn {
         width: 100%;
       }
+    }
+  }
+
+  &__search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+
+    @media (max-width: 768px) {
+      max-width: 100%;
+      min-width: 100%;
+    }
+  }
+
+  &__search-input {
+    width: 100%;
+    padding: 0.6rem 0.75rem 0.6rem 2.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &:focus {
+      border-color: #4f46e5;
+    }
+  }
+
+  &__search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #999;
+    font-size: 1.1rem;
+    line-height: 1;
+
+    &:hover {
+      color: #666;
     }
   }
 

@@ -456,7 +456,7 @@ export function UserManagement() {
 
           {!showForm && !isReadOnly && (
             <div className="dashboard-layout__actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '400px' }}>
+              <div className="dashboard-layout__search">
                 <svg
                   width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999"
                   strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -470,53 +470,18 @@ export function UserManagement() {
                   placeholder="Buscar por nombre, email o identificación..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.6rem 0.75rem 0.6rem 2.5rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  className="dashboard-layout__search-input"
                 />
                 {searchTerm && (
                   <button
                     type="button"
                     onClick={() => setSearchTerm('')}
-                    style={{
-                      position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
-                      background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
-                      color: '#999', fontSize: '1.1rem', lineHeight: 1,
-                    }}
+                    className="dashboard-layout__search-clear"
                     title="Limpiar búsqueda"
                   >
                     ×
                   </button>
                 )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <label htmlFor="perPage" style={{ fontSize: '0.8rem', color: '#666', whiteSpace: 'nowrap' }}>Mostrar</label>
-                <select
-                  id="perPage"
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  style={{
-                    padding: '0.5rem 0.5rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.85rem',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    background: '#fff',
-                  }}
-                >
-                  {PAGE_SIZE_OPTIONS.map(size => (
-                    <option key={size} value={size}>{size}</option>
-                  ))}
-                </select>
               </div>
               <button
                 className="btn btn--primary"
@@ -533,7 +498,7 @@ export function UserManagement() {
 
           {!showForm && isReadOnly && (
             <div className="dashboard-layout__actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ position: 'relative', flex: '1', minWidth: '200px', maxWidth: '400px' }}>
+              <div className="dashboard-layout__search">
                 <svg
                   width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999"
                   strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -547,53 +512,18 @@ export function UserManagement() {
                   placeholder="Buscar por nombre, email o identificación..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.6rem 0.75rem 0.6rem 2.5rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  className="dashboard-layout__search-input"
                 />
                 {searchTerm && (
                   <button
                     type="button"
                     onClick={() => setSearchTerm('')}
-                    style={{
-                      position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
-                      background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
-                      color: '#999', fontSize: '1.1rem', lineHeight: 1,
-                    }}
+                    className="dashboard-layout__search-clear"
                     title="Limpiar búsqueda"
                   >
                     ×
                   </button>
                 )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <label htmlFor="perPageRo" style={{ fontSize: '0.8rem', color: '#666', whiteSpace: 'nowrap' }}>Mostrar</label>
-                <select
-                  id="perPageRo"
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  style={{
-                    padding: '0.5rem 0.5rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.85rem',
-                    outline: 'none',
-                    cursor: 'pointer',
-                    background: '#fff',
-                  }}
-                >
-                  {PAGE_SIZE_OPTIONS.map(size => (
-                    <option key={size} value={size}>{size}</option>
-                  ))}
-                </select>
               </div>
             </div>
           )}
@@ -636,7 +566,10 @@ export function UserManagement() {
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}
+              onItemsPerPageChange={setItemsPerPage}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
               isLoading={isLoading}
               emptyStateIcon={
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

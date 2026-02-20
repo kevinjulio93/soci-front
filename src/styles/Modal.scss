@@ -19,6 +19,13 @@
   z-index: 1000;
   padding: $spacing-lg;
   animation: fadeIn 0.2s ease-in-out;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  @media (max-width: 768px) {
+    padding: $spacing-sm;
+    align-items: flex-start;
+  }
 }
 
 @keyframes fadeIn {
@@ -63,8 +70,10 @@
 
   @media (max-width: 768px) {
     max-width: 100%;
-    max-height: 100vh;
+    max-height: none;
+    min-height: 100vh;
     border-radius: 0;
+    margin: 0;
   }
 }
 
@@ -87,11 +96,21 @@
   padding: $spacing-xl;
   border-bottom: 1px solid #e5e7eb;
 
+  @media (max-width: 768px) {
+    padding: $spacing-md;
+    flex-wrap: wrap;
+  }
+
   // Element: .modal-header__content
   &__content {
     display: flex;
     align-items: center;
     gap: $spacing-md;
+
+    @media (max-width: 768px) {
+      gap: $spacing-sm;
+      flex-wrap: wrap;
+    }
   }
 
   // Element: .modal-header__actions
@@ -114,6 +133,10 @@
     font-weight: $font-weight-bold;
     color: $color-text;
     margin: 0;
+
+    @media (max-width: 768px) {
+      font-size: $font-size-lg;
+    }
   }
 
   // Modifier: .modal-header--confirm
@@ -129,6 +152,10 @@
   font-weight: $font-weight-bold;
   color: $color-text;
   margin: 0;
+
+  @media (max-width: 768px) {
+    font-size: $font-size-lg;
+  }
 }
 
 // Block: .modal-badge
@@ -140,6 +167,11 @@
   font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   white-space: nowrap;
+
+  @media (max-width: 768px) {
+    font-size: $font-size-xs;
+    padding: 2px $spacing-xs;
+  }
 
   // Modifier: .modal-badge--verified
   &--verified {
@@ -179,9 +211,17 @@
 .modal-body {
   padding: $spacing-xl;
   
+  @media (max-width: 768px) {
+    padding: $spacing-md;
+  }
+  
   // Modifier para el modal de detalle - padding reducido
   &--detail {
     padding: $spacing-lg $spacing-xl; // Reducir padding vertical
+
+    @media (max-width: 768px) {
+      padding: $spacing-md;
+    }
   }
 }
 

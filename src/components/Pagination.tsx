@@ -10,6 +10,8 @@ interface PaginationProps {
   itemsPerPage: number
   onPageChange: (page: number) => void
   maxVisiblePages?: number
+  onItemsPerPageChange?: (perPage: number) => void
+  pageSizeOptions?: number[]
 }
 
 export function Pagination({
@@ -19,6 +21,8 @@ export function Pagination({
   itemsPerPage,
   onPageChange,
   maxVisiblePages = 5,
+  onItemsPerPageChange,
+  pageSizeOptions = [10, 25, 50, 100],
 }: PaginationProps) {
   // Calcular el rango de registros mostrados
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1
@@ -91,7 +95,24 @@ export function Pagination({
         Mostrando {startItem} - {endItem} de {totalItems} registros
       </div>
       
-      <div className="pagination__controls">
+      <div className="pagination__wrapper">
+        {onItemsPerPageChange && (
+          <div className="pagination__per-page">
+            <label htmlFor="perPage" className="pagination__per-page-label">Mostrar</label>
+            <select
+              id="perPage"
+              value={itemsPerPage}
+              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+              className="pagination__per-page-select"
+            >
+              {pageSizeOptions.map(size => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        
+        <div className="pagination__controls">
         <button
           className="pagination__btn"
           onClick={handlePrevious}
@@ -125,6 +146,7 @@ export function Pagination({
         >
           →
         </button>
+      </div>
       </div>
     </div>
   )

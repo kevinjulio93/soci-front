@@ -405,15 +405,23 @@ export function SurveyForm({
                     error={errors.phone?.message}
                     {...register('phone', {
                       required: 'El teléfono es obligatorio',
-                      pattern: {
-                        value: /^[0-9]+$/,
-                        message: 'El teléfono solo debe contener números',
+                      minLength: {
+                        value: 10,
+                        message: 'El teléfono debe tener exactamente 10 dígitos',
                       },
                       maxLength: {
                         value: 10,
-                        message: 'El teléfono debe tener máximo 10 dígitos',
+                        message: 'El teléfono debe tener exactamente 10 dígitos',
+                      },
+                      pattern: {
+                        value: /^[0-9]{10}$/,
+                        message: 'El teléfono debe contener solo números',
                       },
                     })}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement
+                      target.value = target.value.replace(/[^0-9]/g, '')
+                    }}
                   />
                 </div>
 

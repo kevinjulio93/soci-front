@@ -1,10 +1,11 @@
 /**
- * SurveysList - Lista de todas las encuestas con audios
- * Vista para administradores que muestra todas las encuestas realizadas
+ * SurveysList - Vista de encuestas
+ * Métricas: visibles para todos los roles con acceso a admin
+ * Tabla: visible solo para el rol admin
  */
 
 import { useState, useEffect } from 'react'
-import { Sidebar, DataTable, ConfirmModal, SurveyDetailModal } from '../components'
+import { Sidebar, DataTable, ConfirmModal, SurveyDetailModal, MetricsCard } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { getSurveysTableColumns, MESSAGES } from '../constants'
@@ -26,6 +27,9 @@ export default function SurveysList() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedSurvey, setSelectedSurvey] = useState<RespondentData | null>(null)
 
+  const userRole = user?.role?.role?.toLowerCase() || ''
+  const isAdmin = userRole === 'admin'
+
   const loadSurveys = async (page: number) => {
     try {
       setIsLoading(true)
@@ -41,14 +45,12 @@ export default function SurveysList() {
     }
   }
 
-  const loadData = async () => {
-    await loadSurveys(1)
-  }
-
   useEffect(() => {
-    loadData()
+    if (isAdmin) {
+      loadSurveys(1)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isAdmin])
 
   const handlePageChange = async (page: number) => {
     await loadSurveys(page)
@@ -76,7 +78,6 @@ export default function SurveysList() {
       await apiService.deleteRespondent(respondentToDelete.id)
       notificationService.success(MESSAGES.RESPONDENT_DELETE_SUCCESS)
       
-      // Recargar la lista
       await loadSurveys(currentPage)
       
       setShowDeleteModal(false)
@@ -125,53 +126,69 @@ export default function SurveysList() {
         </div>
 
         <div className="dashboard-layout__body">
-          <div className="dashboard__header-section">
-            <div className="dashboard__header-text">
-              <h2 className="dashboard__section-title">Todas las Encuestas</h2>
-              <p className="dashboard__section-desc">
-                {totalRecords} encuesta{totalRecords !== 1 ? 's' : ''} registrada{totalRecords !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-
-          <DataTable
-            columns={getSurveysTableColumns(formatDate, handleViewDetails, user?.role?.role?.toLowerCase() === 'readonly' ? undefined : handleDeleteClick)}
-            data={surveys}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={totalRecords}
-            itemsPerPage={10}
-            onPageChange={handlePageChange}
-            isLoading={isLoading}
-            emptyStateIcon={
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            }
-            emptyStateTitle="No hay encuestas"
-            emptyStateDescription="Aún no se han registrado encuestas en el sistema."
-            getRowKey={(survey) => survey._id}
+          {/* Métricas - Visible para todos los roles */}
+          <MetricsCard 
+            viewType={userRole as 'admin' | 'coordinador_zona' | 'coordinador_campo' | 'supervisor' | 'socializer'}
+            showDailyView={false}
+            autoLoad={true}
           />
+
+          {/* Tabla - Solo visible para admin */}
+          {isAdmin && (
+            <>
+              <div className="dashboard__header-section">
+                <div className="dashboard__header-text">
+                  <h2 className="dashboard__section-title">Todas las Encuestas</h2>
+                  <p className="dashboard__section-desc">
+                    {totalRecords} encuesta{totalRecords !== 1 ? 's' : ''} registrada{totalRecords !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+
+              <DataTable
+                columns={getSurveysTableColumns(formatDate, handleViewDetails, handleDeleteClick)}
+                data={surveys}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalRecords}
+                itemsPerPage={10}
+                onPageChange={handlePageChange}
+                isLoading={isLoading}
+                emptyStateIcon={
+                  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                }
+                emptyStateTitle="No hay encuestas"
+                emptyStateDescription="Aún no se han registrado encuestas en el sistema."
+                getRowKey={(survey) => survey._id}
+              />
+            </>
+          )}
         </div>
       </div>
 
-      <ConfirmModal
-        isOpen={showDeleteModal}
-        title="Eliminar Encuestado"
-        message={`¿Está seguro de eliminar a ${respondentToDelete?.name || 'este encuestado'}?`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        onConfirm={handleDeleteConfirm}
-        onClose={handleDeleteCancel}
-        isLoading={isDeleting}
-      />
+      {isAdmin && (
+        <>
+          <ConfirmModal
+            isOpen={showDeleteModal}
+            title="Eliminar Encuestado"
+            message={`¿Está seguro de eliminar a ${respondentToDelete?.name || 'este encuestado'}?`}
+            confirmText="Eliminar"
+            cancelText="Cancelar"
+            onConfirm={handleDeleteConfirm}
+            onClose={handleDeleteCancel}
+            isLoading={isDeleting}
+          />
 
-      <SurveyDetailModal
-        isOpen={showDetailModal}
-        onClose={handleCloseDetailModal}
-        survey={selectedSurvey}
-        formatDate={formatDate}
-      />
+          <SurveyDetailModal
+            isOpen={showDetailModal}
+            onClose={handleCloseDetailModal}
+            survey={selectedSurvey}
+            formatDate={formatDate}
+          />
+        </>
+      )}
     </div>
   )
 }
