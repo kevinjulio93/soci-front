@@ -264,6 +264,9 @@ export default function ReportsGenerate() {
       notificationService.success(
         `Reporte generado: ${response.data.totalItems} registros`
       )
+      if (window.matchMedia('(max-width: 1024px)').matches) {
+        setFilterPanelOpen(false)
+      }
     } catch (err) {
       notificationService.handleApiError(err, 'Error al generar el reporte')
     } finally {

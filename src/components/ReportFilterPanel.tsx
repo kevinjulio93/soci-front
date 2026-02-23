@@ -465,6 +465,13 @@ export function ReportFilterPanel({
               🔄 Limpiar
             </button>
           </div>
+          <button
+            className="btn btn--secondary rg-panel__close-mobile"
+            onClick={onClose}
+            type="button"
+          >
+            Cerrar filtros
+          </button>
         </div>
       </aside>
     </>

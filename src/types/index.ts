@@ -30,7 +30,8 @@ export interface User {
   status?: 'enabled' | 'disabled'
   profile?: {
     _id: string
-    fullName: string
+    fullName?: string
+    name?: string
     idNumber: string
     phone?: string
     coordinator?: any

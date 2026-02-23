@@ -49,13 +49,31 @@ export const notificationService = {
    * Maneja errores de API y muestra notificaciones apropiadas
    */
   handleApiError: (error: any, defaultMessage: string = MESSAGES.GENERIC_ERROR) => {
-    const message = 
-      error?.response?.data?.message || 
-      error?.response?.data?.error ||
-      error?.message || 
-      defaultMessage
+    const rawStatus = error?.code || error?.response?.status || error?.status
+    const status = typeof rawStatus === 'string' ? parseInt(rawStatus, 10) : rawStatus
+    const friendlyByStatus: Record<number, string> = {
+      400: 'La solicitud no es valida. Verifique los datos e intente de nuevo.',
+      401: 'Sesion expirada o no autorizada. Inicie sesion nuevamente.',
+      403: 'No tienes permisos para realizar esta accion.',
+      404: 'No se encontro el recurso solicitado.',
+      408: 'La solicitud tomo demasiado tiempo. Intente de nuevo.',
+      409: 'Conflicto con el estado actual. Actualice e intente de nuevo.',
+      422: 'Datos invalidos. Revise la informacion enviada.',
+      429: 'Demasiadas solicitudes. Espera un momento e intenta de nuevo.',
+      500: 'Error interno del servidor. Intente mas tarde.',
+      502: 'Servidor no disponible. Intente mas tarde.',
+      503: 'Servicio no disponible. Intente mas tarde.',
+      504: 'Tiempo de espera del servidor. Intente mas tarde.',
+    }
 
-    notificationService.error(message)
+    if (typeof status === 'number' && !Number.isNaN(status)) {
+      const friendly = friendlyByStatus[status] || defaultMessage
+      notificationService.error(`HTTP ${status} - ${friendly}`)
+      return
+    }
+
+    // Sin estatus: error de red o desconocido
+    notificationService.error('HTTP - Error de red. Verifique su conexion e intente de nuevo.')
   },
 
   /**

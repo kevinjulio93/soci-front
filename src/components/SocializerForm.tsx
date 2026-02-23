@@ -79,6 +79,8 @@ export function SocializerForm({
     reset,
     watch,
     setValue,
+    clearErrors,
+    unregister,
   } = useForm<ReturnType<SocializerFormData['toFormData']>>({
     mode: 'onBlur',
     defaultValues: initialData || new SocializerFormData().toFormData(),
@@ -262,8 +264,12 @@ export function SocializerForm({
       const role = roles.find(r => r._id === watchedRoleId)
       const roleValue = role?.originalRole || role?.role || ''
       setSelectedRole(roleValue)
+      
+      // Limpiar errores de campos de jerarquía cuando cambia el rol
+      // para evitar que campos del rol anterior queden con errores
+      clearErrors(['assignedSupervisor', 'assignedFieldCoordinator', 'assignedZoneCoordinator'])
     }
-  }, [watchedRoleId, roles, isEditMode])
+  }, [watchedRoleId, roles, isEditMode, clearErrors])
 
   useEffect(() => {
     loadRoles()
@@ -292,17 +298,35 @@ export function SocializerForm({
 
   // Registrar validación para campos de jerarquía (SearchableSelect usa setValue, no register en JSX)
   useEffect(() => {
+    // Lista de TODOS los campos de jerarquía posibles
+    const allHierarchyFields = ['assignedSupervisor', 'assignedFieldCoordinator', 'assignedZoneCoordinator']
+    
+    // Obtener campos que deben estar activos
     const fields = isEditMode && editHierarchyField
       ? [editHierarchyField]
       : visibleHierarchyFields
+    
+    const activeFieldKeys = fields.map(f => f.fieldKey)
+    
+    // Desregistrar campos que NO están activos para este rol
+    allHierarchyFields.forEach((fieldKey) => {
+      if (!activeFieldKeys.includes(fieldKey)) {
+        unregister(fieldKey as any)
+        setValue(fieldKey as any, '')
+      }
+    })
+    
+    // Limpiar errores de todos los campos
+    clearErrors(allHierarchyFields as any)
 
+    // Registrar solo los campos activos para este rol
     fields.forEach((field) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       _register(field.fieldKey as any, {
         required: `Debe seleccionar un ${field.label.toLowerCase()}`,
       })
     })
-  }, [_register, isEditMode, editHierarchyField, visibleHierarchyFields])
+  }, [_register, isEditMode, editHierarchyField, visibleHierarchyFields, clearErrors, unregister, setValue])
 
   // Submit wrapper para transformar coordinatorId según jerarquía
   const handleFormSubmit = (formData: ReturnType<SocializerFormData['toFormData']>) => {

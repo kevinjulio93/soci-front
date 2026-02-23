@@ -73,14 +73,26 @@
   &__user-info {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: $spacing-sm;
+    flex-wrap: wrap;
 
     @media (min-width: 768px) {
       gap: $spacing-lg;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
     }
 
     span {
-      font-size: $font-size-base;
+      font-size: $font-size-sm;
+      text-align: center;
+      width: 100%;
+
+      @media (min-width: 768px) {
+        font-size: $font-size-base;
+        width: auto;
+        text-align: left;
+      }
     }
   }
 
@@ -89,12 +101,19 @@
     background-color: rgba(255, 255, 255, 0.2);
     color: $color-white;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: $spacing-sm $spacing-lg;
+    padding: $spacing-xs $spacing-md;
     border-radius: $border-radius-md;
     cursor: pointer;
     font-weight: $font-weight-medium;
     transition: all $transition-base;
     font-family: $font-family-primary;
+    font-size: $font-size-sm;
+    white-space: nowrap;
+
+    @media (min-width: 768px) {
+      padding: $spacing-sm $spacing-lg;
+      font-size: $font-size-base;
+    }
 
     &:hover {
       background-color: rgba(255, 255, 255, 0.3);
@@ -279,6 +298,14 @@
     border: 1px solid $color-border;
     padding: $spacing-xs $spacing-lg;
     font-size: $font-size-sm;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-xs;
+
+    svg {
+      flex-shrink: 0;
+    }
 
     &:hover {
       background-color: $color-background;
@@ -288,6 +315,13 @@
 
   // Modifier: .btn--small
   &--small {
+    padding: $spacing-xs $spacing-md;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+  }
+
+  // Modifier: .btn--sm (alias)
+  &--sm {
     padding: $spacing-xs $spacing-md;
     font-size: $font-size-xs;
     font-weight: $font-weight-medium;
@@ -2892,11 +2926,23 @@
   flex-wrap: wrap;
   gap: 0.75rem;
 
+  @media (max-width: 640px) {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
   &__left {
     display: flex;
     align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+      gap: 0.5rem;
+      width: 100%;
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 
   &__title {
@@ -2904,6 +2950,10 @@
     font-size: 1.1rem;
     font-weight: $font-weight-semibold;
     color: $color-secondary;
+
+    @media (max-width: 640px) {
+      font-size: 1rem;
+    }
   }
 
   &__info {
@@ -2911,12 +2961,32 @@
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+      width: 100%;
+      gap: 0.4rem;
+    }
   }
 
   &__right {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+
+    @media (max-width: 640px) {
+      width: 100%;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      @media (max-width: 640px) {
+        flex: 1 1 0;
+        height: 40px;
+        font-size: 0.8rem;
+        padding: 0 0.6rem;
+        justify-content: center;
+      }
+    }
   }
 }
 
@@ -2927,6 +2997,11 @@
   padding: 0.25rem 0.6rem;
   border-radius: $border-radius-full;
   white-space: nowrap;
+
+  @media (max-width: 640px) {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.5rem;
+  }
 
   &--count {
     background: #e8f5e9;
@@ -2966,6 +3041,13 @@
   font-weight: $font-weight-semibold;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  @media (max-width: 640px) {
+    flex: 1 1 0;
+    height: 40px;
+    padding: 0 0.6rem;
+    font-size: 0.78rem;
+  }
 
   &:hover {
     background: #d9e01e;
@@ -3044,6 +3126,10 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: $color-secondary $color-background;
+
+  @media (max-width: 640px) {
+    border-top: 1px solid $color-border;
+  }
   
   &::-webkit-scrollbar {
     height: 8px;
@@ -3175,6 +3261,12 @@
   background: #f8f9fa;
   flex-wrap: wrap;
 
+  @media (max-width: 640px) {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+    justify-content: space-between;
+  }
+
   &__btn {
     padding: 0.5rem 1rem;
     background: #4a7c6f;
@@ -3185,6 +3277,12 @@
     font-weight: $font-weight-semibold;
     font-size: 0.85rem;
     transition: background-color 0.2s;
+
+    @media (max-width: 640px) {
+      flex: 1 1 calc(50% - 0.5rem);
+      padding: 0.45rem 0.6rem;
+      font-size: 0.8rem;
+    }
 
     &:hover:not(:disabled) {
       background: color.adjust(#4a7c6f, $lightness: -8%);
@@ -3205,6 +3303,14 @@
     background: $color-white;
     border: 1px solid $color-border;
     border-radius: $border-radius-md;
+
+    @media (max-width: 640px) {
+      order: 3;
+      width: 100%;
+      text-align: center;
+      font-size: 0.82rem;
+      padding: 0.4rem 0.6rem;
+    }
   }
 
   &__detail {
@@ -3212,6 +3318,14 @@
     color: $color-light-text;
     padding-left: 1rem;
     border-left: 1px solid $color-border;
+
+    @media (max-width: 640px) {
+      order: 4;
+      width: 100%;
+      padding-left: 0;
+      border-left: none;
+      text-align: center;
+    }
   }
 }
 
@@ -4122,7 +4236,7 @@ input[type="date"].form-group__input {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.35);
-    z-index: 1099;
+    z-index: 1;
   }
 }
 
@@ -4135,6 +4249,8 @@ input[type="date"].form-group__input {
   border: 1px solid $color-border;
   border-radius: $border-radius-md;
   overflow: hidden;
+  position: relative;
+  z-index: 2;
 
   &__header {
     display: flex;
@@ -4322,6 +4438,15 @@ input[type="date"].form-group__input {
       align-items: center;
       justify-content: center;
       text-align: center;
+    }
+  }
+
+  &__close-mobile {
+    display: none;
+    width: 100%;
+
+    @media (max-width: 1024px) {
+      display: flex;
     }
   }
 

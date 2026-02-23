@@ -110,7 +110,7 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.ADMIN_REPORTS_SOCIALIZERS,
     element: (
-      <ProtectedRoute requireAdminRole>
+      <ProtectedRoute allowedRoles={['admin', 'coordinador_zona', 'zonecoordinator']}>
         <ReportsSocializers />
       </ProtectedRoute>
     ),

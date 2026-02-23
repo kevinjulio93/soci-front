@@ -53,7 +53,7 @@ export const ROLE_HIERARCHY_CONFIG: Record<string, RoleHierarchyConfig> = {
         loadHierarchyRole: 'supervisor',
       },
     ],
-    creatableRoles: ['readonly', 'zonecoordinator', 'fieldcoordinator', 'supervisor', 'socializer'],
+    creatableRoles: ['admin', 'readonly', 'zonecoordinator', 'fieldcoordinator', 'supervisor', 'socializer'],
   },
   readonly: {
     visibleFields: [],
@@ -163,16 +163,6 @@ export function getEditHierarchyField(roleBeingEdited: string): HierarchyLevel |
       label: 'Coordinador de Zona',
       dataSourceField: 'zoneCoordinators',
       loadHierarchyRole: 'fieldcoordinator',
-    }
-  }
-  
-  if (normalizedRole === 'zonecoordinator' || normalizedRole === 'coordinador de zona') {
-    return {
-      role: normalizedRole,
-      fieldKey: 'assignedAdmin',
-      label: 'Administrador',
-      dataSourceField: 'zoneCoordinators',
-      loadHierarchyRole: 'zonecoordinator',
     }
   }
   

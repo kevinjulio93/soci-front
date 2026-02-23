@@ -13,6 +13,7 @@ import { LoadingState } from './LoadingState'
 interface ProtectedRouteProps {
   children: ReactNode
   allowedSubjects?: string[] // subjects permitidos (ej: ['admins', 'surveys'])
+  allowedRoles?: string[] // roles permitidos (ej: ['admin', 'coordinador_zona'])
   requireAdminRole?: boolean // requiere que sea admin o root
   requireSocializerRole?: boolean // requiere que sea socializer
 }
@@ -20,6 +21,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({
   children,
   allowedSubjects,
+  allowedRoles,
   requireAdminRole = false,
   requireSocializerRole = false,
 }: ProtectedRouteProps) {
@@ -90,6 +92,16 @@ export function ProtectedRoute({
 
     if (!hasPermission) {
       return <Navigate to="/" replace />
+    }
+  }
+
+  // Verificar roles si se especifican
+  if (allowedRoles && allowedRoles.length > 0) {
+    const roleType = user.role?.role?.toLowerCase() || ''
+    const hasRole = allowedRoles.includes(roleType)
+
+    if (!hasRole) {
+      return <Navigate to="/admin/dashboard" replace />
     }
   }
 
