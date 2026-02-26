@@ -4,10 +4,10 @@
  * Optimizado para manejar miles de registros con renderizado condicional
  */
 
-import { useState, useEffect, useMemo, useCallback, memo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents } from 'react-leaflet'
-import { Icon, LatLngBounds } from 'leaflet'
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet'
+import * as L from 'leaflet'
 import { Sidebar, DateInput } from '../components'
 import { apiService } from '../services/api.service'
 import { ROUTES, EXTERNAL_URLS, MESSAGES, MAP_CONFIG } from '../constants'
@@ -23,74 +23,104 @@ import {
 import { getTodayISO } from '../utils/dateHelpers'
 import { RespondentData } from '../models/ApiResponses'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet.markercluster'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import '../styles/Dashboard.scss'
 
-// Componente optimizado de marcador individual
-const OptimizedMarker = memo(({ 
-  respondent, 
-  icon, 
-  position 
-}: { 
-  respondent: RespondentData
-  icon: Icon
-  position: [number, number]
-}) => {
-  const isSuccessful = respondent.willingToRespond === true
-  
-  // Get label from noResponseReason/rejectionReason
-  const getReasonLabel = () => {
-    const noResponse = respondent.noResponseReason as unknown as { label?: string }
-    const rejection = respondent.rejectionReason as unknown as { label?: string }
-    if (noResponse?.label) return noResponse.label
-    if (rejection?.label) return rejection.label
-    return 'No especificada'
-  }
-  const reasonLabel = getReasonLabel()
-  
-  // Tooltip text - show label for unsuccessful surveys
-  const tooltipText = isSuccessful 
-    ? respondent.fullName || 'Encuesta exitosa'
-    : reasonLabel
-  
-  return (
-    <Marker position={position} icon={icon}>
-      <Tooltip direction="top" offset={[0, -10]} opacity={0.9}>
-        {tooltipText}
-      </Tooltip>
-      <Popup>
-        <div style={{ minWidth: '200px' }}>
-          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600' }}>
-            {isSuccessful 
-              ? (respondent.fullName || 'No proporcionado')
-              : reasonLabel
-            }
-          </h4>
-          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-            <strong>Estado:</strong>{' '}
-            <span style={{ color: isSuccessful ? '#3b82f6' : '#ef4444' }}>
-              {isSuccessful ? 'Exitosa' : 'Rechazada'}
-            </span>
-          </div>
-          {!isSuccessful && (respondent.noResponseReason || respondent.rejectionReason) && (
-            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-              <strong>Razón:</strong> {reasonLabel}
-            </div>
-          )}
-          {respondent.neighborhood && (
-            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-              <strong>Barrio:</strong> {respondent.neighborhood}
-            </div>
-          )}
-          <div style={{ fontSize: '12px', color: '#6b7280' }}>
-            <strong>Fecha:</strong> {formatDateES(respondent.createdAt)}
-          </div>
-        </div>
-      </Popup>
-    </Marker>
-  )
-})
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 
-OptimizedMarker.displayName = 'OptimizedMarker'
+const getReasonLabel = (respondent: RespondentData) => {
+  const noResponse = respondent.noResponseReason as unknown as { label?: string }
+  const rejection = respondent.rejectionReason as unknown as { label?: string }
+  if (noResponse?.label) return noResponse.label
+  if (rejection?.label) return rejection.label
+  return 'No especificada'
+}
+
+const buildPopupHtml = (respondent: RespondentData, isSuccessful: boolean, reasonLabel: string) => {
+  const title = isSuccessful ? (respondent.fullName || 'No proporcionado') : reasonLabel
+  const statusText = isSuccessful ? 'Exitosa' : 'Rechazada'
+  const statusColor = isSuccessful ? '#3b82f6' : '#ef4444'
+  const reasonLine = !isSuccessful && (respondent.noResponseReason || respondent.rejectionReason)
+    ? `<div style="font-size:12px; color:#6b7280; margin-bottom:4px;"><strong>Razón:</strong> ${escapeHtml(reasonLabel)}</div>`
+    : ''
+  const neighborhoodLine = respondent.neighborhood
+    ? `<div style="font-size:12px; color:#6b7280; margin-bottom:4px;"><strong>Barrio:</strong> ${escapeHtml(respondent.neighborhood)}</div>`
+    : ''
+
+  return `
+    <div style="min-width:200px">
+      <h4 style="margin:0 0 8px 0; font-size:14px; font-weight:600;">${escapeHtml(title)}</h4>
+      <div style="font-size:12px; color:#6b7280; margin-bottom:4px;">
+        <strong>Estado:</strong> <span style="color:${statusColor}">${statusText}</span>
+      </div>
+      ${reasonLine}
+      ${neighborhoodLine}
+      <div style="font-size:12px; color:#6b7280;">
+        <strong>Fecha:</strong> ${escapeHtml(formatDateES(respondent.createdAt))}
+      </div>
+    </div>
+  `.trim()
+}
+
+function ClusteredMarkers({
+  respondents,
+  getAdjustedPosition,
+  successfulIcon,
+  unsuccessfulIcon,
+}: {
+  respondents: RespondentData[]
+  getAdjustedPosition: (respondent: RespondentData, index: number, allData: RespondentData[]) => [number, number]
+  successfulIcon: L.Icon
+  unsuccessfulIcon: L.Icon
+}) {
+  const map = useMap()
+  const clusterGroupRef = useRef<L.LayerGroup | null>(null)
+
+  useEffect(() => {
+    if (!clusterGroupRef.current) {
+      clusterGroupRef.current = L.markerClusterGroup({
+        chunkedLoading: true,
+        removeOutsideVisibleBounds: true,
+        showCoverageOnHover: false,
+        maxClusterRadius: 50,
+      })
+      map.addLayer(clusterGroupRef.current)
+    }
+
+    const clusterGroup = clusterGroupRef.current
+    clusterGroup.clearLayers()
+
+    respondents.forEach((respondent, index) => {
+      const isSuccessful = respondent.willingToRespond === true
+      const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
+      const adjustedPosition = getAdjustedPosition(respondent, index, respondents)
+      const reasonLabel = getReasonLabel(respondent)
+      const tooltipText = isSuccessful ? (respondent.fullName || 'Encuesta exitosa') : reasonLabel
+
+      const marker = L.marker(adjustedPosition, { icon })
+      marker.bindTooltip(tooltipText, { direction: 'top', offset: [0, -10], opacity: 0.9 })
+      marker.bindPopup(buildPopupHtml(respondent, isSuccessful, reasonLabel))
+      clusterGroup.addLayer(marker)
+    })
+
+    return () => {
+      if (clusterGroupRef.current) {
+        map.removeLayer(clusterGroupRef.current)
+        clusterGroupRef.current = null
+      }
+    }
+  }, [map, respondents, getAdjustedPosition, successfulIcon, unsuccessfulIcon])
+
+  return null
+}
 
 // Componente para renderizar solo marcadores visibles en el viewport
 function VisibleMarkers({ 
@@ -101,18 +131,15 @@ function VisibleMarkers({
 }: { 
   respondents: RespondentData[]
   getAdjustedPosition: (respondent: RespondentData, index: number, allData: RespondentData[]) => [number, number]
-  successfulIcon: Icon
-  unsuccessfulIcon: Icon
+  successfulIcon: L.Icon
+  unsuccessfulIcon: L.Icon
 }) {
   const map = useMap()
   const [visibleMarkers, setVisibleMarkers] = useState<RespondentData[]>([])
-  const [zoom, setZoom] = useState(map.getZoom())
 
   // Función para calcular marcadores visibles
   const updateVisibleMarkers = useCallback(() => {
     const bounds = map.getBounds()
-    const currentZoom = map.getZoom()
-    setZoom(currentZoom)
     
     // Filtrar solo marcadores dentro del viewport con un margen pequeño
     const padding = 0.05 // 5% de margen para precargar
@@ -127,13 +154,8 @@ function VisibleMarkers({
              lng <= bounds.getEast() + lngPadding
     })
     
-    // Si el zoom es alto (>= 14), renderizar todos los visibles
-    // Si el zoom es bajo, limitar a 500 para performance
-    if (currentZoom >= 14) {
-      setVisibleMarkers(visible)
-    } else {
-      setVisibleMarkers(visible.slice(0, 500))
-    }
+    // Limitar siempre el numero de marcadores visibles para evitar consumo de memoria en mobile
+    setVisibleMarkers(visible.slice(0, 300))
   }, [respondents, map])
 
   // Escuchar eventos del mapa
@@ -149,20 +171,12 @@ function VisibleMarkers({
 
   return (
     <>
-      {visibleMarkers.map((respondent, index) => {
-        const isSuccessful = respondent.willingToRespond === true
-        const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
-        const adjustedPosition = getAdjustedPosition(respondent, index, visibleMarkers)
-        
-        return (
-          <OptimizedMarker
-            key={respondent._id}
-            respondent={respondent}
-            icon={icon}
-            position={adjustedPosition}
-          />
-        )
-      })}
+      <ClusteredMarkers
+        respondents={visibleMarkers}
+        getAdjustedPosition={getAdjustedPosition}
+        successfulIcon={successfulIcon}
+        unsuccessfulIcon={unsuccessfulIcon}
+      />
       {/* Indicador de marcadores visibles */}
       <div style={{
         position: 'absolute',
@@ -176,8 +190,8 @@ function VisibleMarkers({
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         Mostrando {visibleMarkers.length} de {respondents.length} marcadores
-        {respondents.length > visibleMarkers.length && zoom < 14 && (
-          <> - Haz zoom para ver todos</>
+        {respondents.length > visibleMarkers.length && (
+          <> - Haz zoom o mueve el mapa para ver otros</>
         )}
       </div>
     </>
@@ -191,7 +205,7 @@ function MapBounds({ respondents }: { respondents: RespondentData[] }) {
   useEffect(() => {
     if (respondents.length === 0) return
     
-    const bounds = new LatLngBounds(
+    const bounds = new L.LatLngBounds(
       respondents.map(r => [
         r.location?.coordinates[1] || 0,
         r.location?.coordinates[0] || 0,
@@ -206,7 +220,7 @@ function MapBounds({ respondents }: { respondents: RespondentData[] }) {
 }
 
 // Iconos de marcadores estándar de Leaflet con colores diferentes
-const successfulIcon = new Icon({
+const successfulIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   shadowUrl: EXTERNAL_URLS.LEAFLET_MARKER_SHADOW,
   iconSize: MAP_CONFIG.MARKER_SIZE,
@@ -215,7 +229,7 @@ const successfulIcon = new Icon({
   shadowSize: MAP_CONFIG.SHADOW_SIZE
 })
 
-const unsuccessfulIcon = new Icon({
+const unsuccessfulIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: EXTERNAL_URLS.LEAFLET_MARKER_SHADOW,
   iconSize: MAP_CONFIG.MARKER_SIZE,
@@ -310,12 +324,21 @@ export default function ReportsMap() {
     setShowRejectionBreakdown(false)
   }
 
-  // Cargar todas las encuestas
+  // Cargar encuestas del día (una sola llamada)
   const loadAllRespondents = async () => {
     try {
       setIsLoading(true)
-      const response = await apiService.getRespondents(1, 10000)
-      const respondentsWithLocation = filterRespondentsWithLocation(response.data)
+      const today = getTodayISO()
+      const response = await apiService.getReportsBySocializerAndDate(today, today)
+      const report = response.data?.report || []
+      
+      const allSurveys: RespondentData[] = report.flatMap((socializer: { allSurveys?: unknown[] }) =>
+        Array.isArray(socializer.allSurveys)
+          ? socializer.allSurveys.map((s) => new RespondentData(s))
+          : []
+      )
+      
+      const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)
       setAllRespondents(respondentsWithLocation)
       const newStats = calculateSurveyStats(respondentsWithLocation)
       const defensoresCount = respondentsWithLocation.filter(r => (r as any).isPatriaDefender === true).length
@@ -331,6 +354,11 @@ export default function ReportsMap() {
   const loadFilteredRespondents = async () => {
     if (!startDate || !endDate) {
       notificationService.warning('Por favor seleccione un rango de fechas')
+      return
+    }
+
+    if (endDate < startDate) {
+      notificationService.warning('La fecha final no puede ser menor que la fecha inicial')
       return
     }
 
@@ -475,6 +503,7 @@ export default function ReportsMap() {
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   disabled={isLoading}
+                  min={startDate}
                   required
                 />
               </div>

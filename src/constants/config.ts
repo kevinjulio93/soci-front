@@ -42,8 +42,8 @@ export const TOAST_CONFIG = {
 } as const
 
 export const SYNC_CONFIG = {
-  // Intervalo de sincronización automática (30 segundos)
-  AUTO_SYNC_INTERVAL: 30000,
+  // Intervalo de sincronización automática (5 minutos)
+  AUTO_SYNC_INTERVAL: 5 * 60 * 1000,
 } as const
 
 export const FILE_CONFIG = {
