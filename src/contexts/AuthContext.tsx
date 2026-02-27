@@ -31,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Restaurar sesión al montar
   useEffect(() => {
-    debugger
     const restoreSession = async () => {
       const user = authService.restoreSession()
       if (user) {

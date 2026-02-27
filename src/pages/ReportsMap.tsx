@@ -77,7 +77,7 @@ function ClusteredMarkers({
   unsuccessfulIcon,
 }: {
   respondents: RespondentData[]
-  getAdjustedPosition: (respondent: RespondentData, index: number, allData: RespondentData[]) => [number, number]
+  getAdjustedPosition: (respondent: RespondentData) => [number, number]
   successfulIcon: L.Icon
   unsuccessfulIcon: L.Icon
 }) {
@@ -98,10 +98,10 @@ function ClusteredMarkers({
     const clusterGroup = clusterGroupRef.current
     clusterGroup.clearLayers()
 
-    respondents.forEach((respondent, index) => {
+    respondents.forEach((respondent) => {
       const isSuccessful = respondent.willingToRespond === true
       const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
-      const adjustedPosition = getAdjustedPosition(respondent, index, respondents)
+      const adjustedPosition = getAdjustedPosition(respondent)
       const reasonLabel = getReasonLabel(respondent)
       const tooltipText = isSuccessful ? (respondent.fullName || 'Encuesta exitosa') : reasonLabel
 
@@ -130,7 +130,7 @@ function VisibleMarkers({
   unsuccessfulIcon 
 }: { 
   respondents: RespondentData[]
-  getAdjustedPosition: (respondent: RespondentData, index: number, allData: RespondentData[]) => [number, number]
+  getAdjustedPosition: (respondent: RespondentData) => [number, number]
   successfulIcon: L.Icon
   unsuccessfulIcon: L.Icon
 }) {
@@ -435,28 +435,9 @@ export default function ReportsMap() {
 
   const mapCenter = useMemo(() => calculateMapCenter(allRespondents), [allRespondents])
   
-  // Memoizar la función de ajuste de posición
-  const getAdjustedPosition = useCallback((respondent: RespondentData, index: number, allData: RespondentData[]): [number, number] => {
-    const [lat, long] = extractCoordinates(respondent)
-    
-    // Verificar si hay otras encuestas en la misma ubicación (hasta 4 decimales)
-    const sameLocationCount = allData.filter((r, i) => {
-      if (i >= index) return false // Solo contar las anteriores
-      const [rLat, rLong] = extractCoordinates(r)
-      return Math.abs(rLat - lat) < 0.0001 && Math.abs(rLong - long) < 0.0001
-    }).length
-    
-    if (sameLocationCount > 0) {
-      // Aplicar offset pequeño en círculo alrededor del punto original
-      const angle = (sameLocationCount * 60) * (Math.PI / 180) // 60 grados entre cada marcador
-      const offsetDistance = 0.0002 // ~20 metros
-      const latOffset = Math.sin(angle) * offsetDistance
-      const longOffset = Math.cos(angle) * offsetDistance
-      
-      return [lat + latOffset, long + longOffset]
-    }
-    
-    return [lat, long]
+  // Función para obtener posición - sin offsets, el clustering se encarga de la distribución
+  const getAdjustedPosition = useCallback((respondent: RespondentData): [number, number] => {
+    return extractCoordinates(respondent)
   }, [])
 
   return (
