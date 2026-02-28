@@ -76,7 +76,7 @@ export function ReportFilterPanel({
   const ACTIVE_ZONE = import.meta.env.VITE_ACTIVE_ZONE || 'zona1'
   const ZONE_ALIASES: Record<string, number> = { zonaf: 6 }
   const ZONE_NUMBER = ZONE_ALIASES[ACTIVE_ZONE] ?? (parseInt(ACTIVE_ZONE.replace('zona', ''), 10) || 1)
-  
+
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [zoneDepartments, setZoneDepartments] = useState<ZoneDepartmentEntry[]>([])
   const [municipalities, setMunicipalities] = useState<ZoneMunicipalityItem[]>([])
@@ -106,7 +106,7 @@ export function ReportFilterPanel({
       setMunicipalities([])
       return
     }
-    
+
     // Buscar el departamento seleccionado en la data ya cargada
     const selectedDept = zoneDepartments.find(d => d?.department?._id === filters.department)
     if (selectedDept?.municipalities) {
@@ -171,6 +171,7 @@ export function ReportFilterPanel({
               <DateInput
                 label="Desde"
                 value={filters.startDate}
+                max={filters.endDate}
                 onChange={(e) => onFilterChange('startDate', e.target.value)}
                 disabled={isGenerating}
                 required
@@ -180,6 +181,7 @@ export function ReportFilterPanel({
               <DateInput
                 label="Hasta"
                 value={filters.endDate}
+                min={filters.startDate}
                 onChange={(e) => onFilterChange('endDate', e.target.value)}
                 disabled={isGenerating}
                 required

@@ -259,12 +259,13 @@ export default function ReportsMap() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [allRespondents, setAllRespondents] = useState<RespondentData[]>([])
+  const [allSurveys, setAllSurveys] = useState<RespondentData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<FilterType>('all')
   const [startDate, setStartDate] = useState(getTodayISO())
   const [endDate, setEndDate] = useState(getTodayISO())
   const [useFilters, setUseFilters] = useState(false)
+  const [fetchedDateRange, setFetchedDateRange] = useState({ start: '', end: '' })
   const [showRejectionBreakdown, setShowRejectionBreakdown] = useState(false)
   const [stats, setStats] = useState({
     total: 0,
@@ -273,6 +274,7 @@ export default function ReportsMap() {
     defensores: 0,
     isVerified: 0,
     isLinkedHouse: 0,
+    linkedHomes: 0,
   })
 
   // Verificar si el usuario puede ver datos de rechazo (solo admin, no supervisores)
@@ -281,9 +283,14 @@ export default function ReportsMap() {
     return userRole !== 'supervisor'
   }, [user?.role?.role])
 
-  // Calcular estadísticas de motivos de rechazo
+  // Encuestas con ubicación para el mapa
+  const respondentsWithLocation = useMemo(() =>
+    filterRespondentsWithLocation(allSurveys),
+    [allSurveys])
+
+  // Calcular estadísticas de motivos de rechazo usando TODAS las encuestas
   const rejectionStats = useMemo(() => {
-    const unsuccessful = allRespondents.filter(r => r.willingToRespond === false)
+    const unsuccessful = allSurveys.filter(r => r.willingToRespond === false)
     const localStats: { [key: string]: { label: string; count: number } } = {}
 
     unsuccessful.forEach(r => {
@@ -308,7 +315,7 @@ export default function ReportsMap() {
     })
 
     return Object.values(localStats).sort((a: any, b: any) => b.count - a.count)
-  }, [allRespondents])
+  }, [allSurveys])
 
   // Handler para el click en la card de no exitosas
   const handleUnsuccessfulClick = () => {
@@ -356,19 +363,29 @@ export default function ReportsMap() {
           : []
       )
 
-      const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)
-      setAllRespondents(respondentsWithLocation)
-      const newStats = calculateSurveyStats(respondentsWithLocation)
-      const defensoresCount = respondentsWithLocation.filter(r => (r as any).isPatriaDefender === true).length
-      const verifiedCount = respondentsWithLocation.filter(r => r.isVerified === true).length
-      const linkedHouseCount = respondentsWithLocation.filter(r => r.isLinkedHouse === true).length
+
+      setAllSurveys(allSurveys)
+
+      const resumen = response.data?.resumen || response.resumen
+
+      // Intenta usar los totales del backend, si no, los calcula iterando
+      const newStats = calculateSurveyStats(allSurveys)
+      const defensoresCount = resumen?.totalIsPatriaDefender ?? allSurveys.filter(r => (r as any).isPatriaDefender === true).length
+      const verifiedCount = resumen?.totalIsVerified ?? allSurveys.filter(r => r.isVerified === true).length
+      const linkedHouseCount = resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
+      const linkedHomesCount = resumen?.linkedHomes ?? allSurveys.filter(r => (r as any).linkedHomes === true).length
 
       setStats({
         ...newStats,
+        total: resumen?.totalEncuestas ?? newStats.total,
+        successful: resumen?.totalExitosas ?? newStats.successful,
+        unsuccessful: resumen?.totalNoExitosas ?? newStats.unsuccessful,
         defensores: defensoresCount,
         isVerified: verifiedCount,
-        isLinkedHouse: linkedHouseCount
+        isLinkedHouse: linkedHouseCount,
+        linkedHomes: linkedHomesCount,
       })
+      setFetchedDateRange({ start: today, end: today })
     } catch (error) {
       notificationService.handleApiError(error, MESSAGES.RESPONDENT_LOAD_ERROR)
     } finally {
@@ -399,25 +416,33 @@ export default function ReportsMap() {
           : []
       )
 
-      const respondentsWithLocation = filterRespondentsWithLocation(allSurveys)
-
-      if (respondentsWithLocation.length === 0 && allSurveys.length > 0) {
+      if (filterRespondentsWithLocation(allSurveys).length === 0 && allSurveys.length > 0) {
         console.warn('⚠️ Todas las encuestas fueron filtradas. Verificar estructura de datos.')
       }
 
-      setAllRespondents(respondentsWithLocation)
-      const newStats = calculateSurveyStats(respondentsWithLocation)
-      const defensoresCount = respondentsWithLocation.filter(r => (r as any).isPatriaDefender === true).length
-      const verifiedCount = respondentsWithLocation.filter(r => r.isVerified === true).length
-      const linkedHouseCount = respondentsWithLocation.filter(r => r.isLinkedHouse === true).length
+      setAllSurveys(allSurveys)
+
+      const resumen = response.data?.resumen || response.resumen
+
+      // Calcular estadísticas usando TODAS las encuestas (con y sin ubicación)
+      const newStats = calculateSurveyStats(allSurveys)
+      const defensoresCount = resumen?.totalIsPatriaDefender ?? allSurveys.filter(r => (r as any).isPatriaDefender === true).length
+      const verifiedCount = resumen?.totalIsVerified ?? allSurveys.filter(r => r.isVerified === true).length
+      const linkedHouseCount = resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
+      const linkedHomesCount = resumen?.linkedHomes ?? allSurveys.filter(r => (r as any).linkedHomes === true).length
 
       setStats({
         ...newStats,
+        total: resumen?.totalEncuestas ?? newStats.total,
+        successful: resumen?.totalExitosas ?? newStats.successful,
+        unsuccessful: resumen?.totalNoExitosas ?? newStats.unsuccessful,
         defensores: defensoresCount,
         isVerified: verifiedCount,
-        isLinkedHouse: linkedHouseCount
+        isLinkedHouse: linkedHouseCount,
+        linkedHomes: linkedHomesCount,
       })
       setUseFilters(true)
+      setFetchedDateRange({ start: startDate, end: endDate })
 
       notificationService.success('Encuestas filtradas correctamente')
     } catch (error) {
@@ -437,19 +462,33 @@ export default function ReportsMap() {
   }
 
   const handleClearFilters = () => {
-    setStartDate('')
-    setEndDate('')
+    setStartDate(getTodayISO())
+    setEndDate(getTodayISO())
     setUseFilters(false)
     loadAllRespondents()
+  }
+
+  const handleStartDateChange = (val: string) => {
+    setStartDate(val)
+    if (val && endDate && val > endDate) {
+      setEndDate(val)
+    }
+  }
+
+  const handleEndDateChange = (val: string) => {
+    setEndDate(val)
+    if (val && startDate && val < startDate) {
+      setStartDate(val)
+    }
   }
 
   const handleApplyFilters = () => {
     loadFilteredRespondents()
   }
 
-  // Memoizar el filtrado para evitar recálculos innecesarios
+  // Memoizar el filtrado para el mapa
   const filteredRespondents = useMemo(() => {
-    return allRespondents.filter(r => {
+    return respondentsWithLocation.filter(r => {
       if (filter === 'all') return true
       if (filter === 'successful') return r.willingToRespond === true
       if (filter === 'unsuccessful') return r.willingToRespond === false
@@ -458,9 +497,9 @@ export default function ReportsMap() {
       if (filter === 'isLinkedHouse') return r.isLinkedHouse === true
       return true
     })
-  }, [allRespondents, filter])
+  }, [respondentsWithLocation, filter])
 
-  const mapCenter = useMemo(() => calculateMapCenter(allRespondents), [allRespondents])
+  const mapCenter = useMemo(() => calculateMapCenter(respondentsWithLocation), [respondentsWithLocation])
 
   return (
     <div className="dashboard-layout">
@@ -495,7 +534,8 @@ export default function ReportsMap() {
                 <DateInput
                   label="Fecha Inicio"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  max={endDate}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
                   disabled={isLoading}
                   required
                 />
@@ -504,9 +544,9 @@ export default function ReportsMap() {
                 <DateInput
                   label="Fecha Fin"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  disabled={isLoading}
                   min={startDate}
+                  onChange={(e) => handleEndDateChange(e.target.value)}
+                  disabled={isLoading}
                   required
                 />
               </div>
@@ -531,10 +571,10 @@ export default function ReportsMap() {
               </button>
             </div>
 
-            {useFilters && (
+            {fetchedDateRange.start && (
               <div className="filter-card__info">
                 <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-                Mostrando encuestas del {formatDateES(startDate)} al {formatDateES(endDate)}
+                Mostrando métricas del {formatDateES(fetchedDateRange.start)} al {formatDateES(fetchedDateRange.end)}
               </div>
             )}
           </div>
@@ -617,10 +657,21 @@ export default function ReportsMap() {
               style={{ cursor: 'pointer' }}
             >
               <div className="stat-card__icon">
-                <span style={{ fontSize: '1.5rem' }}>🏠</span>
+                <span style={{ fontSize: '1.5rem' }}>➕</span>
               </div>
               <div className="stat-card__value">{stats.isLinkedHouse}</div>
               <div className="stat-card__label">VINCULACIONES EXTRAS</div>
+            </div>
+
+            <div
+              className={`stat-card stat-card--success`}
+              style={{ cursor: 'default' }}
+            >
+              <div className="stat-card__icon">
+                <span style={{ fontSize: '1.5rem' }}>🏠</span>
+              </div>
+              <div className="stat-card__value">{stats.linkedHomes}</div>
+              <div className="stat-card__label">HOGARES VINCULADOS</div>
             </div>
           </div>
 
@@ -661,9 +712,13 @@ export default function ReportsMap() {
             <div className="loading-container">
               <p>{MESSAGES.LOADING_DATA}</p>
             </div>
-          ) : allRespondents.length === 0 ? (
+          ) : allSurveys.length === 0 ? (
             <div className="empty-state">
-              <p>No hay encuestas con ubicación registrada</p>
+              <p>No hay encuestas registradas para este periodo</p>
+            </div>
+          ) : respondentsWithLocation.length === 0 ? (
+            <div className="empty-state">
+              <p>Las encuestas encontradas no tienen ubicación registrada</p>
             </div>
           ) : (
             <div className="dashboard-map-container">

@@ -36,6 +36,7 @@ export interface MetricsData {
   defensores: number
   isVerified: number
   isLinkedHouse: number
+  linkedHomes: number
   dailyStats?: DailyStat[]
   rejectionStats?: RejectionStat[]
   loadedAt: string
@@ -49,6 +50,7 @@ export interface DailyStat {
   defensores: number
   isVerified: number
   isLinkedHouse: number
+  linkedHomes: number
 }
 
 export interface RejectionStat {
@@ -82,6 +84,7 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
     defensores: number;
     isVerified: number;
     isLinkedHouse: number;
+    linkedHomes: number;
   }>()
 
   respondents.forEach(r => {
@@ -94,7 +97,8 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
         unsuccessful: 0,
         defensores: 0,
         isVerified: 0,
-        isLinkedHouse: 0
+        isLinkedHouse: 0,
+        linkedHomes: 0
       })
     }
 
@@ -117,6 +121,10 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
 
     if (r.isLinkedHouse === true) {
       stat.isLinkedHouse++
+    }
+
+    if ((r as any).linkedHomes === true) {
+      stat.linkedHomes++
     }
   })
 
@@ -173,6 +181,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
     defensores: 0,
     isVerified: 0,
     isLinkedHouse: 0,
+    linkedHomes: 0,
     rejectionStats: [],
     loadedAt: '',
   })
@@ -232,16 +241,20 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       const linkedHouseCount = resumen?.totalIsLinkedHouse ??
         allSurveys.filter(r => r.isLinkedHouse === true).length
 
+      const linkedHomesCount = resumen?.linkedHomes ??
+        allSurveys.filter(r => (r as any).linkedHomes === true).length
+
       const dailyStats = calculateDailyStats(allSurveys)
       const rejectionStats = calculateRejectionStats(allSurveys)
 
       const newMetrics: MetricsData = {
-        total: surveyStats.total,
-        successful: surveyStats.successful,
-        unsuccessful: surveyStats.unsuccessful,
+        total: resumen?.totalEncuestas ?? surveyStats.total,
+        successful: resumen?.totalExitosas ?? surveyStats.successful,
+        unsuccessful: resumen?.totalNoExitosas ?? surveyStats.unsuccessful,
         defensores: defensoresCount,
         isVerified: verifiedCount,
         isLinkedHouse: linkedHouseCount,
+        linkedHomes: linkedHomesCount,
         dailyStats,
         rejectionStats,
         loadedAt: new Date().toISOString(),
@@ -268,6 +281,20 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
     loadMetrics()
   }
 
+  const handleStartDateChange = (val: string) => {
+    setStartDate(val)
+    if (val && endDate && val > endDate) {
+      setEndDate(val)
+    }
+  }
+
+  const handleEndDateChange = (val: string) => {
+    setEndDate(val)
+    if (val && startDate && val < startDate) {
+      setStartDate(val)
+    }
+  }
+
   const handleClearFilters = () => {
     setStartDate(getTodayISO())
     setEndDate(getTodayISO())
@@ -278,6 +305,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       defensores: 0,
       isVerified: 0,
       isLinkedHouse: 0,
+      linkedHomes: 0,
       rejectionStats: [],
       loadedAt: '',
     })
@@ -309,7 +337,8 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
             <DateInput
               label="Fecha Inicio"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              max={endDate}
+              onChange={(e) => handleStartDateChange(e.target.value)}
               disabled={isLoading}
               required
             />
@@ -318,7 +347,8 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
             <DateInput
               label="Fecha Fin"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              min={startDate}
+              onChange={(e) => handleEndDateChange(e.target.value)}
               disabled={isLoading}
               required
             />
@@ -433,10 +463,21 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
           style={{ cursor: 'pointer' }}
         >
           <div className="stat-card__icon">
-            <span style={{ fontSize: '1.5rem' }}>🏠</span>
+            <span style={{ fontSize: '1.5rem' }}>➕</span>
           </div>
           <div className="stat-card__value">{metrics.isLinkedHouse}</div>
           <div className="stat-card__label">VINCULACIONES EXTRAS</div>
+        </div>
+
+        <div
+          className={`stat-card stat-card--success`}
+          style={{ cursor: 'default' }}
+        >
+          <div className="stat-card__icon">
+            <span style={{ fontSize: '1.5rem' }}>🏠</span>
+          </div>
+          <div className="stat-card__value">{metrics.linkedHomes}</div>
+          <div className="stat-card__label">HOGARES VINCULADOS</div>
         </div>
       </div>
 

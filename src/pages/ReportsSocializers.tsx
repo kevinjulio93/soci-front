@@ -87,8 +87,23 @@ export default function ReportsSocializers() {
   const [endDate, setEndDate] = useState(getTodayString())
   const [municipality, setMunicipality] = useState('')
   const [reportData, setReportData] = useState<SocializerRow[]>([])
+  const [summaryData, setSummaryData] = useState<any>(null)
 
   const handleBackToReports = () => navigate(ROUTES.ADMIN_REPORTS)
+
+  const handleStartDateChange = (val: string) => {
+    setStartDate(val)
+    if (val && endDate && val > endDate) {
+      setEndDate(val)
+    }
+  }
+
+  const handleEndDateChange = (val: string) => {
+    setEndDate(val)
+    if (val && startDate && val < startDate) {
+      setStartDate(val)
+    }
+  }
 
   const generateReport = async () => {
     if (!startDate || !endDate) {
@@ -119,6 +134,7 @@ export default function ReportsSocializers() {
       })).sort((a, b) => b.interventions - a.interventions)
 
       setReportData(rows)
+      setSummaryData(response.resumen || null)
 
       notificationService.success(`Reporte generado: ${rows.length} socializadores, ${response.resumen?.totalIntervenciones ?? rows.reduce((s, r) => s + r.interventions, 0)} intervenciones`)
     } catch (err) {
@@ -133,6 +149,7 @@ export default function ReportsSocializers() {
     setEndDate(getTodayString())
     setMunicipality('')
     setReportData([])
+    setSummaryData(null)
   }
 
   const exportToExcel = async () => {
@@ -206,7 +223,8 @@ export default function ReportsSocializers() {
                 <DateInput
                   label="Fecha Inicio"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  max={endDate}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
                   disabled={isGenerating}
                   required
                 />
@@ -215,7 +233,8 @@ export default function ReportsSocializers() {
                 <DateInput
                   label="Fecha Fin"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate}
+                  onChange={(e) => handleEndDateChange(e.target.value)}
                   disabled={isGenerating}
                   required
                 />
@@ -299,6 +318,10 @@ export default function ReportsSocializers() {
               <div className="stat-card">
                 <div className="stat-card__value" style={{ color: '#0066cc' }}>{totals.defensores}</div>
                 <div className="stat-card__label">Defensores de la Patria</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-card__value" style={{ color: '#27ae60' }}>{summaryData?.linkedHomes || 0}</div>
+                <div className="stat-card__label">Hogares Vinculados</div>
               </div>
             </div>
           )}

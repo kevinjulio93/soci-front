@@ -113,11 +113,10 @@ const TABLE_COLUMNS: ReportTableColumn<ReportItem>[] = [
     align: 'center',
     render: (item) => (
       <span
-        className={`rg-status-badge ${
-          item.surveyStatus === 'successful'
+        className={`rg-status-badge ${item.surveyStatus === 'successful'
             ? 'rg-status-badge--success'
             : 'rg-status-badge--error'
-        }`}
+          }`}
       >
         {item.surveyStatus === 'successful' ? '✓ Exitosa' : '✗ No Exitosa'}
       </span>
@@ -203,7 +202,17 @@ export default function ReportsGenerate() {
 
   // ---- Handlers ----
   const handleFilterChange = (field: keyof ReportFilters, value: string) => {
-    setFilters((prev) => ({ ...prev, [field]: value }))
+    setFilters((prev) => {
+      const updated = { ...prev, [field]: value }
+
+      if (field === 'startDate' && value && prev.endDate && value > prev.endDate) {
+        updated.endDate = value
+      } else if (field === 'endDate' && value && prev.startDate && value < prev.startDate) {
+        updated.startDate = value
+      }
+
+      return updated
+    })
   }
 
   const handleBackToReports = () => navigate(ROUTES.ADMIN_REPORTS)
@@ -475,22 +484,22 @@ export default function ReportsGenerate() {
                   emptyAction={
                     !filterPanelOpen
                       ? {
-                          label: 'Abrir Filtros',
-                          onClick: () => setFilterPanelOpen(true),
-                          icon: (
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              style={{ marginRight: '0.4rem' }}
-                            >
-                              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-                            </svg>
-                          ),
-                        }
+                        label: 'Abrir Filtros',
+                        onClick: () => setFilterPanelOpen(true),
+                        icon: (
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            style={{ marginRight: '0.4rem' }}
+                          >
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                          </svg>
+                        ),
+                      }
                       : undefined
                   }
                 />

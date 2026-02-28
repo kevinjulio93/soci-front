@@ -197,7 +197,14 @@ export default function AdminDashboard() {
   const handleFilterChange = (field: keyof FilterState, value: string) => {
     setFilters(prev => {
       const updated = { ...prev, [field]: value }
-      
+
+      // Validar fechas
+      if (field === 'startDate' && value && prev.endDate && value > prev.endDate) {
+        updated.endDate = value
+      } else if (field === 'endDate' && value && prev.startDate && value < prev.startDate) {
+        updated.startDate = value
+      }
+
       // Limpiar filtros en cascada cuando se cambia un valor superior
       if (field === 'zoneCoordinator') {
         updated.fieldCoordinator = ''
@@ -208,7 +215,7 @@ export default function AdminDashboard() {
         updated.supervisor = ''
         setSupervisors([])
       }
-      
+
       return updated
     })
   }
@@ -238,10 +245,10 @@ export default function AdminDashboard() {
   return (
     <div className="dashboard-layout">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
+
       <div className="dashboard-layout__content">
         <div className="dashboard-layout__header">
-          <button 
+          <button
             className="dashboard-layout__menu-btn"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
@@ -263,21 +270,23 @@ export default function AdminDashboard() {
           {/* Filtros de Reporte */}
           <div className="report-filters-card">
             <h3 className="report-filters-card__title">Filtros de Reporte</h3>
-            
+
             <div className="report-filters-grid">
               {/* Fechas - siempre visibles */}
               <DateInput
                 label="Fecha Inicio"
                 required
                 value={filters.startDate}
+                max={filters.endDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
                 placeholder="dd/mm/yyyy"
               />
-              
+
               <DateInput
                 label="Fecha Fin"
                 required
                 value={filters.endDate}
+                min={filters.startDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
                 placeholder="dd/mm/yyyy"
               />
@@ -321,7 +330,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="report-filters-card__actions">
-              <button 
+              <button
                 className="btn btn--primary btn--with-icon"
                 onClick={handleGenerateReport}
               >
@@ -330,8 +339,8 @@ export default function AdminDashboard() {
                 </svg>
                 Generar Reporte
               </button>
-              
-              <button 
+
+              <button
                 className="btn btn--outline btn--with-icon"
                 onClick={handleExportExcel}
               >
@@ -348,7 +357,7 @@ export default function AdminDashboard() {
           ) : (
             <>
               <div className="stats-grid">
-                <StatCard 
+                <StatCard
                   icon={(
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -391,7 +400,7 @@ export default function AdminDashboard() {
                     </div>
                   ))}
                   {topSocializers.length === 0 && (
-                    <EmptyState 
+                    <EmptyState
                       title="No hay datos disponibles"
                       description="Aún no se han registrado socializadores"
                     />
