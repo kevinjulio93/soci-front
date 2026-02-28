@@ -34,6 +34,8 @@ export interface MetricsData {
   successful: number
   unsuccessful: number
   defensores: number
+  isVerified: number
+  isLinkedHouse: number
   dailyStats?: DailyStat[]
   rejectionStats?: RejectionStat[]
   loadedAt: string
@@ -45,6 +47,8 @@ export interface DailyStat {
   successful: number
   unsuccessful: number
   defensores: number
+  isVerified: number
+  isLinkedHouse: number
 }
 
 export interface RejectionStat {
@@ -58,7 +62,7 @@ export interface RejectionStat {
  */
 export const validateMetricsPermissions = (userRole: string): { canViewUnsuccessful: boolean; canViewDailyBreakdown: boolean } => {
   const roleLower = userRole.toLowerCase()
-  
+
   return {
     // Supervisor y socializer NO pueden ver no exitosas
     canViewUnsuccessful: roleLower !== 'supervisor' && roleLower !== 'socializer',
@@ -71,29 +75,51 @@ export const validateMetricsPermissions = (userRole: string): { canViewUnsuccess
  * Calcular estadísticas por día desde una lista de encuestas
  */
 const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
-  const dailyMap = new Map<string, { total: number; successful: number; unsuccessful: number; defensores: number }>()
-  
+  const dailyMap = new Map<string, {
+    total: number;
+    successful: number;
+    unsuccessful: number;
+    defensores: number;
+    isVerified: number;
+    isLinkedHouse: number;
+  }>()
+
   respondents.forEach(r => {
     const dateStr = r.createdAt.split('T')[0]
-    
+
     if (!dailyMap.has(dateStr)) {
-      dailyMap.set(dateStr, { total: 0, successful: 0, unsuccessful: 0, defensores: 0 })
+      dailyMap.set(dateStr, {
+        total: 0,
+        successful: 0,
+        unsuccessful: 0,
+        defensores: 0,
+        isVerified: 0,
+        isLinkedHouse: 0
+      })
     }
-    
+
     const stat = dailyMap.get(dateStr)!
     stat.total++
-    
+
     if (r.willingToRespond === true) {
       stat.successful++
     } else {
       stat.unsuccessful++
     }
-    
-    if ((r as any).isPatriaDefender === true) {
+
+    if (r.isPatriaDefender === true) {
       stat.defensores++
     }
+
+    if (r.isVerified === true) {
+      stat.isVerified++
+    }
+
+    if (r.isLinkedHouse === true) {
+      stat.isLinkedHouse++
+    }
   })
-  
+
   return Array.from(dailyMap.entries())
     .map(([date, stat]) => ({ date, ...stat }))
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -105,14 +131,14 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
 const calculateRejectionStats = (respondents: RespondentData[]): RejectionStat[] => {
   const unsuccessful = respondents.filter(r => r.willingToRespond === false)
   const stats = new Map<string, { label: string; count: number; value: string }>()
-  
+
   unsuccessful.forEach(r => {
     const reason = r.noResponseReason || r.rejectionReason
     if (reason) {
       const reasonObj = reason as unknown as { value?: string; label?: string }
       const key = reasonObj.value || 'other'
       const label = reasonObj.label || 'Otro motivo'
-      
+
       if (stats.has(key)) {
         stats.get(key)!.count++
       } else {
@@ -126,7 +152,7 @@ const calculateRejectionStats = (respondents: RespondentData[]): RejectionStat[]
       }
     }
   })
-  
+
   return Array.from(stats.values()).sort((a, b) => b.count - a.count)
 }
 
@@ -145,12 +171,14 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
     successful: 0,
     unsuccessful: 0,
     defensores: 0,
+    isVerified: 0,
+    isLinkedHouse: 0,
     rejectionStats: [],
     loadedAt: '',
   })
   const [isLoading, setIsLoading] = useState(false)
   const [showRejectionBreakdown, setShowRejectionBreakdown] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'successful' | 'unsuccessful' | 'defensores'>('all')
+  const [filter, setFilter] = useState<'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse'>('all')
 
   const userRole = user?.role?.role || ''
   const permissions = useMemo(() => validateMetricsPermissions(userRole), [userRole])
@@ -179,7 +207,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       //   resumen: { totalEncuestas, totalExitosas, totalNoExitosas, ... },
       //   report: [{ socializerName, totalSurveys, allSurveys: RespondentData[] }, ...]
       // }
-      
+
       const report = response.data?.report || []
 
       // Extraer todas las encuestas de todos los socializadores
@@ -191,7 +219,19 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
 
       // Calcular estadísticas
       const surveyStats = calculateSurveyStats(allSurveys)
-      const defensoresCount = allSurveys.filter(r => (r as any).isPatriaDefender === true).length
+
+      // Intentar obtener totales del backend, si no, calcularlos
+      const resumen = response.data?.resumen || response.resumen
+
+      const defensoresCount = resumen?.totalIsPatriaDefender ?? resumen?.totalDefensores ??
+        allSurveys.filter(r => r.isPatriaDefender === true).length
+
+      const verifiedCount = resumen?.totalIsVerified ??
+        allSurveys.filter(r => r.isVerified === true).length
+
+      const linkedHouseCount = resumen?.totalIsLinkedHouse ??
+        allSurveys.filter(r => r.isLinkedHouse === true).length
+
       const dailyStats = calculateDailyStats(allSurveys)
       const rejectionStats = calculateRejectionStats(allSurveys)
 
@@ -200,6 +240,8 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
         successful: surveyStats.successful,
         unsuccessful: surveyStats.unsuccessful,
         defensores: defensoresCount,
+        isVerified: verifiedCount,
+        isLinkedHouse: linkedHouseCount,
         dailyStats,
         rejectionStats,
         loadedAt: new Date().toISOString(),
@@ -234,13 +276,15 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       successful: 0,
       unsuccessful: 0,
       defensores: 0,
+      isVerified: 0,
+      isLinkedHouse: 0,
       rejectionStats: [],
       loadedAt: '',
     })
     setFilter('all')
   }
 
-  const handleMetricClick = (metricType: 'all' | 'successful' | 'unsuccessful' | 'defensores') => {
+  const handleMetricClick = (metricType: 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse') => {
     setFilter(metricType)
     if (metricType === 'unsuccessful') {
       setShowRejectionBreakdown(!showRejectionBreakdown)
@@ -360,15 +404,39 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
         )}
 
         <div
-          className={`stat-card ${filter === 'defensores' ? 'stat-card--active' : ''}`}
+          className={`stat-card stat-card--warning ${filter === 'defensores' ? 'stat-card--active' : ''}`}
           onClick={() => handleMetricClick('defensores')}
-          style={{ cursor: 'pointer', backgroundColor: '#fef3c7', borderColor: '#f59e0b' }}
+          style={{ cursor: 'pointer' }}
         >
           <div className="stat-card__icon">
             <span style={{ fontSize: '1.5rem' }}>⭐</span>
           </div>
           <div className="stat-card__value">{metrics.defensores}</div>
           <div className="stat-card__label">Defensores de la Patria</div>
+        </div>
+
+        <div
+          className={`stat-card stat-card--info ${filter === 'isVerified' ? 'stat-card--active' : ''}`}
+          onClick={() => handleMetricClick('isVerified')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="stat-card__icon">
+            <span style={{ fontSize: '1.5rem' }}>✅</span>
+          </div>
+          <div className="stat-card__value">{metrics.isVerified}</div>
+          <div className="stat-card__label">Verificadas</div>
+        </div>
+
+        <div
+          className={`stat-card stat-card--purple ${filter === 'isLinkedHouse' ? 'stat-card--active' : ''}`}
+          onClick={() => handleMetricClick('isLinkedHouse')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="stat-card__icon">
+            <span style={{ fontSize: '1.5rem' }}>🏠</span>
+          </div>
+          <div className="stat-card__value">{metrics.isLinkedHouse}</div>
+          <div className="stat-card__label">VINCULACIONES EXTRAS</div>
         </div>
       </div>
 

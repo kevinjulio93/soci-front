@@ -53,6 +53,9 @@ type UpdateUserPayload = {
     fullName?: string
     phone?: string
     idNumber?: string
+    supervisor?: string
+    fieldCoordinator?: string
+    zoneCoordinator?: string
   }
 }
 
@@ -437,9 +440,9 @@ class ApiService {
     if (!audioBlob || audioBlob.size === 0) {
       throw new Error('El audio está vacío o no se pudo grabar correctamente')
     }
-    
+
     const formData = new FormData()
-    
+
     // Determinar la extensión del archivo basado en el tipo MIME
     let extension: string = FILE_CONFIG.AUDIO_EXTENSIONS.MP3
     if (audioBlob.type.includes('webm')) {
@@ -449,10 +452,10 @@ class ApiService {
     } else if (audioBlob.type.includes('mpeg') || audioBlob.type.includes('mp3')) {
       extension = FILE_CONFIG.AUDIO_EXTENSIONS.MP3
     }
-    
+
     formData.append('audio', audioBlob, `recording-${respondentId}-${Date.now()}.${extension}`)
     formData.append('respondentId', respondentId)
-    
+
     const result = await this.requestFormData<{ message: string; audioUrl: string }>(API_ENDPOINTS.UPLOAD_AUDIO, formData)
     return new UploadAudioResponse(result.message, { audioUrl: result.audioUrl })
   }
@@ -471,10 +474,10 @@ class ApiService {
       url += `&search=${encodeURIComponent(search.trim())}`
     }
     const response = await this.get<any>(url)
-    
+
     // La respuesta tiene estructura: { data: [], pagination: { page, perPage, total, totalPages } }
     const socializers = response.data.map((item: any) => new SocializerData(item))
-    
+
     return new GetSocializersResponse(
       response.pagination.page,
       response.pagination.perPage,
@@ -486,13 +489,13 @@ class ApiService {
 
   async getUser(id: string): Promise<GetSocializerResponse> {
     const response = await this.get<any>(API_ENDPOINTS.USER_BY_ID(id))
-    
+
     return new GetSocializerResponse(new SocializerData(response.data))
   }
 
   async updateUser(userId: string, data: UpdateUserPayload): Promise<UpdateSocializerResponse> {
     const response = await this.put<any>(API_ENDPOINTS.USER_BY_ID(userId), data)
-    
+
     return new UpdateSocializerResponse(response.message, new SocializerData(response.data))
   }
 
@@ -543,7 +546,7 @@ class ApiService {
     }
 
     const response = await this.post<any>(API_ENDPOINTS.USERS_CREATE_WITH_PROFILE, requestBody)
-    
+
     // The create endpoint returns { data: { profile: {..., user: {...}}, userId } }
     // Normalize to the structure SocializerData expects (list/hierarchy format)
     const profileData = response.data?.profile || response.data
@@ -552,15 +555,15 @@ class ApiService {
 
   async deleteSocializer(id: string): Promise<DeleteSocializerResponse> {
     const response = await this.delete<any>(API_ENDPOINTS.SOCIALIZER_BY_ID(id))
-    
+
     return new DeleteSocializerResponse(response.message)
   }
 
   async getRoles(): Promise<GetRolesResponse> {
     const response = await this.get<any>(API_ENDPOINTS.ROLES)
-    
+
     const roles = response.data.map((item: any) => new RoleData(item))
-    
+
     return new GetRolesResponse(roles)
   }
 
@@ -572,12 +575,12 @@ class ApiService {
   }>> {
     // Obtener todos los socializers (con paginación grande para obtener todos)
     const response = await this.get<any>(`${API_ENDPOINTS.SOCIALIZERS}?page=1&perPage=1000`)
-    
+
     // Filtrar solo los que tienen rol de coordinador
     const coordinators = (response.data || [])
       .filter((item: any) => {
-        const roleString = typeof item.user?.role === 'string' 
-          ? item.user.role 
+        const roleString = typeof item.user?.role === 'string'
+          ? item.user.role
           : item.user?.role?.role || ''
         return roleString.toLowerCase() === 'coordinador' || roleString.toLowerCase() === 'coordinator'
       })
@@ -587,7 +590,7 @@ class ApiService {
         idNumber: item.idNumber,
         email: item.user?.email || ''
       }))
-    
+
     return coordinators
   }
 
@@ -622,7 +625,7 @@ class ApiService {
     replaceExisting?: boolean;
   }): Promise<{ success: boolean; message: string; data?: any }> {
     const response = await this.post<any>(API_ENDPOINTS.COORDINATOR_ASSIGNMENTS_BATCH, data)
-    
+
     return {
       success: response.success ?? true,
       message: response.message ?? 'Supervisor asignado correctamente',
@@ -636,7 +639,7 @@ class ApiService {
     deleteRecords?: boolean;
   }): Promise<{ success: boolean; message: string }> {
     const response = await this.post<any>(API_ENDPOINTS.COORDINATOR_ASSIGNMENTS_BATCH_UNASSIGN, data)
-    
+
     return {
       success: response.success ?? true,
       message: response.message ?? 'Supervisor desasignado correctamente',
@@ -645,7 +648,7 @@ class ApiService {
 
   async updateLocation(data: { userId: string; latitude: number; longitude: number; accuracy: number }): Promise<{ success: boolean; message: string }> {
     const response = await this.post<any>(API_ENDPOINTS.LOCATIONS, data)
-    
+
     return {
       success: response.success ?? true,
       message: response.message ?? 'Ubicación actualizada correctamente',
@@ -654,10 +657,10 @@ class ApiService {
 
   async getLatestLocation(userId: string): Promise<{ lat: number; long: number; timestamp: string; accuracy?: number }> {
     const response = await this.get<any>(API_ENDPOINTS.LOCATION_LATEST(userId))
-    
+
     // La API devuelve coordinates en formato [longitude, latitude] (GeoJSON format)
     const [longitude, latitude] = response.data.location.coordinates
-    
+
     return {
       lat: latitude,
       long: longitude,
@@ -672,13 +675,13 @@ class ApiService {
     socializerId?: string
   ): Promise<any> {
     let url = `${API_ENDPOINTS.RESPONDENTS_REPORTS_BY_SOCIALIZER_DATE}?startDate=${startDate}&endDate=${endDate}`
-    
+
     if (socializerId) {
       url += `&socializerId=${socializerId}`
     }
 
     const response = await this.get<any>(url)
-    
+
     return response
   }
 
@@ -690,7 +693,7 @@ class ApiService {
     perPage: number = 10000
   ): Promise<any> {
     const params = new URLSearchParams()
-    
+
     if (startDate) params.append('startDate', startDate)
     if (endDate) params.append('endDate', endDate)
     if (socializerId) params.append('socializerId', socializerId)
@@ -700,7 +703,7 @@ class ApiService {
     const url = `${API_ENDPOINTS.RESPONDENTS_REPORTS_COMPLETE}?${params.toString()}`
 
     const response = await this.get<any>(url)
-    
+
     return response
   }
 
@@ -710,15 +713,15 @@ class ApiService {
    */
   async getDashboard002Report(params: Dashboard002Params): Promise<Dashboard002Response> {
     const queryParams = new URLSearchParams()
-    
+
     // Parámetros de paginación
     if (params.page) queryParams.append('page', params.page.toString())
     if (params.perPage) queryParams.append('perPage', params.perPage.toString())
-    
+
     // Parámetros de fecha
     if (params.startDate) queryParams.append('startDate', params.startDate)
     if (params.endDate) queryParams.append('endDate', params.endDate)
-    
+
     // Parámetros de búsqueda y estado
     if (params.q) queryParams.append('q', params.q)
     if (params.surveyStatus) queryParams.append('surveyStatus', params.surveyStatus)
@@ -726,25 +729,25 @@ class ApiService {
     if (params.isPatriaDefender !== undefined) queryParams.append('isPatriaDefender', params.isPatriaDefender.toString())
     if (params.isVerified !== undefined) queryParams.append('isVerified', params.isVerified.toString())
     if (params.isLinkedHouse !== undefined) queryParams.append('isLinkedHouse', params.isLinkedHouse.toString())
-    
+
     // Parámetros de ubicación
     if (params.department) queryParams.append('department', params.department)
     if (params.city) queryParams.append('city', params.city)
     if (params.neighborhood) queryParams.append('neighborhood', params.neighborhood)
-    
+
     // Parámetros demográficos
     if (params.gender) queryParams.append('gender', params.gender)
     if (params.ageRange) queryParams.append('ageRange', params.ageRange)
     if (params.stratum) queryParams.append('stratum', params.stratum)
     if (params.idType) queryParams.append('idType', params.idType)
-    
+
     // Parámetros de ordenamiento
     if (params.sortBy) queryParams.append('sortBy', params.sortBy)
     if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder)
-    
+
     const url = `${API_ENDPOINTS.DASHBOARD_002}?${queryParams.toString()}`
     const response = await this.get<Dashboard002Response>(url)
-    
+
     return response
   }
 

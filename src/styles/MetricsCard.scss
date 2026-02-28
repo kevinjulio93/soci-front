@@ -137,6 +137,60 @@
     }
   }
 
+  &--warning {
+    background-color: #fef3c7;
+    border-color: #f59e0b;
+
+    &.stat-card--active {
+      background-color: #fde68a;
+      border-color: #f59e0b;
+    }
+
+    .stat-card__value {
+      color: #92400e;
+    }
+
+    .stat-card__label {
+      color: #b45309;
+    }
+  }
+
+  &--info {
+    border-color: #0d9488;
+    background: linear-gradient(135deg, #ccfbf1 0%, #f0fdfa 100%);
+
+    &.stat-card--active {
+      background-color: #f0fdfa;
+      border-color: #0d9488;
+    }
+
+    .stat-card__value {
+      color: #0d9488;
+    }
+
+    .stat-card__label {
+      color: #0f766e;
+    }
+  }
+
+  &--purple {
+    border-color: #7c3aed;
+    background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);
+
+    &.stat-card--active {
+      background-color: #f5f3ff;
+      border-color: #7c3aed;
+    }
+
+    .stat-card__value {
+      color: #7c3aed;
+    }
+
+    .stat-card__label {
+      color: #6d28d9;
+    }
+  }
+
   &__icon {
     display: flex;
     align-items: center;

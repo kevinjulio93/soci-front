@@ -100,7 +100,7 @@ export function SocializerForm({
   const loadHierarchyOptions = useCallback(async (role: string) => {
     try {
       const normalizedRole = normalizeRoleValue(role)
-      
+
       // Si no hay usuario logueado, no cargar
       if (!user?.id) return
 
@@ -153,18 +153,18 @@ export function SocializerForm({
       const response = await apiService.getRoles()
       // Usar el método helper de la clase GetRolesResponse
       let activeRoles = response.getActiveRoles()
-      
+
       // Filtrar roles según jerarquía usando la configuración
       const hierarchyConfig = getHierarchyConfig(userRole)
-      
+
       // Usar creatableRoles de la configuración para filtrar
       if (hierarchyConfig.creatableRoles && hierarchyConfig.creatableRoles.length > 0) {
-        activeRoles = activeRoles.filter(role => 
+        activeRoles = activeRoles.filter(role =>
           hierarchyConfig.creatableRoles!.includes(role.role.toLowerCase())
         )
       }
       // Si no tiene creatableRoles definidos, no puede crear nada (como readonly)
-      
+
       // Traducir roles sin filtrar ni limitar la cantidad
       const translatedRoles = activeRoles.map(role => ({
         _id: role._id,
@@ -172,7 +172,7 @@ export function SocializerForm({
         originalRole: role.role,
         status: role.status
       }))
-      
+
       // Ordenar roles en el orden requerido: Administrador, Supervisor, Socializador, Solo Lectura
       translatedRoles.sort((a, b) => {
         const indexA = ROLE_ORDER.indexOf(a.role)
@@ -182,7 +182,7 @@ export function SocializerForm({
         if (indexB === -1) return -1
         return indexA - indexB
       })
-      
+
       setRoles(translatedRoles)
     } catch {
       // Error silencioso
@@ -238,7 +238,7 @@ export function SocializerForm({
   useEffect(() => {
     if (!isEditMode && !initialData && userRole && user?.profile?._id) {
       const autoSelectField = getAutoSelectField(userRole)
-      
+
       if (autoSelectField === 'assignedZoneCoordinator') {
         setValue('assignedZoneCoordinator', user.profile._id)
       } else if (autoSelectField === 'assignedFieldCoordinator') {
@@ -264,7 +264,7 @@ export function SocializerForm({
       const role = roles.find(r => r._id === watchedRoleId)
       const roleValue = role?.originalRole || role?.role || ''
       setSelectedRole(roleValue)
-      
+
       // Limpiar errores de campos de jerarquía cuando cambia el rol
       // para evitar que campos del rol anterior queden con errores
       clearErrors(['assignedSupervisor', 'assignedFieldCoordinator', 'assignedZoneCoordinator'])
@@ -279,7 +279,7 @@ export function SocializerForm({
   useEffect(() => {
     if (!isEditMode && !initialData && userRole === 'supervisor' && roles.length > 0) {
       // Supervisor solo puede crear socializadores
-      const socializerRole = roles.find(r => 
+      const socializerRole = roles.find(r =>
         r.originalRole === 'socializer' || r.originalRole === 'socializador'
       )
       if (socializerRole) {
@@ -300,14 +300,14 @@ export function SocializerForm({
   useEffect(() => {
     // Lista de TODOS los campos de jerarquía posibles
     const allHierarchyFields = ['assignedSupervisor', 'assignedFieldCoordinator', 'assignedZoneCoordinator']
-    
+
     // Obtener campos que deben estar activos
     const fields = isEditMode && editHierarchyField
       ? [editHierarchyField]
       : visibleHierarchyFields
-    
+
     const activeFieldKeys = fields.map(f => f.fieldKey)
-    
+
     // Desregistrar campos que NO están activos para este rol
     allHierarchyFields.forEach((fieldKey) => {
       if (!activeFieldKeys.includes(fieldKey)) {
@@ -315,7 +315,7 @@ export function SocializerForm({
         setValue(fieldKey as any, '')
       }
     })
-    
+
     // Limpiar errores de todos los campos
     clearErrors(allHierarchyFields as any)
 
@@ -335,7 +335,7 @@ export function SocializerForm({
     const roleToCheck = normalizeRoleValue(
       selectedRoleObj?.originalRole || selectedRoleObj?.role || ''
     )
-    
+
     // Agregar automáticamente el campo de coordinador según el rol del usuario logueado
     if (userRole === 'supervisor') {
       // El supervisor crea socializadores y debe asignarse automáticamente
@@ -353,7 +353,7 @@ export function SocializerForm({
         payload.assignedZoneCoordinator = user?.profile?._id
       }
     }
-    
+
     // Mapear el campo de asignación según el rol
     if (roleToCheck === 'socializer' || roleToCheck === 'socializador') {
       // Socializador -> asignar supervisor
@@ -374,13 +374,13 @@ export function SocializerForm({
         delete payload.assignedZoneCoordinator
       }
     }
-    
+
     // Eliminar campos no usados
     delete payload.coordinator
     delete payload.assignedFieldCoordinator
     delete payload.assignedSupervisor
     delete payload.assignedZoneCoordinator
-    
+
     onSubmit(payload)
   }
 
@@ -440,10 +440,6 @@ export function SocializerForm({
             error={errors.idNumber?.message}
             {...register('idNumber', {
               required: 'El número de identificación es obligatorio',
-              pattern: {
-                value: /^[0-9]+$/,
-                message: 'Solo se permiten números',
-              },
             })}
           />
 
@@ -548,15 +544,15 @@ export function SocializerForm({
                 options={
                   editHierarchyField.dataSourceField === 'zoneCoordinators'
                     ? zoneCoordinators.map((item) => ({
-                        value: item._id,
-                        label: `${getCoordinatorFullName(item)} - ${getCoordinatorEmail(item)}`,
-                      }))
+                      value: item._id,
+                      label: `${getCoordinatorFullName(item)} - ${getCoordinatorEmail(item)}`,
+                    }))
                     : editHierarchyField.dataSourceField === 'fieldCoordinators'
-                    ? fieldCoordinators.map((item) => ({
+                      ? fieldCoordinators.map((item) => ({
                         value: item._id,
                         label: `${getCoordinatorFullName(item)} - ${getCoordinatorEmail(item)}`,
                       }))
-                    : coordinators.map((item) => ({
+                      : coordinators.map((item) => ({
                         value: item._id,
                         label: `${getCoordinatorFullName(item)} - ${getCoordinatorEmail(item)}`,
                       }))
@@ -576,11 +572,11 @@ export function SocializerForm({
             // En modo creación: mostrar campos según la configuración
             visibleHierarchyFields.map((hierarchyField) => {
               const isAutoSelected = getAutoSelectField(userRole) === hierarchyField.fieldKey
-              const dataSource = hierarchyField.dataSourceField === 'zoneCoordinators' 
-                ? zoneCoordinators 
-                : hierarchyField.dataSourceField === 'fieldCoordinators' 
-                ? fieldCoordinators 
-                : coordinators
+              const dataSource = hierarchyField.dataSourceField === 'zoneCoordinators'
+                ? zoneCoordinators
+                : hierarchyField.dataSourceField === 'fieldCoordinators'
+                  ? fieldCoordinators
+                  : coordinators
 
               return (
                 <div key={hierarchyField.fieldKey}>

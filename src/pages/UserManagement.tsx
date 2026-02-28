@@ -17,11 +17,11 @@ interface EditUserData {
   _id: string // User ID
   email: string
   role:
-    | {
-        _id: string
-        role: string
-      }
-    | string
+  | {
+    _id: string
+    role: string
+  }
+  | string
   status: string
   profile: {
     _id: string
@@ -158,7 +158,7 @@ export function UserManagement() {
   const navigate = useNavigate()
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
-  
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [users, setUsers] = useState<Socializer[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -178,7 +178,7 @@ export function UserManagement() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [itemsPerPage, setItemsPerPage] = useState(PAGE_SIZE_OPTIONS[0])
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  
+
   // Determinar si estamos en modo formulario
   const isNewMode = location.pathname === ROUTES.ADMIN_SOCIALIZERS_NEW
   const isEditMode = location.pathname.includes('/edit/')
@@ -195,10 +195,10 @@ export function UserManagement() {
       setIsLoading(true)
       setError(null)
       const response = await apiService.getUsersHierarchy(page, perPage || itemsPerPage, search)
-      
+
       // Transformar SocializerData[] a Socializer[] para que funcione con la tabla
       const transformedData: Socializer[] = response.data.map((item) => mapToTableUser(item))
-      
+
       setUsers(transformedData)
       setTotalPages(response.totalPages)
       setTotalItems(response.totalItems)
@@ -218,13 +218,13 @@ export function UserManagement() {
       setFormError(null)
       const response = await apiService.getUser(userId)
       const userData = response.data
-      
+
       // SocializerData ya procesó la estructura:
       // _id: profileId
       // user: { _id: userId, email, role, ... }
       // profile: Coordinador padre (ya viene de profile.profile del API)
       const editData: EditUserData = buildEditUserData(userData)
-      
+
       setEditingUser(editData)
     } catch (err) {
       setFormError('Error al cargar los datos del usuario')
@@ -258,7 +258,7 @@ export function UserManagement() {
     if (!showForm) {
       loadUsers(currentPage, debouncedSearch)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, showForm, loadUsers])
 
   // Cargar usuario cuando estamos en modo edición
@@ -275,7 +275,7 @@ export function UserManagement() {
   }, [id, isEditMode, loadUserForEdit])
 
   // Manejar creación/edición
-  const handleSubmit = async (data: SocializerFormData) => {
+  const handleSubmit = async (data: any) => {
     try {
       setFormLoading(true)
       setFormError(null)
@@ -290,6 +290,9 @@ export function UserManagement() {
             fullName?: string
             phone?: string
             idNumber?: string
+            supervisor?: string
+            fieldCoordinator?: string
+            zoneCoordinator?: string
           }
         } = {
           email: data.email,
@@ -297,15 +300,35 @@ export function UserManagement() {
           profileData: {
             fullName: data.fullName,
             phone: data.phone,
-            idNumber: data.idNumber
+            idNumber: data.idNumber,
           }
         }
-        
+
+        // Determinar el rol que se está editando para asignar el jefe correcto en profileData
+        const roleBeingEdited = getRoleName(editingUser.role).toLowerCase()
+
+        if (roleBeingEdited === 'socializer' || roleBeingEdited === 'socializador') {
+          const supervisorId = data.supervisorId || data.assignedSupervisor || data.coordinator
+          if (supervisorId && updatePayload.profileData) {
+            updatePayload.profileData.supervisor = supervisorId
+          }
+        } else if (roleBeingEdited === 'supervisor') {
+          const fieldCoordinatorId = data.fieldCoordinatorId || data.assignedFieldCoordinator
+          if (fieldCoordinatorId && updatePayload.profileData) {
+            updatePayload.profileData.fieldCoordinator = fieldCoordinatorId
+          }
+        } else if (roleBeingEdited === 'fieldcoordinator' || roleBeingEdited === 'coordinador de campo') {
+          const zoneCoordinatorId = data.zoneCoordinatorId || data.assignedZoneCoordinator
+          if (zoneCoordinatorId && updatePayload.profileData) {
+            updatePayload.profileData.zoneCoordinator = zoneCoordinatorId
+          }
+        }
+
         // Solo incluir contraseña si se proporcionó
         if (data.password && data.password.trim() !== '') {
           updatePayload.password = data.password
         }
-        
+
         await apiService.updateUser(editingUser._id, updatePayload)
         notificationService.success(MESSAGES.USER_UPDATE_SUCCESS)
       } else {
@@ -319,11 +342,11 @@ export function UserManagement() {
     } catch (err) {
       // Extraer mensaje del error de API (formato: { message, code })
       const apiErr = err as { message?: string; code?: string; response?: { data?: { message?: string } } }
-      const errorMessage = 
+      const errorMessage =
         apiErr?.message ||
-        apiErr?.response?.data?.message || 
+        apiErr?.response?.data?.message ||
         MESSAGES.USER_SAVE_ERROR
-      
+
       // No duplicar notificación si ya tenemos mensaje específico del backend
       if (!apiErr?.message) {
         notificationService.handleApiError(err, MESSAGES.USER_SAVE_ERROR)
@@ -410,7 +433,7 @@ export function UserManagement() {
     const parentCoordinatorProfile = userProfile.profile as ParentCoordinatorProfile | undefined
     const roleId = getRoleId(editingUser.role)
     const roleName = getRoleName(editingUser.role)
-    
+
     // Mapear el coordinador padre al campo correcto del formulario según el rol
     const parentFormField = mapParentCoordinatorToFormField(roleName, parentCoordinatorProfile)
 
@@ -429,10 +452,10 @@ export function UserManagement() {
   return (
     <div className="dashboard-layout">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
+
       <div className="dashboard-layout__content">
         <div className="dashboard-layout__header">
-          <button 
+          <button
             className="dashboard-layout__menu-btn"
             onClick={() => setSidebarOpen(!sidebarOpen)}
             aria-label="Toggle menu"
