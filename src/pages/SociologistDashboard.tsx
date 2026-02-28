@@ -19,7 +19,7 @@ export default function SociologistDashboard() {
   // Tracking de geolocalización para socializadores
   const { isTracking, error: geoError, permissionState } = useGeolocationTracking({
     enabled: true,
-    intervalMs: 30000, // 30 segundos para pruebas
+    intervalMs: 300000, // 5 minutos
   })  // Hook centralizado para logout
   const handleLogout = useLogout()
 

@@ -33,7 +33,7 @@ export default function SurveysList() {
   const loadSurveys = async (page: number) => {
     try {
       setIsLoading(true)
-      const response = await apiService.getRespondents(page, 10)
+      const response = await apiService.getRespondents(page, 50)
       setSurveys(response.data || [])
       setTotalPages(response.totalPages || 1)
       setTotalRecords(response.totalItems || 0)
@@ -77,9 +77,9 @@ export default function SurveysList() {
       setIsDeleting(true)
       await apiService.deleteRespondent(respondentToDelete.id)
       notificationService.success(MESSAGES.RESPONDENT_DELETE_SUCCESS)
-      
+
       await loadSurveys(currentPage)
-      
+
       setShowDeleteModal(false)
       setRespondentToDelete(null)
     } catch (error) {
@@ -111,10 +111,10 @@ export default function SurveysList() {
   return (
     <div className="dashboard-layout">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
+
       <div className="dashboard-layout__content">
         <div className="dashboard-layout__header">
-          <button 
+          <button
             className="dashboard-layout__menu-btn"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
@@ -127,7 +127,7 @@ export default function SurveysList() {
 
         <div className="dashboard-layout__body">
           {/* Métricas - Visible para todos los roles */}
-          <MetricsCard 
+          <MetricsCard
             viewType={userRole as 'admin' | 'coordinador_zona' | 'coordinador_campo' | 'supervisor' | 'socializer'}
             showDailyView={false}
             autoLoad={true}
@@ -151,7 +151,7 @@ export default function SurveysList() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={totalRecords}
-                itemsPerPage={10}
+                itemsPerPage={50}
                 onPageChange={handlePageChange}
                 isLoading={isLoading}
                 emptyStateIcon={
