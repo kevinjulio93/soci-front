@@ -1,33 +1,34 @@
 /**
  * ReportsMap - Mapa de ubicaciones de encuestas
- * Muestra todas las encuestas en un mapa con marcadores de colores según el estado
- * Optimizado para manejar miles de registros con renderizado condicional
+ * Usa Leaflet (gratuito) + Supercluster (clustering ultrarrápido)
+ * Optimizado para manejar miles de registros
  */
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import * as L from 'leaflet'
+import Supercluster from 'supercluster'
 import { Sidebar, DateInput } from '../components'
 import { apiService } from '../services/api.service'
-import { ROUTES, EXTERNAL_URLS, MESSAGES, MAP_CONFIG } from '../constants'
+import { ROUTES, MESSAGES } from '../constants'
 import { notificationService } from '../services/notification.service'
 import { useAuth } from '../contexts/AuthContext'
 import {
   filterRespondentsWithLocation,
   calculateMapCenter,
   calculateSurveyStats,
-  extractCoordinates,
   formatDateES
 } from '../utils'
 import { getTodayISO } from '../utils/dateHelpers'
 import { RespondentData } from '../models/ApiResponses'
 import 'leaflet/dist/leaflet.css'
-import 'leaflet.markercluster'
-import 'leaflet.markercluster/dist/MarkerCluster.css'
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import '../styles/Dashboard.scss'
 import '../styles/MetricsCard.scss'
+
+// Tile provider gratuito de alta calidad (CartoDB Voyager - estilo similar a Google Maps)
+const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
 
 const escapeHtml = (value: string) =>
   value
@@ -73,184 +74,186 @@ const buildPopupHtml = (respondent: RespondentData, isSuccessful: boolean, reaso
   `.trim()
 }
 
-function ClusteredMarkers({
-  respondents,
-  getAdjustedPosition,
-  successfulIcon,
-  unsuccessfulIcon,
-}: {
-  respondents: RespondentData[]
-  getAdjustedPosition: (respondent: RespondentData) => [number, number]
-  successfulIcon: L.Icon
-  unsuccessfulIcon: L.Icon
-}) {
-  const map = useMap()
-  const clusterGroupRef = useRef<L.LayerGroup | null>(null)
+// Crear iconos de cluster como DivIcon de Leaflet
+function createClusterIcon(count: number): L.DivIcon {
+  let size = 36
+  let bgColor = 'rgba(59, 130, 246, 0.85)'
 
-  useEffect(() => {
-    if (!clusterGroupRef.current) {
-      clusterGroupRef.current = L.markerClusterGroup({
-        chunkedLoading: true,
-        removeOutsideVisibleBounds: true,
-        showCoverageOnHover: false,
-        maxClusterRadius: 50,
-      })
-      map.addLayer(clusterGroupRef.current)
-    }
+  if (count > 10) { size = 44; bgColor = 'rgba(234, 179, 8, 0.85)'; }
+  if (count > 50) { size = 52; bgColor = 'rgba(239, 68, 68, 0.85)'; }
+  if (count > 200) { size = 60; bgColor = 'rgba(139, 92, 246, 0.85)'; }
 
-    const clusterGroup = clusterGroupRef.current
-    clusterGroup.clearLayers()
-
-    respondents.forEach((respondent) => {
-      const isSuccessful = respondent.willingToRespond === true
-      const icon = isSuccessful ? successfulIcon : unsuccessfulIcon
-      const adjustedPosition = getAdjustedPosition(respondent)
-      const reasonLabel = getReasonLabel(respondent)
-      const tooltipText = isSuccessful ? (respondent.fullName || 'Encuesta exitosa') : reasonLabel
-
-      const marker = L.marker(adjustedPosition, { icon })
-      marker.bindTooltip(tooltipText, { direction: 'top', offset: [0, -10], opacity: 0.9 })
-      marker.bindPopup(buildPopupHtml(respondent, isSuccessful, reasonLabel))
-      clusterGroup.addLayer(marker)
-    })
-
-    return () => {
-      if (clusterGroupRef.current) {
-        map.removeLayer(clusterGroupRef.current)
-        clusterGroupRef.current = null
-      }
-    }
-  }, [map, respondents, getAdjustedPosition, successfulIcon, unsuccessfulIcon])
-
-  return null
+  return L.divIcon({
+    html: `<div style="
+      width:${size}px; height:${size}px; border-radius:50%;
+      background:${bgColor}; color:#fff; display:flex;
+      align-items:center; justify-content:center;
+      font-weight:bold; font-size:13px;
+      border:3px solid rgba(255,255,255,0.9);
+      box-shadow:0 3px 8px rgba(0,0,0,0.3);
+      cursor:pointer;
+    ">${count}</div>`,
+    className: 'supercluster-marker',
+    iconSize: L.point(size, size),
+    iconAnchor: L.point(size / 2, size / 2),
+  })
 }
 
-// Componente para renderizar solo marcadores visibles en el viewport
-function VisibleMarkers({
+// Crear icono individual de pin
+function createPinIcon(isSuccessful: boolean): L.DivIcon {
+  const color = isSuccessful ? '#3b82f6' : '#ef4444'
+  const glyph = isSuccessful ? '✓' : '✗'
+
+  return L.divIcon({
+    html: `<div style="
+      width:28px; height:28px; border-radius:50% 50% 50% 0;
+      background:${color}; transform:rotate(-45deg);
+      border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.3);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+    "><span style="transform:rotate(45deg); color:#fff; font-size:14px; font-weight:bold;">${glyph}</span></div>`,
+    className: 'supercluster-pin',
+    iconSize: L.point(28, 40),
+    iconAnchor: L.point(14, 40),
+    popupAnchor: [0, -40],
+  })
+}
+
+// Componente que renderiza clusters y marcadores con Supercluster
+function SuperclusterLayer({
   respondents,
-  getAdjustedPosition,
-  successfulIcon,
-  unsuccessfulIcon
 }: {
   respondents: RespondentData[]
-  getAdjustedPosition: (respondent: RespondentData) => [number, number]
-  successfulIcon: L.Icon
-  unsuccessfulIcon: L.Icon
 }) {
   const map = useMap()
-  const [visibleMarkers, setVisibleMarkers] = useState<RespondentData[]>([])
+  const [clusters, setClusters] = useState<any[]>([])
+  const markersLayerRef = useRef<L.LayerGroup>(L.layerGroup())
 
-  // Función para calcular marcadores visibles
-  const updateVisibleMarkers = useCallback(() => {
-    const bounds = map.getBounds()
-
-    // Filtrar solo marcadores dentro del viewport con un margen pequeño
-    const padding = 0.05 // 5% de margen para precargar
-    const latPadding = (bounds.getNorth() - bounds.getSouth()) * padding
-    const lngPadding = (bounds.getEast() - bounds.getWest()) * padding
-
-    const visible = respondents.filter((r) => {
-      const [lat, lng] = extractCoordinates(r)
-      return lat >= bounds.getSouth() - latPadding &&
-        lat <= bounds.getNorth() + latPadding &&
-        lng >= bounds.getWest() - lngPadding &&
-        lng <= bounds.getEast() + lngPadding
+  const supercluster = useMemo(() => {
+    const sc = new Supercluster({
+      radius: 60,
+      maxZoom: 18,
     })
 
-    // Limitar siempre el numero de marcadores visibles para evitar consumo de memoria en mobile
-    setVisibleMarkers(visible.slice(0, 300))
-  }, [respondents, map])
+    const points = respondents.map(r => ({
+      type: 'Feature' as const,
+      properties: {
+        cluster: false,
+        respondentId: r._id,
+        isSuccessful: r.willingToRespond,
+        fullName: r.fullName,
+        isVerified: r.isVerified,
+        isLinkedHouse: r.isLinkedHouse,
+        noResponseReason: r.noResponseReason,
+        rejectionReason: r.rejectionReason,
+        createdAt: r.createdAt,
+        neighborhood: r.neighborhood,
+        willingToRespond: r.willingToRespond,
+      },
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [
+          r.location?.coordinates[0] || 0,
+          r.location?.coordinates[1] || 0
+        ]
+      }
+    }))
 
-  // Escuchar eventos del mapa
+    sc.load(points)
+    return sc
+  }, [respondents])
+
+  const updateClusters = useCallback(() => {
+    const mapBounds = map.getBounds()
+    const mapZoom = Math.round(map.getZoom())
+
+    const bounds: [number, number, number, number] = [
+      mapBounds.getWest(),
+      mapBounds.getSouth(),
+      mapBounds.getEast(),
+      mapBounds.getNorth()
+    ]
+
+    const newClusters = supercluster.getClusters(bounds, mapZoom)
+    setClusters(newClusters)
+  }, [map, supercluster])
+
+  // Escuchar cambios de zoom y movimiento
   useMapEvents({
-    moveend: updateVisibleMarkers,
-    zoomend: updateVisibleMarkers,
+    moveend: updateClusters,
+    zoomend: updateClusters,
   })
 
-  // Actualizar en el primer render y cuando cambien los respondents
+  // Primera carga
   useEffect(() => {
-    updateVisibleMarkers()
-  }, [respondents, updateVisibleMarkers])
+    updateClusters()
+  }, [updateClusters])
 
-  return (
-    <>
-      <ClusteredMarkers
-        respondents={visibleMarkers}
-        getAdjustedPosition={getAdjustedPosition}
-        successfulIcon={successfulIcon}
-        unsuccessfulIcon={unsuccessfulIcon}
-      />
-      {/* Indicador de marcadores visibles */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        right: '10px',
-        background: 'rgba(255, 255, 255, 0.9)',
-        padding: '8px 12px',
-        borderRadius: '4px',
-        fontSize: '12px',
-        zIndex: 1000,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        Mostrando {visibleMarkers.length} de {respondents.length} marcadores
-        {respondents.length > visibleMarkers.length && (
-          <> - Haz zoom o mueve el mapa para ver otros</>
-        )}
-      </div>
-    </>
-  )
-}
+  // Renderizar marcadores en el mapa
+  useEffect(() => {
+    const layer = markersLayerRef.current
+    layer.clearLayers()
 
-// Componente para ajustar los límites del mapa
-function MapBounds({ respondents }: { respondents: RespondentData[] }) {
-  const map = useMap()
+    clusters.forEach(cluster => {
+      const [lng, lat] = cluster.geometry.coordinates
+      const isCluster = cluster.properties.cluster
 
+      if (isCluster) {
+        const count = cluster.properties.point_count
+        const icon = createClusterIcon(count)
+        const marker = L.marker([lat, lng], { icon })
+
+        marker.on('click', () => {
+          const expansionZoom = supercluster.getClusterExpansionZoom(cluster.id)
+          map.flyTo([lat, lng], expansionZoom, { duration: 0.5 })
+        })
+
+        layer.addLayer(marker)
+      } else {
+        const isSuccessful = cluster.properties.isSuccessful === true
+        const icon = createPinIcon(isSuccessful)
+        const marker = L.marker([lat, lng], { icon })
+
+        // Crear respondent temporal para popup
+        const r = respondents.find(resp => resp._id === cluster.properties.respondentId)
+        if (r) {
+          const reasonLabel = getReasonLabel(r)
+          const tooltipText = isSuccessful ? (r.fullName || 'Encuesta exitosa') : reasonLabel
+          marker.bindTooltip(tooltipText, { direction: 'top', offset: [0, -40], opacity: 0.9 })
+          marker.bindPopup(buildPopupHtml(r, isSuccessful, reasonLabel), { maxWidth: 300 })
+        }
+
+        layer.addLayer(marker)
+      }
+    })
+
+    if (!map.hasLayer(layer)) {
+      map.addLayer(layer)
+    }
+
+    return () => {
+      layer.clearLayers()
+    }
+  }, [clusters, map, supercluster, respondents])
+
+  // Fit bounds en primera carga
   useEffect(() => {
     if (respondents.length === 0) return
 
-    const bounds = new L.LatLngBounds(
+    const bounds = L.latLngBounds(
       respondents.map(r => [
         r.location?.coordinates[1] || 0,
         r.location?.coordinates[0] || 0,
       ] as [number, number])
     )
 
-    // Ajustar bounds con zoom máximo para ver de cerca
-    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 })
-  }, [respondents, map])
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
+  }, [respondents.length]) // Solo en primera carga
 
   return null
 }
 
-// Iconos de marcadores estándar de Leaflet con colores diferentes
-const successfulIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: EXTERNAL_URLS.LEAFLET_MARKER_SHADOW,
-  iconSize: MAP_CONFIG.MARKER_SIZE,
-  iconAnchor: MAP_CONFIG.MARKER_ANCHOR,
-  popupAnchor: MAP_CONFIG.POPUP_ANCHOR,
-  shadowSize: MAP_CONFIG.SHADOW_SIZE
-})
-
-const unsuccessfulIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: EXTERNAL_URLS.LEAFLET_MARKER_SHADOW,
-  iconSize: MAP_CONFIG.MARKER_SIZE,
-  iconAnchor: MAP_CONFIG.MARKER_ANCHOR,
-  popupAnchor: MAP_CONFIG.POPUP_ANCHOR,
-  shadowSize: MAP_CONFIG.SHADOW_SIZE
-})
-
 type FilterType = 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse'
-
-// interface SocializerReport {
-//   dailyStats: Array<{
-//     date: string
-//     totalSurveys: number
-//     surveys: RespondentData[]
-//   }>
-//   allSurveys: RespondentData[]
-// }
 
 export default function ReportsMap() {
   const navigate = useNavigate()
@@ -281,7 +284,7 @@ export default function ReportsMap() {
   // Calcular estadísticas de motivos de rechazo
   const rejectionStats = useMemo(() => {
     const unsuccessful = allRespondents.filter(r => r.willingToRespond === false)
-    const stats = new Map<string, { label: string; count: number }>()
+    const localStats: { [key: string]: { label: string; count: number } } = {}
 
     unsuccessful.forEach(r => {
       const reason = r.noResponseReason || r.rejectionReason
@@ -290,21 +293,21 @@ export default function ReportsMap() {
         const key = reasonObj.value || 'other'
         const label = reasonObj.label || 'Otro motivo'
 
-        if (stats.has(key)) {
-          stats.get(key)!.count++
+        if (localStats[key]) {
+          localStats[key].count++
         } else {
-          stats.set(key, { label, count: 1 })
+          localStats[key] = { label, count: 1 }
         }
       } else {
-        if (stats.has('no_specified')) {
-          stats.get('no_specified')!.count++
+        if (localStats['no_specified']) {
+          localStats['no_specified'].count++
         } else {
-          stats.set('no_specified', { label: 'No especificado', count: 1 })
+          localStats['no_specified'] = { label: 'No especificado', count: 1 }
         }
       }
     })
 
-    return Array.from(stats.values()).sort((a, b) => b.count - a.count)
+    return Object.values(localStats).sort((a: any, b: any) => b.count - a.count)
   }, [allRespondents])
 
   // Handler para el click en la card de no exitosas
@@ -388,17 +391,8 @@ export default function ReportsMap() {
     try {
       setIsLoading(true)
       const response = await apiService.getReportsBySocializerAndDate(startDate, endDate)
-
-      // La respuesta tiene estructura:
-      // {
-      //   dateRange: { startDate, endDate },
-      //   totalSocializers: number,
-      //   resumen: { totalEncuestas, totalExitosas, totalNoExitosas, ... },
-      //   report: [{ socializerName, totalSurveys, allSurveys: RespondentData[] }, ...]
-      // }
       const report = response.data?.report || []
 
-      // Extraer todas las encuestas de todos los socializadores
       const allSurveys: RespondentData[] = report.flatMap((socializer: { allSurveys?: unknown[] }) =>
         Array.isArray(socializer.allSurveys)
           ? socializer.allSurveys.map((s) => new RespondentData(s))
@@ -467,11 +461,6 @@ export default function ReportsMap() {
   }, [allRespondents, filter])
 
   const mapCenter = useMemo(() => calculateMapCenter(allRespondents), [allRespondents])
-
-  // Función para obtener posición - sin offsets, el clustering se encarga de la distribución
-  const getAdjustedPosition = useCallback((respondent: RespondentData): [number, number] => {
-    return extractCoordinates(respondent)
-  }, [])
 
   return (
     <div className="dashboard-layout">
@@ -643,7 +632,7 @@ export default function ReportsMap() {
                 Motivos de Rechazo
               </h3>
               <div className="rejection-breakdown__grid">
-                {rejectionStats.map((stat, index) => (
+                {rejectionStats.map((stat: any, index: number) => (
                   <div key={index} className="rejection-breakdown__item">
                     <div className="rejection-breakdown__count">
                       {stat.count}
@@ -680,26 +669,17 @@ export default function ReportsMap() {
             <div className="dashboard-map-container">
               <MapContainer
                 center={mapCenter}
-                zoom={18}
+                zoom={5}
                 maxZoom={18}
                 style={{ height: '100%', width: '100%' }}
                 preferCanvas={true}
               >
                 <TileLayer
-                  attribution={EXTERNAL_URLS.LEAFLET_ATTRIBUTION}
-                  url={EXTERNAL_URLS.LEAFLET_TILE_URL}
-                  maxZoom={18}
+                  attribution={TILE_ATTRIBUTION}
+                  url={TILE_URL}
+                  maxZoom={20}
                 />
-
-                <MapBounds respondents={filteredRespondents} />
-
-                {/* Renderizado optimizado de marcadores solo en viewport */}
-                <VisibleMarkers
-                  respondents={filteredRespondents}
-                  getAdjustedPosition={getAdjustedPosition}
-                  successfulIcon={successfulIcon}
-                  unsuccessfulIcon={unsuccessfulIcon}
-                />
+                <SuperclusterLayer respondents={filteredRespondents} />
               </MapContainer>
             </div>
           )}
