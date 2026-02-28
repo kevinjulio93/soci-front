@@ -253,7 +253,7 @@ function SuperclusterLayer({
   return null
 }
 
-type FilterType = 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse'
+type FilterType = 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline'
 
 export default function ReportsMap() {
   const navigate = useNavigate()
@@ -275,6 +275,7 @@ export default function ReportsMap() {
     isVerified: 0,
     isLinkedHouse: 0,
     linkedHomes: 0,
+    isOffline: 0,
   })
 
   // Verificar si el usuario puede ver datos de rechazo (solo admin, no supervisores)
@@ -349,6 +350,11 @@ export default function ReportsMap() {
     setShowRejectionBreakdown(false)
   }
 
+  const handleOfflineClick = () => {
+    setFilter('isOffline')
+    setShowRejectionBreakdown(false)
+  }
+
   // Cargar encuestas del día (una sola llamada)
   const loadAllRespondents = async () => {
     try {
@@ -374,6 +380,7 @@ export default function ReportsMap() {
       const verifiedCount = resumen?.totalIsVerified ?? allSurveys.filter(r => r.isVerified === true).length
       const linkedHouseCount = resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
       const linkedHomesCount = resumen?.linkedHomes ?? allSurveys.filter(r => (r as any).linkedHomes === true).length
+      const offlineCount = resumen?.totalIsOffline ?? allSurveys.filter(r => (r as any).isOffline === true).length
 
       setStats({
         ...newStats,
@@ -384,6 +391,7 @@ export default function ReportsMap() {
         isVerified: verifiedCount,
         isLinkedHouse: linkedHouseCount,
         linkedHomes: linkedHomesCount,
+        isOffline: offlineCount,
       })
       setFetchedDateRange({ start: today, end: today })
     } catch (error) {
@@ -430,6 +438,7 @@ export default function ReportsMap() {
       const verifiedCount = resumen?.totalIsVerified ?? allSurveys.filter(r => r.isVerified === true).length
       const linkedHouseCount = resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
       const linkedHomesCount = resumen?.linkedHomes ?? allSurveys.filter(r => (r as any).linkedHomes === true).length
+      const offlineCount = resumen?.totalIsOffline ?? allSurveys.filter(r => (r as any).isOffline === true).length
 
       setStats({
         ...newStats,
@@ -440,6 +449,7 @@ export default function ReportsMap() {
         isVerified: verifiedCount,
         isLinkedHouse: linkedHouseCount,
         linkedHomes: linkedHomesCount,
+        isOffline: offlineCount,
       })
       setUseFilters(true)
       setFetchedDateRange({ start: startDate, end: endDate })
@@ -495,6 +505,7 @@ export default function ReportsMap() {
       if (filter === 'defensores') return (r as any).isPatriaDefender === true
       if (filter === 'isVerified') return r.isVerified === true
       if (filter === 'isLinkedHouse') return r.isLinkedHouse === true
+      if (filter === 'isOffline') return (r as any).isOffline === true
       return true
     })
   }, [respondentsWithLocation, filter])
@@ -582,10 +593,13 @@ export default function ReportsMap() {
           {/* Estadísticas con filtros clickeables */}
           <div className="reports-stats">
             <div
-              className={`stat-card ${filter === 'all' ? 'stat-card--active' : ''}`}
+              className={`stat-card stat-card--primary ${filter === 'all' ? 'stat-card--active' : ''}`}
               onClick={handleAllClick}
               style={{ cursor: 'pointer' }}
             >
+              <div className="stat-card__icon">
+                <span style={{ fontSize: '1.2rem' }}>📊</span>
+              </div>
               <div className="stat-card__value">{stats.total}</div>
               <div className="stat-card__label">Total de Intervenciones</div>
             </div>
@@ -672,6 +686,18 @@ export default function ReportsMap() {
               </div>
               <div className="stat-card__value">{stats.linkedHomes}</div>
               <div className="stat-card__label">HOGARES VINCULADOS</div>
+            </div>
+
+            <div
+              className={`stat-card stat-card--darkblue ${filter === 'isOffline' ? 'stat-card--active' : ''}`}
+              onClick={handleOfflineClick}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="stat-card__icon">
+                <span style={{ fontSize: '1.5rem' }}>📡</span>
+              </div>
+              <div className="stat-card__value">{stats.isOffline}</div>
+              <div className="stat-card__label">Registro Sin Conexión</div>
             </div>
           </div>
 

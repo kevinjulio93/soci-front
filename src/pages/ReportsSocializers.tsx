@@ -303,7 +303,10 @@ export default function ReportsSocializers() {
           {/* Totales */}
           {hasData && (
             <div className="reports-stats" style={{ marginBottom: '1.5rem' }}>
-              <div className="stat-card">
+              <div className="stat-card stat-card--primary">
+                <div className="stat-card__icon">
+                  <span style={{ fontSize: '1.2rem' }}>📊</span>
+                </div>
                 <div className="stat-card__value">{totals.interventions}</div>
                 <div className="stat-card__label">Total Intervenciones</div>
               </div>
@@ -322,6 +325,13 @@ export default function ReportsSocializers() {
               <div className="stat-card">
                 <div className="stat-card__value" style={{ color: '#27ae60' }}>{summaryData?.linkedHomes || 0}</div>
                 <div className="stat-card__label">Hogares Vinculados</div>
+              </div>
+              <div className="stat-card stat-card--darkblue">
+                <div className="stat-card__icon" style={{ marginBottom: '8px' }}>
+                  <span style={{ fontSize: '1.2rem' }}>📡</span>
+                </div>
+                <div className="stat-card__value">{summaryData?.totalIsOffline || 0}</div>
+                <div className="stat-card__label">Registro Sin Conexión</div>
               </div>
             </div>
           )}

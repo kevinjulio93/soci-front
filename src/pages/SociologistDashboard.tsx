@@ -5,53 +5,23 @@
  */
 
 import { useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
 import { DashboardHeader, PageHeader, MetricsCard } from '../components'
 import { useAuth } from '../contexts/AuthContext'
-import { apiService } from '../services/api.service'
-import { notificationService } from '../services/notification.service'
 import { useSyncStatus, useGeolocationTracking, useLogout } from '../hooks'
-import { ROUTES, MESSAGES } from '../constants'
+import { ROUTES } from '../constants'
 import '../styles/Dashboard.scss'
 
 export default function SociologistDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const { isOnline, pendingCount, isSyncing, manualSync } = useSyncStatus()
-  
+
   // Tracking de geolocalización para socializadores
   const { isTracking, error: geoError, permissionState } = useGeolocationTracking({
     enabled: true,
     intervalMs: 30000, // 30 segundos para pruebas
-  })
-  
-  const [totalRecords, setTotalRecords] = useState(0)
-
-  // Hook centralizado para logout
+  })  // Hook centralizado para logout
   const handleLogout = useLogout()
-
-  const loadData = async () => {
-    try {
-      const response = await apiService.getRespondents(1, 10)
-      setTotalRecords(response.totalItems || 0)
-    } catch (error) {
-      notificationService.handleApiError(error, MESSAGES.LOAD_ERROR)
-    }
-  }
-
-  useEffect(() => {
-    loadData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Recargar datos después de sincronizar
-  useEffect(() => {
-    if (!isSyncing && pendingCount === 0 && isOnline) {
-      // Recargar datos cuando se completa la sincronización
-      loadData()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSyncing, pendingCount, isOnline])
 
   const handleManualSync = async () => {
     await manualSync()
@@ -59,11 +29,11 @@ export default function SociologistDashboard() {
 
   const handleNewSurvey = () => {
     // Navegar a la página de nueva encuesta, la grabación iniciará allí
-    navigate(ROUTES.SURVEY_PARTICIPANT('new'), { 
-      state: { 
+    navigate(ROUTES.SURVEY_PARTICIPANT('new'), {
+      state: {
         startRecording: true,
         editMode: false
-      } 
+      }
     })
   }
 
@@ -78,7 +48,7 @@ export default function SociologistDashboard() {
       <main className="dashboard__main">
         <PageHeader
           title="Mis Encuestas"
-          description={`${totalRecords} encuesta${totalRecords !== 1 ? 's' : ''} registrada${totalRecords !== 1 ? 's' : ''}`}
+          description="Aquí puedes ver las encuestas que has registrado"
         >
           <div className="dashboard__header-actions-group">
             {/* Indicador de tracking GPS */}
@@ -99,7 +69,7 @@ export default function SociologistDashboard() {
               </div>
             )}
             {pendingCount > 0 && (
-              <button 
+              <button
                 className="btn btn--sync"
                 onClick={handleManualSync}
                 disabled={isSyncing || !isOnline}
@@ -120,8 +90,8 @@ export default function SociologistDashboard() {
 
         <section className="dashboard__content">
           {/* Métricas Diarias del Socializador */}
-          <MetricsCard 
-            viewType="socializer" 
+          <MetricsCard
+            viewType="socializer"
             showDailyView={true}
             autoLoad={true}
           />

@@ -37,6 +37,7 @@ export interface MetricsData {
   isVerified: number
   isLinkedHouse: number
   linkedHomes: number
+  isOffline: number
   dailyStats?: DailyStat[]
   rejectionStats?: RejectionStat[]
   loadedAt: string
@@ -51,6 +52,7 @@ export interface DailyStat {
   isVerified: number
   isLinkedHouse: number
   linkedHomes: number
+  isOffline: number
 }
 
 export interface RejectionStat {
@@ -85,6 +87,7 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
     isVerified: number;
     isLinkedHouse: number;
     linkedHomes: number;
+    isOffline: number;
   }>()
 
   respondents.forEach(r => {
@@ -98,7 +101,8 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
         defensores: 0,
         isVerified: 0,
         isLinkedHouse: 0,
-        linkedHomes: 0
+        linkedHomes: 0,
+        isOffline: 0
       })
     }
 
@@ -125,6 +129,10 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
 
     if ((r as any).linkedHomes === true) {
       stat.linkedHomes++
+    }
+
+    if ((r as any).isOffline === true) {
+      stat.isOffline++
     }
   })
 
@@ -182,12 +190,13 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
     isVerified: 0,
     isLinkedHouse: 0,
     linkedHomes: 0,
+    isOffline: 0,
     rejectionStats: [],
     loadedAt: '',
   })
   const [isLoading, setIsLoading] = useState(false)
   const [showRejectionBreakdown, setShowRejectionBreakdown] = useState(false)
-  const [filter, setFilter] = useState<'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse'>('all')
+  const [filter, setFilter] = useState<'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline'>('all')
 
   const userRole = user?.role?.role || ''
   const permissions = useMemo(() => validateMetricsPermissions(userRole), [userRole])
@@ -244,6 +253,9 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       const linkedHomesCount = resumen?.linkedHomes ??
         allSurveys.filter(r => (r as any).linkedHomes === true).length
 
+      const offlineCount = resumen?.totalIsOffline ??
+        allSurveys.filter(r => (r as any).isOffline === true).length
+
       const dailyStats = calculateDailyStats(allSurveys)
       const rejectionStats = calculateRejectionStats(allSurveys)
 
@@ -255,6 +267,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
         isVerified: verifiedCount,
         isLinkedHouse: linkedHouseCount,
         linkedHomes: linkedHomesCount,
+        isOffline: offlineCount,
         dailyStats,
         rejectionStats,
         loadedAt: new Date().toISOString(),
@@ -306,13 +319,14 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       isVerified: 0,
       isLinkedHouse: 0,
       linkedHomes: 0,
+      isOffline: 0,
       rejectionStats: [],
       loadedAt: '',
     })
     setFilter('all')
   }
 
-  const handleMetricClick = (metricType: 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse') => {
+  const handleMetricClick = (metricType: 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline') => {
     setFilter(metricType)
     if (metricType === 'unsuccessful') {
       setShowRejectionBreakdown(!showRejectionBreakdown)
@@ -385,10 +399,13 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       {/* Estadísticas */}
       <div className="reports-stats">
         <div
-          className={`stat-card ${filter === 'all' ? 'stat-card--active' : ''}`}
+          className={`stat-card stat-card--primary ${filter === 'all' ? 'stat-card--active' : ''}`}
           onClick={() => handleMetricClick('all')}
           style={{ cursor: 'pointer' }}
         >
+          <div className="stat-card__icon">
+            <span style={{ fontSize: '1.2rem' }}>📊</span>
+          </div>
           <div className="stat-card__value">{metrics.total}</div>
           <div className="stat-card__label">Total de Intervenciones</div>
         </div>
@@ -478,6 +495,18 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
           </div>
           <div className="stat-card__value">{metrics.linkedHomes}</div>
           <div className="stat-card__label">HOGARES VINCULADOS</div>
+        </div>
+
+        <div
+          className={`stat-card stat-card--darkblue ${filter === 'isOffline' ? 'stat-card--active' : ''}`}
+          onClick={() => handleMetricClick('isOffline')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="stat-card__icon">
+            <span style={{ fontSize: '1.2rem' }}>📡</span>
+          </div>
+          <div className="stat-card__value">{metrics.isOffline}</div>
+          <div className="stat-card__label">Registro Sin Conexión</div>
         </div>
       </div>
 
