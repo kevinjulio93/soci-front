@@ -26,14 +26,15 @@ export default function SurveysList() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [selectedSurvey, setSelectedSurvey] = useState<RespondentData | null>(null)
+  const [itemsPerPage, setItemsPerPage] = useState(50)
 
   const userRole = user?.role?.role?.toLowerCase() || ''
   const isAdmin = userRole === 'admin'
 
-  const loadSurveys = async (page: number) => {
+  const loadSurveys = async (page: number, perPage?: number) => {
     try {
       setIsLoading(true)
-      const response = await apiService.getRespondents(page, 50)
+      const response = await apiService.getRespondents(page, perPage || itemsPerPage)
       setSurveys(response.data || [])
       setTotalPages(response.totalPages || 1)
       setTotalRecords(response.totalItems || 0)
@@ -54,6 +55,11 @@ export default function SurveysList() {
 
   const handlePageChange = async (page: number) => {
     await loadSurveys(page)
+  }
+
+  const handleItemsPerPageChange = (perPage: number) => {
+    setItemsPerPage(perPage)
+    loadSurveys(1, perPage)
   }
 
   const formatDate = (dateString: string) => {
@@ -151,8 +157,10 @@ export default function SurveysList() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={totalRecords}
-                itemsPerPage={50}
+                itemsPerPage={itemsPerPage}
                 onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                pageSizeOptions={[10, 25, 50, 100]}
                 isLoading={isLoading}
                 emptyStateIcon={
                   <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

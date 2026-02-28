@@ -615,11 +615,12 @@
     border-radius: 0;
   }
 
-  // Wrapper para scroll horizontal
+  // Wrapper para scroll horizontal y vertical
   &__wrapper {
     width: 100%;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: auto;
+    max-height: 528px; // ~10 filas de 48px + header 48px
     -webkit-overflow-scrolling: touch; // Smooth scrolling en iOS
     position: relative;
     display: block; // Asegurar que sea un bloque
@@ -716,6 +717,9 @@
   // Element: .survey-table__thead
   &__thead {
     background: $color-background;
+    position: sticky;
+    top: 0;
+    z-index: 1;
   }
 
   // Element: .survey-table__th
@@ -2901,22 +2905,15 @@
       width: 340px;
       min-width: 340px;
       opacity: 1;
+    }
 
-      @media (max-width: 1024px) {
-        position: fixed;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 360px;
-        min-width: 360px;
-        z-index: 1100;
-        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-      }
-
-      @media (max-width: 640px) {
-        width: 100%;
-        min-width: 100%;
-      }
+    @media (max-width: 1024px) {
+      width: 0 !important;
+      min-width: 0 !important;
+      overflow: visible !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: none; // The wrapper itself ignores clicks
     }
   }
 }
@@ -3890,6 +3887,120 @@ input[type="date"].form-group__input {
   }
 }
 
+// =============================================
+// MAP LEGEND
+// =============================================
+.map-legend {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.75rem;
+  line-height: 1.4;
+
+  // Desktop overlay: positioned inside the map
+  &--overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    z-index: 1000;
+    max-width: 160px;
+
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+
+  // Mobile: below the map, full width
+  &--mobile {
+    display: none;
+    margin-top: 12px;
+    max-width: 100%;
+
+    @media (max-width: 768px) {
+      display: block;
+    }
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #1e293b;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+
+    svg {
+      color: #64748b;
+      flex-shrink: 0;
+    }
+  }
+
+  &__row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  &__section {
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &__section-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.68rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+    color: #475569;
+  }
+
+  &__dot {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  &__pin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 1.5px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    color: #fff;
+    font-size: 8px;
+    font-weight: bold;
+    line-height: 1;
+  }
+}
+
 .loading-container,
 .empty-state {
   text-align: center;
@@ -4266,8 +4377,17 @@ input[type="date"].form-group__input {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    z-index: 1;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1100;
+    opacity: 0;
+    animation: fadeInOverlay 0.3s forwards;
+    pointer-events: auto;
+  }
+}
+
+@keyframes fadeInOverlay {
+  to {
+    opacity: 1;
   }
 }
 
@@ -4282,6 +4402,28 @@ input[type="date"].form-group__input {
   overflow: hidden;
   position: relative;
   z-index: 2;
+
+  @media (max-width: 1024px) {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 340px;
+    max-width: 85vw;
+    border-radius: 0;
+    border: none;
+    z-index: 1101;
+    pointer-events: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &--open {
+    @media (max-width: 1024px) {
+      transform: translateX(0);
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    }
+  }
 
   &__header {
     display: flex;
@@ -4393,10 +4535,16 @@ input[type="date"].form-group__input {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   &__field {
     margin-bottom: 0.75rem;
+    min-width: 0; // fixes flex blowout
+
 
     &:last-child {
       margin-bottom: 0;

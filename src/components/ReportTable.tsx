@@ -47,6 +47,34 @@ export function ReportTable<T>({
     )
   }
 
+  if (data.length === 0) {
+    return (
+      <div className="rg-table-empty" style={{ padding: '4rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+        {emptyIcon ? (
+          <div className="rg-table-empty__icon" style={{ opacity: 0.5, marginBottom: '1rem' }}>{emptyIcon}</div>
+        ) : (
+          <div className="rg-table-empty__icon" style={{ opacity: 0.5, marginBottom: '1rem' }}>
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+        )}
+        <h4 className="rg-table-empty__title" style={{ fontSize: '1.2rem', color: '#334155', marginBottom: '0.5rem' }}>{emptyTitle}</h4>
+        <p className="rg-table-empty__description" style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>{emptyDescription}</p>
+        {emptyAction && (
+          <button
+            className="btn btn--primary"
+            onClick={emptyAction.onClick}
+            style={{ marginTop: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}
+          >
+            {emptyAction.icon}
+            {emptyAction.label}
+          </button>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="rg-table-wrapper">
       <table className="rg-table">
@@ -67,49 +95,19 @@ export function ReportTable<T>({
           </tr>
         </thead>
         <tbody>
-          {data.length > 0 ? (
-            data.map((item, idx) => (
-              <tr key={getRowKey(item)} className="rg-table__row">
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    className="rg-table__td"
-                    style={{ textAlign: col.align || 'left' }}
-                  >
-                    {col.render(item, idx)}
-                  </td>
-                ))}
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={columns.length} className="rg-table__empty-cell">
-                <div className="rg-table-empty">
-                  {emptyIcon ? (
-                    <div className="rg-table-empty__icon">{emptyIcon}</div>
-                  ) : (
-                    <div className="rg-table-empty__icon">
-                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                  )}
-                  <h4 className="rg-table-empty__title">{emptyTitle}</h4>
-                  <p className="rg-table-empty__description">{emptyDescription}</p>
-                  {emptyAction && (
-                    <button
-                      className="btn btn--primary btn--sm"
-                      onClick={emptyAction.onClick}
-                      style={{ marginTop: '1rem' }}
-                    >
-                      {emptyAction.icon}
-                      {emptyAction.label}
-                    </button>
-                  )}
-                </div>
-              </td>
+          {data.map((item, idx) => (
+            <tr key={getRowKey(item)} className="rg-table__row">
+              {columns.map((col) => (
+                <td
+                  key={col.key}
+                  className="rg-table__td"
+                  style={{ textAlign: col.align || 'left' }}
+                >
+                  {col.render(item, idx)}
+                </td>
+              ))}
             </tr>
-          )}
+          ))}
         </tbody>
       </table>
     </div>

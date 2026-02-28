@@ -747,22 +747,110 @@ export default function ReportsMap() {
               <p>Las encuestas encontradas no tienen ubicación registrada</p>
             </div>
           ) : (
-            <div className="dashboard-map-container">
-              <MapContainer
-                center={mapCenter}
-                zoom={5}
-                maxZoom={18}
-                style={{ height: '100%', width: '100%' }}
-                preferCanvas={true}
-              >
-                <TileLayer
-                  attribution={TILE_ATTRIBUTION}
-                  url={TILE_URL}
-                  maxZoom={20}
-                />
-                <SuperclusterLayer respondents={filteredRespondents} />
-              </MapContainer>
-            </div>
+            <>
+              <div className="dashboard-map-container" style={{ position: 'relative' }}>
+                <MapContainer
+                  center={mapCenter}
+                  zoom={5}
+                  maxZoom={18}
+                  style={{ height: '100%', width: '100%' }}
+                  preferCanvas={true}
+                >
+                  <TileLayer
+                    attribution={TILE_ATTRIBUTION}
+                    url={TILE_URL}
+                    maxZoom={20}
+                  />
+                  <SuperclusterLayer respondents={filteredRespondents} />
+                </MapContainer>
+
+                {/* Leyenda del mapa - visible solo en desktop como overlay */}
+                <div className="map-legend map-legend--overlay">
+                  <div className="map-legend__title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="16" x2="12" y2="12" />
+                      <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    Leyenda
+                  </div>
+                  <div className="map-legend__section">
+                    <span className="map-legend__section-label">Agrupaciones</span>
+                    <div className="map-legend__item">
+                      <span className="map-legend__dot" style={{ background: 'rgba(59, 130, 246, 0.85)' }}></span>
+                      <span>1 – 10</span>
+                    </div>
+                    <div className="map-legend__item">
+                      <span className="map-legend__dot" style={{ background: 'rgba(234, 179, 8, 0.85)' }}></span>
+                      <span>11 – 50</span>
+                    </div>
+                    <div className="map-legend__item">
+                      <span className="map-legend__dot" style={{ background: 'rgba(239, 68, 68, 0.85)' }}></span>
+                      <span>51 – 200</span>
+                    </div>
+                    <div className="map-legend__item">
+                      <span className="map-legend__dot" style={{ background: 'rgba(139, 92, 246, 0.85)' }}></span>
+                      <span>200+</span>
+                    </div>
+                  </div>
+                  <div className="map-legend__section">
+                    <span className="map-legend__section-label">Encuestas</span>
+                    <div className="map-legend__item">
+                      <span className="map-legend__pin" style={{ background: '#3b82f6' }}>✓</span>
+                      <span>Exitosa</span>
+                    </div>
+                    <div className="map-legend__item">
+                      <span className="map-legend__pin" style={{ background: '#ef4444' }}>✗</span>
+                      <span>No exitosa</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Leyenda del mapa - visible solo en mobile, debajo del mapa */}
+              <div className="map-legend map-legend--mobile">
+                <div className="map-legend__title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  Leyenda del Mapa
+                </div>
+                <div className="map-legend__row">
+                  <div className="map-legend__section">
+                    <span className="map-legend__section-label">Agrupaciones</span>
+                    <div className="map-legend__item">
+                      <span className="map-legend__dot" style={{ background: 'rgba(59, 130, 246, 0.85)' }}></span>
+                      <span>1 – 10</span>
+                    </div>
+                    <div className="map-legend__item">
+                      <span className="map-legend__dot" style={{ background: 'rgba(234, 179, 8, 0.85)' }}></span>
+                      <span>11 – 50</span>
+                    </div>
+                    <div className="map-legend__item">
+                      <span className="map-legend__dot" style={{ background: 'rgba(239, 68, 68, 0.85)' }}></span>
+                      <span>51 – 200</span>
+                    </div>
+                    <div className="map-legend__item">
+                      <span className="map-legend__dot" style={{ background: 'rgba(139, 92, 246, 0.85)' }}></span>
+                      <span>200+</span>
+                    </div>
+                  </div>
+                  <div className="map-legend__section">
+                    <span className="map-legend__section-label">Encuestas</span>
+                    <div className="map-legend__item">
+                      <span className="map-legend__pin" style={{ background: '#3b82f6' }}>✓</span>
+                      <span>Exitosa</span>
+                    </div>
+                    <div className="map-legend__item">
+                      <span className="map-legend__pin" style={{ background: '#ef4444' }}>✗</span>
+                      <span>No exitosa</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

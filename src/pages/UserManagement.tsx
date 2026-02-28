@@ -67,7 +67,7 @@ type SocializerApi = {
   updatedAt: string
 }
 
-const PAGE_SIZE_OPTIONS = [20, 50, 100]
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 
 const getRoleName = (role: EditUserData['role'] | undefined): string => {
   if (!role) return ''
@@ -176,7 +176,7 @@ export function UserManagement() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [itemsPerPage, setItemsPerPage] = useState(PAGE_SIZE_OPTIONS[0])
+  const [itemsPerPage, setItemsPerPage] = useState(50)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Determinar si estamos en modo formulario
