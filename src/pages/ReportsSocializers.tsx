@@ -21,6 +21,10 @@ interface SocializerRow {
   successful: number
   unsuccessful: number
   defensores: number
+  isLinkedHouse: number
+  linkedHomes: number
+  verificados: number
+  isOffline: number
 }
 
 // Obtener fecha actual en formato YYYY-MM-DD
@@ -74,6 +78,50 @@ const TABLE_COLUMNS: ReportTableColumn<SocializerRow>[] = [
     render: (item) => (
       <span style={{ fontWeight: 600, color: item.defensores > 0 ? '#0066cc' : '#999' }}>
         {item.defensores}
+      </span>
+    ),
+  },
+  {
+    key: 'isLinkedHouse',
+    label: 'Vinculaciones Extra',
+    minWidth: '130px',  
+    align: 'center',
+    render: (item) => (
+      <span style={{ fontWeight: 600, color: item.isLinkedHouse > 0 ? '#8b5cf6' : '#999' }}>
+        {item.isLinkedHouse}
+      </span>
+    ),
+  },
+  {
+    key: 'linkedHomes',
+    label: 'Hogares Vinculados',
+    minWidth: '130px',
+    align: 'center',
+    render: (item) => (
+      <span style={{ fontWeight: 600, color: item.linkedHomes > 0 ? '#27ae60' : '#999' }}>
+        {item.linkedHomes}
+      </span>
+    ),
+  },
+  {
+    key: 'verificados',
+    label: 'Verificados',
+    minWidth: '100px',
+    align: 'center',
+    render: (item) => (
+      <span style={{ fontWeight: 600, color: item.verificados > 0 ? '#9b59b6' : '#999' }}>
+        {item.verificados}
+      </span>
+    ),
+  },
+  {
+    key: 'isOffline',
+    label: 'Sin Conexión',
+    minWidth: '110px',
+    align: 'center',
+    render: (item) => (
+      <span style={{ fontWeight: 600, color: item.isOffline > 0 ? '#1e40af' : '#999' }}>
+        {item.isOffline}
       </span>
     ),
   },
@@ -131,12 +179,16 @@ export default function ReportsSocializers() {
         successful: s.exitosas,
         unsuccessful: s.noExitosas,
         defensores: s.defensoresDeLaPatria,
+        isLinkedHouse: s.isLinkedHouse || 0,
+        linkedHomes: s.linkedHomes || 0,
+        verificados: s.verificados || 0,
+        isOffline: s.isOffline || 0,
       })).sort((a, b) => b.interventions - a.interventions)
 
       setReportData(rows)
       setSummaryData(response.resumen || null)
 
-      notificationService.success(`Reporte generado: ${rows.length} socializadores, ${response.resumen?.totalIntervenciones ?? rows.reduce((s, r) => s + r.interventions, 0)} intervenciones`)
+      notificationService.success(`Reporte generado: ${rows.length} socializadores, ${response.resumen?.totalEncuestas ?? rows.reduce((s, r) => s + r.interventions, 0)} intervenciones`)
     } catch (err) {
       notificationService.handleApiError(err, 'Error al generar el reporte')
     } finally {
@@ -179,8 +231,12 @@ export default function ReportsSocializers() {
       successful: acc.successful + r.successful,
       unsuccessful: acc.unsuccessful + r.unsuccessful,
       defensores: acc.defensores + r.defensores,
+      isLinkedHouse: acc.isLinkedHouse + r.isLinkedHouse,
+      linkedHomes: acc.linkedHomes + r.linkedHomes,
+      verificados: acc.verificados + r.verificados,
+      isOffline: acc.isOffline + r.isOffline,
     }),
-    { interventions: 0, successful: 0, unsuccessful: 0, defensores: 0 }
+    { interventions: 0, successful: 0, unsuccessful: 0, defensores: 0, isLinkedHouse: 0, linkedHomes: 0, verificados: 0, isOffline: 0 }
   )
 
   const hasData = reportData.length > 0
@@ -307,30 +363,70 @@ export default function ReportsSocializers() {
                 <div className="stat-card__icon">
                   <span style={{ fontSize: '1.2rem' }}>📊</span>
                 </div>
-                <div className="stat-card__value">{totals.interventions}</div>
-                <div className="stat-card__label">Total Intervenciones</div>
+                <div className="stat-card__value">{summaryData?.totalEncuestas ?? summaryData?.totalIntervenciones ?? totals.interventions}</div>
+                <div className="stat-card__label">Total de Intervenciones</div>
               </div>
-              <div className="stat-card">
-                <div className="stat-card__value" style={{ color: '#27ae60' }}>{totals.successful}</div>
+              <div className="stat-card stat-card--success">
+                <div className="stat-card__icon">
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '50%',
+                    backgroundColor: '#3b82f6',
+                    border: '2px solid white',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  }}></div>
+                </div>
+                <div className="stat-card__value">{summaryData?.totalExitosas ?? totals.successful}</div>
                 <div className="stat-card__label">Exitosas</div>
               </div>
-              <div className="stat-card">
-                <div className="stat-card__value" style={{ color: '#e74c3c' }}>{totals.unsuccessful}</div>
+              <div className="stat-card stat-card--danger">
+                <div className="stat-card__icon">
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    borderRadius: '50%',
+                    backgroundColor: '#ef4444',
+                    border: '2px solid white',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  }}></div>
+                </div>
+                <div className="stat-card__value">{summaryData?.totalNoExitosas ?? totals.unsuccessful}</div>
                 <div className="stat-card__label">No Exitosas</div>
               </div>
-              <div className="stat-card">
-                <div className="stat-card__value" style={{ color: '#0066cc' }}>{totals.defensores}</div>
+              <div className="stat-card stat-card--warning">
+                <div className="stat-card__icon">
+                  <span style={{ fontSize: '1.5rem' }}>⭐</span>
+                </div>
+                <div className="stat-card__value">{summaryData?.totalIsPatriaDefender ?? summaryData?.totalDefensores ?? totals.defensores}</div>
                 <div className="stat-card__label">Defensores de la Patria</div>
               </div>
-              <div className="stat-card">
-                <div className="stat-card__value" style={{ color: '#27ae60' }}>{summaryData?.linkedHomes || 0}</div>
-                <div className="stat-card__label">Hogares Vinculados</div>
+              <div className="stat-card stat-card--purple">
+                <div className="stat-card__icon">
+                  <span style={{ fontSize: '1.5rem' }}>➕</span>
+                </div>
+                <div className="stat-card__value">{summaryData?.totalIsLinkedHouse ?? totals.isLinkedHouse}</div>
+                <div className="stat-card__label">VINCULACIONES EXTRAS</div>
+              </div>
+              <div className="stat-card stat-card--success">
+                <div className="stat-card__icon">
+                  <span style={{ fontSize: '1.5rem' }}>🏠</span>
+                </div>
+                <div className="stat-card__value">{summaryData?.linkedHomes ?? summaryData?.totalLinkedHomes ?? totals.linkedHomes}</div>
+                <div className="stat-card__label">HOGARES VINCULADOS</div>
+              </div>
+              <div className="stat-card stat-card--info">
+                <div className="stat-card__icon">
+                  <span style={{ fontSize: '1.5rem' }}>✅</span>
+                </div>
+                <div className="stat-card__value">{summaryData?.totalIsVerified ?? summaryData?.totalVerificados ?? totals.verificados}</div>
+                <div className="stat-card__label">Verificadas</div>
               </div>
               <div className="stat-card stat-card--darkblue">
-                <div className="stat-card__icon" style={{ marginBottom: '8px' }}>
+                <div className="stat-card__icon">
                   <span style={{ fontSize: '1.2rem' }}>📡</span>
                 </div>
-                <div className="stat-card__value">{summaryData?.totalIsOffline || 0}</div>
+                <div className="stat-card__value">{summaryData?.totalIsOffline ?? totals.isOffline}</div>
                 <div className="stat-card__label">Registro Sin Conexión</div>
               </div>
             </div>

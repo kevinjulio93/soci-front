@@ -174,6 +174,17 @@ type Dashboard003Socializador = {
   exitosas: number
   noExitosas: number
   defensoresDeLaPatria: number
+  isLinkedHouse: number
+  linkedHomes: number
+  verificados: number
+  isOffline: number
+  noExitosaDetalle?: {
+    noSeEncuentraEnCasa: number
+    noEstaInteresado: number
+    otraRazon: number
+    noTieneTiempo: number
+    preocupacionesDePrivacidad: number
+  }
 }
 
 type Dashboard003Response = {
@@ -186,10 +197,26 @@ type Dashboard003Response = {
   }
   totalSocializadores: number
   resumen: {
-    totalIntervenciones: number
+    totalEncuestas: number
+    totalIntervenciones?: number
     totalExitosas: number
     totalNoExitosas: number
-    totalDefensores: number
+    totalIsPatriaDefender: number
+    totalDefensores?: number
+    totalIsLinkedHouse: number
+    totalLinkedHomes?: number
+    totalIsVerified: number
+    totalVerificados?: number
+    totalIsOffline: number
+    totalSocializers: number
+    noExitosaDetalle: {
+      noSeEncuentraEnCasa: number
+      noEstaInteresado: number
+      otraRazon: number
+      noTieneTiempo: number
+      preocupacionesDePrivacidad: number
+    }
+    linkedHomes: number
   }
   socializadores: Dashboard003Socializador[]
   timestamp: string
