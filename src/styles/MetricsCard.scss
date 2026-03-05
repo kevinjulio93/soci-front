@@ -14,6 +14,69 @@
   &__filters {
     margin-bottom: $spacing-lg;
   }
+
+  &--loading {
+    position: relative;
+  }
+}
+
+.reports-stats {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: $spacing-md;
+  margin-bottom: $spacing-xl;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
+}
+
+.metrics-loading-overlay {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background-color: rgba(255, 255, 255, 0.6);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-lg;
+  backdrop-filter: blur(1px);
+  pointer-events: all;
+
+  .spinner {
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid $color-primary;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+  }
+}
+
+.dashboard-map-container--loading {
+  position: relative;
+
+  .metrics-loading-overlay {
+    background-color: transparent;
+    pointer-events: none;
+    z-index: 1000; // Por encima de Leaflet
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 // Filtros de rango de fechas

@@ -21,7 +21,7 @@ export function DashboardHeader({ title, user, onLogout }: DashboardHeaderProps)
           <h1 className="dashboard__title">{title}</h1>
         </div>
         <div className="dashboard__user-info">
-          <span>Bienvenido, {user?.fullName || user?.profile?.fullName || user?.email}</span>
+          <span>Bienvenido, {user?.profile?.name || user?.fullName || user?.profile?.fullName || user?.email}</span>
           <button onClick={onLogout} className="dashboard__logout-btn">
             Cerrar Sesión
           </button>

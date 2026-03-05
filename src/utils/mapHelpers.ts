@@ -9,11 +9,11 @@ import { RespondentData } from '../models/ApiResponses'
  */
 export const filterRespondentsWithLocation = (respondents: RespondentData[]): RespondentData[] => {
   return respondents.filter(
-    r => r.location && 
-         r.location.coordinates && 
-         r.location.coordinates.length === 2 &&
-         r.location.coordinates[0] !== 0 && 
-         r.location.coordinates[1] !== 0
+    r => r.location &&
+      r.location.coordinates &&
+      r.location.coordinates.length === 2 &&
+      r.location.coordinates[0] !== 0 &&
+      r.location.coordinates[1] !== 0
   )
 }
 
@@ -36,8 +36,8 @@ export const calculateMapCenter = (
  * Calcula estadísticas de encuestas
  */
 export const calculateSurveyStats = (respondents: RespondentData[]) => {
-  const successful = respondents.filter(r => r.willingToRespond === true).length
-  const unsuccessful = respondents.filter(r => r.willingToRespond === false).length
+  const successful = respondents.filter(r => r.surveyStatus === 'successful').length
+  const unsuccessful = respondents.filter(r => r.surveyStatus === 'unsuccessful' || (r.surveyStatus !== 'successful' && r.willingToRespond === false)).length
 
   return {
     total: respondents.length,

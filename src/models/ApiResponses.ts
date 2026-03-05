@@ -11,7 +11,7 @@
 export class ApiResponse<T> {
   readonly message: string
   readonly data: T
-  
+
   constructor(message: string, data: T) {
     this.message = message
     this.data = data
@@ -24,7 +24,7 @@ export class PaginatedResponse<T> {
   readonly totalItems: number
   readonly totalPages: number
   readonly data: T[]
-  
+
   constructor(
     currentPage: number,
     itemsPerPage: number,
@@ -96,6 +96,11 @@ export class RespondentData {
   public isLinkedHouse?: boolean
   public isVerified?: boolean
   public facebookUsername?: string
+  public socializer?: {
+    _id: string
+    fullName: string
+    phone: string
+  }
 
   constructor(data: any) {
     // Helper: extract a plain string from a value that may be a populated DB object
@@ -112,8 +117,8 @@ export class RespondentData {
     this.idType = data.idType
     this.identification = data.identification
     this.status = data.status
-    this.createdAt = data.createdAt
-    this.updatedAt = data.updatedAt
+    this.createdAt = data.createdAt || data.created_at
+    this.updatedAt = data.updatedAt || data.updated_at
     this.email = data.email
     this.phone = data.phone
     this.address = data.address
@@ -132,17 +137,18 @@ export class RespondentData {
     this.audioFile = data.audioFile
     this.audioFileKey = data.audioFileKey
     this.autor = data.autor
-    this.willingToRespond = data.willingToRespond
     this.rejectionReason = data.rejectionReason
     this.noResponseReason = data.noResponseReason
     this.visitAddress = data.visitAddress
     this.surveyStatus = data.surveyStatus
-    this.isPatriaDefender = data.isPatriaDefender
-    this.municipality = extractString(data.municipality)
-    this.recordingAuthorization = data.recordingAuthorization
-    this.isLinkedHouse = data.isLinkedHouse
-    this.isVerified = data.isVerified
-    this.facebookUsername = data.facebookUsername
+    this.isPatriaDefender = data.isPatriaDefender || data.is_patria_defender
+    this.municipality = extractString(data.municipality) || extractString(data.city)
+    this.recordingAuthorization = data.recordingAuthorization || data.recording_authorization
+    this.isLinkedHouse = data.isLinkedHouse || data.is_linked_house
+    this.isVerified = data.isVerified || data.is_verified
+    this.facebookUsername = data.facebookUsername || data.facebook_username
+    this.willingToRespond = data.willingToRespond ?? data.willing_to_respond
+    this.socializer = data.socializer
   }
 }
 
@@ -166,7 +172,7 @@ export class GetRespondentsResponse extends PaginatedResponse<RespondentData> {
 
 export class GetRespondentResponse {
   readonly data: RespondentData
-  
+
   constructor(data: RespondentData) {
     this.data = data
   }
@@ -180,7 +186,7 @@ export class UpdateRespondentResponse extends ApiResponse<RespondentData> {
 
 export class DeleteRespondentResponse {
   readonly message: string
-  
+
   constructor(message: string) {
     this.message = message
   }
@@ -278,10 +284,10 @@ export class SocializerData {
      *   }
      * }
      */
-    
+
     // Detectar si es estructura de lista o get individual
     const isGetIndividual = data.email && data.profile && data.profile.fullName
-    
+
     if (isGetIndividual) {
       // Estructura de GET /users/:id
       this._id = data.profile._id // profile ID
@@ -292,7 +298,7 @@ export class SocializerData {
       this.location = data.profile.location
       this.createdAt = data.createdAt
       this.updatedAt = data.updatedAt
-      
+
       // Construir objeto user
       this.user = {
         _id: data._id, // userId
@@ -302,12 +308,12 @@ export class SocializerData {
         createdAt: data.createdAt,
         updatedAt: data.updatedAt
       }
-      
+
       // Propiedades opcionales
       this.email = data.email
       this.role = data.role
       this.profile = data.profile.profile // Coordinador padre
-      
+
       // Coordinator del coordinador padre si existe
       if (data.profile.profile) {
         this.coordinator = data.profile.profile.fieldCoordinator || data.profile.profile.zoneCoordinator || data.profile.profile._id
@@ -322,7 +328,7 @@ export class SocializerData {
       this.location = data.location
       this.createdAt = data.createdAt
       this.updatedAt = data.updatedAt
-      
+
       // El objeto user
       this.user = {
         _id: data.user._id,
@@ -332,12 +338,12 @@ export class SocializerData {
         createdAt: data.user.createdAt,
         updatedAt: data.user.updatedAt
       }
-      
+
       // Propiedades opcionales
       this.email = data.user?.email
       this.role = data.user?.role
       this.profile = data.profile // Coordinador padre
-      
+
       // Coordinator si existe
       if (data.profile) {
         this.coordinator = data.profile.fieldCoordinator || data.profile.zoneCoordinator || data.profile._id
@@ -383,7 +389,7 @@ export class GetSocializersResponse extends PaginatedResponse<SocializerData> {
 
 export class GetSocializerResponse {
   readonly data: SocializerData
-  
+
   constructor(data: SocializerData) {
     this.data = data
   }
@@ -403,7 +409,7 @@ export class UpdateSocializerResponse extends ApiResponse<SocializerData> {
 
 export class DeleteSocializerResponse {
   readonly message: string
-  
+
   constructor(message: string) {
     this.message = message
   }
@@ -431,7 +437,7 @@ export class RoleData {
 
 export class GetRolesResponse {
   readonly data: RoleData[]
-  
+
   constructor(data: RoleData[]) {
     this.data = data
   }

@@ -1334,6 +1334,36 @@
   }
 }
 
+// Block: .socializer-info
+.socializer-info {
+  display: flex;
+  flex-direction: column;
+  max-width: 250px;
+
+  .socializer-name {
+    font-weight: $font-weight-medium;
+    color: $color-dark-text;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// Block: .status-cell
+.status-cell {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  .status-mini-icon {
+    font-size: 1.1rem;
+    cursor: help;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+}
+
 // =============================================
 // PAGINATION - BEM
 // =============================================

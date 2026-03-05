@@ -188,6 +188,20 @@
     color: #721c24;
     border: 1px solid #f5c6cb;
   }
+
+  // Modifier: .modal-badge--success
+  &--success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+  }
+
+  // Modifier: .modal-badge--danger
+  &--danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
 }
 
 // Block: .modal-close
@@ -230,6 +244,33 @@
 // =============================================
 // LOCATION COMPONENTS
 // =============================================
+
+// Block: .modal-loading
+.modal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-3xl;
+  text-align: center;
+  color: $color-light-text;
+  min-height: 300px;
+
+  &__spinner {
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid $color-primary;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    animation: spin 1s linear infinite;
+    margin-bottom: $spacing-lg;
+  }
+
+  p {
+    font-size: $font-size-base;
+    font-weight: $font-weight-medium;
+  }
+}
 
 // Block: .location-loading
 .location-loading {

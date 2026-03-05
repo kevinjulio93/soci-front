@@ -699,17 +699,29 @@ class ApiService {
   async getReportsBySocializerAndDate(
     startDate: string,
     endDate: string,
-    socializerId?: string
+    socializerId?: string,
+    page?: number,
+    perPage?: number
   ): Promise<any> {
-    let url = `${API_ENDPOINTS.RESPONDENTS_REPORTS_BY_SOCIALIZER_DATE}?startDate=${startDate}&endDate=${endDate}`
+    const params = new URLSearchParams()
+    params.append('startDate', startDate)
+    params.append('endDate', endDate)
 
     if (socializerId) {
-      url += `&socializerId=${socializerId}`
+      params.append('socializerId', socializerId)
     }
 
-    const response = await this.get<any>(url)
+    if (page) {
+      params.append('page', page.toString())
+    }
 
-    return response
+    if (perPage) {
+      params.append('perPage', perPage.toString())
+    }
+
+    const url = `${API_ENDPOINTS.RESPONDENTS_REPORTS_BY_SOCIALIZER_DATE}?${params.toString()}`
+
+    return this.get<any>(url)
   }
 
   async getCompleteReport(

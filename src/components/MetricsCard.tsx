@@ -11,7 +11,6 @@ import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { getTodayISO, formatDateES } from '../utils'
-import { LoadingState } from './LoadingState'
 import { RespondentData } from '../models/ApiResponses'
 import { calculateSurveyStats } from '../utils'
 import '../styles/MetricsCard.scss'
@@ -27,6 +26,14 @@ interface MetricsCardProps {
   buttonLabel?: string
   /** Cargar métricas automáticamente al montar el componente */
   autoLoad?: boolean
+  /** Página actual para la tabla unificada */
+  page?: number
+  /** Items por página para la tabla unificada */
+  perPage?: number
+  /** Key para forzar recarga desde afuera */
+  refreshKey?: number
+  /** Callback para notificar estado de carga */
+  onLoading?: (isLoading: boolean) => void
 }
 
 export interface MetricsData {
@@ -41,6 +48,14 @@ export interface MetricsData {
   dailyStats?: DailyStat[]
   rejectionStats?: RejectionStat[]
   loadedAt: string
+  startDate?: string
+  endDate?: string
+  surveys?: RespondentData[]
+  pagination?: {
+    page: number
+    totalPages: number
+    total: number
+  }
 }
 
 export interface DailyStat {
@@ -91,6 +106,7 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
   }>()
 
   respondents.forEach(r => {
+    if (!r.createdAt) return
     const dateStr = r.createdAt.split('T')[0]
 
     if (!dailyMap.has(dateStr)) {
@@ -109,7 +125,7 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
     const stat = dailyMap.get(dateStr)!
     stat.total++
 
-    if (r.willingToRespond === true) {
+    if (r.surveyStatus === 'successful') {
       stat.successful++
     } else {
       stat.unsuccessful++
@@ -145,7 +161,7 @@ const calculateDailyStats = (respondents: RespondentData[]): DailyStat[] => {
  * Calcular estadísticas de motivos de rechazo
  */
 const calculateRejectionStats = (respondents: RespondentData[]): RejectionStat[] => {
-  const unsuccessful = respondents.filter(r => r.willingToRespond === false)
+  const unsuccessful = respondents.filter(r => r && r.surveyStatus === 'unsuccessful')
   const stats = new Map<string, { label: string; count: number; value: string }>()
 
   unsuccessful.forEach(r => {
@@ -178,6 +194,10 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   onMetricsLoaded,
   buttonLabel = 'Generar',
   autoLoad = false,
+  page,
+  perPage,
+  refreshKey,
+  onLoading,
 }) => {
   const { user } = useAuth()
   const [startDate, setStartDate] = useState(getTodayISO())
@@ -205,54 +225,43 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
    * Cargar métricas usando el mismo endpoint que el mapa de encuestas
    * NOTA: El backend filtra automáticamente según el rol del usuario autenticado
    */
-  const loadMetrics = async () => {
-    if (!startDate || !endDate) {
+  const loadMetrics = async (overrideStartDate?: string, overrideEndDate?: string) => {
+    const sDate = overrideStartDate || startDate
+    const eDate = overrideEndDate || endDate
+
+    if (!sDate || !eDate) {
       notificationService.warning('Por favor seleccione un rango de fechas')
       return
     }
 
     try {
       setIsLoading(true)
+      onLoading?.(true)
 
       // Usar el mismo endpoint que el mapa de encuestas
-      // NOTA: El backend filtra automáticamente según el usuario autenticado (rol y permisos)
-      const response = await apiService.getReportsBySocializerAndDate(startDate, endDate)
-
-      // La respuesta tiene estructura:
-      // {
-      //   dateRange: { startDate, endDate },
-      //   totalSocializers: number,
-      //   resumen: { totalEncuestas, totalExitosas, totalNoExitosas, ... },
-      //   report: [{ socializerName, totalSurveys, allSurveys: RespondentData[] }, ...]
-      // }
-
-      const report = response.data?.report || []
-
-      // Extraer todas las encuestas de todos los socializadores
-      const allSurveys: RespondentData[] = report.flatMap((socializer: { allSurveys?: unknown[] }) =>
-        Array.isArray(socializer.allSurveys)
-          ? socializer.allSurveys.map((s) => new RespondentData(s))
-          : []
+      // ... rest of loadMetrics ...
+      // (Simplified for replacement chunk, actual content below)
+      const response = await apiService.getReportsBySocializerAndDate(
+        sDate,
+        eDate,
+        undefined,
+        page,
+        perPage
       )
 
-      // Calcular estadísticas
+      const surveysData = response.data?.surveys || []
+      const allSurveys: RespondentData[] = surveysData.filter((s: any) => s != null).map((s: any) => new RespondentData(s))
       const surveyStats = calculateSurveyStats(allSurveys)
-
-      // Intentar obtener totales del backend, si no, calcularlos
       const resumen = response.data?.resumen || response.resumen
 
       const defensoresCount = resumen?.totalIsPatriaDefender ?? resumen?.totalDefensores ??
         allSurveys.filter(r => r.isPatriaDefender === true).length
-
       const verifiedCount = resumen?.totalIsVerified ??
         allSurveys.filter(r => r.isVerified === true).length
-
       const linkedHouseCount = resumen?.totalIsLinkedHouse ??
         allSurveys.filter(r => r.isLinkedHouse === true).length
-
       const linkedHomesCount = resumen?.linkedHomes ??
         allSurveys.filter(r => (r as any).linkedHomes === true).length
-
       const offlineCount = resumen?.totalIsOffline ??
         allSurveys.filter(r => (r as any).isOffline === true).length
 
@@ -261,16 +270,24 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
 
       const newMetrics: MetricsData = {
         total: resumen?.totalEncuestas ?? surveyStats.total,
-        successful: resumen?.totalExitosas ?? surveyStats.successful,
-        unsuccessful: resumen?.totalNoExitosas ?? surveyStats.unsuccessful,
-        defensores: defensoresCount,
-        isVerified: verifiedCount,
-        isLinkedHouse: linkedHouseCount,
-        linkedHomes: linkedHomesCount,
-        isOffline: offlineCount,
+        successful: resumen?.totalExitosa ?? resumen?.totalExitosas ?? surveyStats.successful,
+        unsuccessful: resumen?.totalNoExitosa ?? resumen?.totalNoExitosas ?? surveyStats.unsuccessful,
+        defensores: resumen?.totalPatriaDefender ?? resumen?.totalIsPatriaDefender ?? defensoresCount,
+        isVerified: resumen?.totalVerified ?? resumen?.totalIsVerified ?? verifiedCount,
+        isLinkedHouse: resumen?.totalLinkedHouse ?? resumen?.totalIsLinkedHouse ?? linkedHouseCount,
+        linkedHomes: resumen?.linkedHomes ?? linkedHomesCount,
+        isOffline: resumen?.totalIsOffline ?? offlineCount,
         dailyStats,
         rejectionStats,
         loadedAt: new Date().toISOString(),
+        startDate,
+        endDate,
+        surveys: allSurveys,
+        pagination: response.data?.pagination || {
+          page: 1,
+          totalPages: 1,
+          total: allSurveys.length,
+        },
       }
 
       setMetrics(newMetrics)
@@ -279,16 +296,17 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       notificationService.handleApiError(error, 'Error al cargar métricas')
     } finally {
       setIsLoading(false)
+      onLoading?.(false)
     }
   }
 
-  // Cargar métricas automáticamente si autoLoad=true
+  // Cargar métricas automáticamente si autoLoad=true o si cambia la página/perPage
   useEffect(() => {
-    if (autoLoad) {
+    if (autoLoad || (page !== undefined)) {
       loadMetrics()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoLoad])
+  }, [autoLoad, page, perPage, refreshKey])
 
   const handleApplyFilters = () => {
     loadMetrics()
@@ -309,21 +327,12 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   }
 
   const handleClearFilters = () => {
-    setStartDate(getTodayISO())
-    setEndDate(getTodayISO())
-    setMetrics({
-      total: 0,
-      successful: 0,
-      unsuccessful: 0,
-      defensores: 0,
-      isVerified: 0,
-      isLinkedHouse: 0,
-      linkedHomes: 0,
-      isOffline: 0,
-      rejectionStats: [],
-      loadedAt: '',
-    })
+    const today = getTodayISO()
+    setStartDate(today)
+    setEndDate(today)
+    loadMetrics(today, today)
     setFilter('all')
+    setShowRejectionBreakdown(false)
   }
 
   const handleMetricClick = (metricType: 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline') => {
@@ -335,12 +344,8 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
     }
   }
 
-  if (isLoading) {
-    return <LoadingState />
-  }
-
   return (
-    <div className="metrics-card">
+    <div className={`metrics-card ${isLoading ? 'metrics-card--loading' : ''}`}>
       {/* Filtros de fecha */}
       <div className="metrics-card__filters filter-card">
         <h3 className="filter-card__title">
@@ -398,6 +403,11 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
 
       {/* Estadísticas */}
       <div className="reports-stats">
+        {isLoading && (
+          <div className="metrics-loading-overlay">
+            <div className="spinner"></div>
+          </div>
+        )}
         <div
           className={`stat-card stat-card--primary ${filter === 'all' ? 'stat-card--active' : ''}`}
           onClick={() => handleMetricClick('all')}

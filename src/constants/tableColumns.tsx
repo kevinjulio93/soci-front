@@ -9,7 +9,6 @@ import type { Survey, Socializer } from '../types'
 import { getAvatarColor, getInitials, translateRole, getRejectionReasonLabel } from '../utils'
 
 export const getSurveysTableColumns = (
-  formatDate: (dateString: string) => string,
   handleViewDetails: (id: string) => void,
   _onDelete?: (id: string, name: string) => void
 ): TableColumn<RespondentData>[] => [
@@ -42,103 +41,31 @@ export const getSurveysTableColumns = (
     },
     {
       key: 'author',
-      header: 'AUTOR',
+      header: 'SOCIALIZADOR',
       render: (survey) => {
-        const authorEmail = survey.autor?.email
-
+        const name = survey.socializer?.fullName || survey.autor?.email || '—'
         return (
-          <div className="contact-info">
-            <span className="contact-email">{authorEmail || <span className="text-muted">—</span>}</span>
+          <div className="socializer-info">
+            <span className="socializer-name" title={name}>{name}</span>
           </div>
         )
       }
     },
     {
-      key: 'idType',
-      header: 'TIPO ID',
+      key: 'status',
+      header: 'ESTADO',
       render: (survey) => {
-        const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
+        const isSuccessful = survey.surveyStatus === 'successful'
         return (
-          <span className="id-type">{survey.idType || <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>}</span>
+          <div className="status-cell">
+            <span className={`badge ${isSuccessful ? 'badge-success' : 'badge-danger'}`}>
+              {isSuccessful ? 'Exitosa' : 'No Exitosa'}
+            </span>
+            {survey.isVerified && <span className="status-mini-icon" title="Verificada">✅</span>}
+            {survey.isPatriaDefender && <span className="status-mini-icon" title="Defensor de la Patria">⭐</span>}
+          </div>
         )
       }
-    },
-    {
-      key: 'identification',
-      header: 'N° IDENTIFICACIÓN',
-      render: (survey) => {
-        const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-        if (!survey.identification) {
-          return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
-        }
-        return <span className="id-number">{survey.identification}</span>
-      }
-    },
-    {
-      key: 'contact',
-      header: 'TELÉFONO',
-      render: (survey) => {
-        const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-        return (
-          <span className="contact-phone">{survey.phone || <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>}</span>
-        )
-      }
-    },
-    {
-      key: 'gender',
-      header: 'GÉNERO',
-      render: (survey) => {
-        const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-        if (!survey.gender) return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
-        const genderClass = survey.gender?.toLowerCase() === 'masculino' ? 'badge-blue' :
-          survey.gender?.toLowerCase() === 'femenino' ? 'badge-pink' : 'badge-gray'
-        return (
-          <span className={`badge ${genderClass}`}>
-            {survey.gender}
-          </span>
-        )
-      }
-    },
-    {
-      key: 'age',
-      header: 'EDAD',
-      render: (survey) => {
-        const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-        if (!survey.ageRange) return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
-        const getAgeClass = (range: string) => {
-          if (range?.includes('18-25')) return 'badge-green'
-          if (range?.includes('26-35')) return 'badge-teal'
-          if (range?.includes('36-45')) return 'badge-orange'
-          if (range?.includes('46-60')) return 'badge-purple'
-          if (range?.includes('60')) return 'badge-brown'
-          return 'badge-gray'
-        }
-        return <span className={`badge ${getAgeClass(survey.ageRange)}`}>{survey.ageRange}</span>
-      }
-    },
-    {
-      key: 'stratum',
-      header: 'ESTRATO',
-      render: (survey) => {
-        const isUnsuccessful = survey.surveyStatus === 'unsuccessful'
-        if (!survey.stratum) return <span className="badge badge-empty">{isUnsuccessful ? getRejectionReasonLabel(survey.noResponseReason ?? survey.rejectionReason) : '—'}</span>
-        const getStratumClass = (stratum: number) => {
-          if (stratum <= 2) return 'badge-red'
-          if (stratum <= 4) return 'badge-yellow'
-          return 'badge-indigo'
-        }
-        return (
-          <span className={`badge ${getStratumClass(survey.stratum)}`}>
-            Estrato {survey.stratum}
-          </span>
-        )
-      }
-    },
-    {
-      key: 'date',
-      header: 'FECHA',
-      render: (survey) => formatDate(survey.createdAt),
-      className: 'survey-table__td--date'
     },
     {
       key: 'actions' as const,
@@ -154,17 +81,6 @@ export const getSurveysTableColumns = (
               <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
             </svg>
           </span>
-          {/* {onDelete && (
-          <span
-            className="action-icon action-icon--delete"
-            onClick={() => onDelete(survey._id, survey.fullName || 'Encuestado')}
-            title="Eliminar encuestado"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="#2d4a5f">
-              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-            </svg>
-          </span>
-        )} */}
         </div>
       )
     }

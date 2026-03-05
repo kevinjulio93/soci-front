@@ -46,14 +46,14 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
         <div className="sidebar__user">
           <div className="sidebar__user-avatar">
-            {(user?.profile?.name || user?.profile?.fullName || user?.email)?.charAt(0).toUpperCase()}
+            {(user?.profile?.name || user?.fullName || user?.profile?.fullName || user?.email)?.charAt(0).toUpperCase()}
           </div>
           <div className="sidebar__user-info">
             <p
               className="sidebar__user-email"
-              title={user?.profile?.name || user?.profile?.fullName || user?.email}
+              title={user?.profile?.name || user?.fullName || user?.profile?.fullName || user?.email}
             >
-              {user?.profile?.name || user?.profile?.fullName || user?.email}
+              {user?.profile?.name || user?.fullName || user?.profile?.fullName || user?.email}
             </p>
             <p className="sidebar__user-role">{translateRole(user?.role?.role || '')}</p>
           </div>

@@ -11,11 +11,13 @@ import 'leaflet/dist/leaflet.css'
 import '../styles/Modal.scss'
 import { RespondentData } from '../models/ApiResponses'
 import { EXTERNAL_URLS, MAP_CONFIG } from '../constants'
+import { apiService } from '../services/api.service'
+import { notificationService } from '../services/notification.service'
 
 interface SurveyDetailModalProps {
   isOpen: boolean
   onClose: () => void
-  survey: RespondentData | null
+  surveyId: string | null
   formatDate: (date: string) => string
 }
 
@@ -43,9 +45,11 @@ const redIcon = new Icon({
 export function SurveyDetailModal({
   isOpen,
   onClose,
-  survey,
+  surveyId,
   formatDate,
 }: SurveyDetailModalProps) {
+  const [survey, setSurvey] = useState<RespondentData | null>(null)
+  const [loading, setLoading] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioError, setAudioError] = useState(false)
 
@@ -83,6 +87,30 @@ export function SurveyDetailModal({
     }
   }, [isOpen])
 
+  // Cargar datos de la encuesta
+  useEffect(() => {
+    const fetchSurvey = async () => {
+      if (isOpen && surveyId) {
+        try {
+          setLoading(true)
+          const response = await apiService.getRespondentById(surveyId)
+          if (response.data) {
+            setSurvey(response.data)
+          }
+        } catch (error) {
+          notificationService.handleApiError(error, 'Error al cargar los detalles de la encuesta')
+          onClose()
+        } finally {
+          setLoading(false)
+        }
+      } else if (!isOpen) {
+        setSurvey(null)
+      }
+    }
+
+    fetchSurvey()
+  }, [surveyId, isOpen, onClose])
+
   // Resetear estados cuando cambia la encuesta
   useEffect(() => {
     if (isOpen && survey) {
@@ -115,13 +143,14 @@ export function SurveyDetailModal({
     }
   }, [survey, isOpen])
 
-  if (!isOpen || !survey) return null
+  if (!isOpen) return null
 
   // Determinar si la encuesta fue exitosa
-  const isSuccessful = survey.surveyStatus === 'successful'
+  const isSuccessful = survey?.surveyStatus === 'successful'
 
   // Obtener la razón de rechazo
   const getRejectionReason = () => {
+    if (!survey) return 'No especificada'
     if (typeof survey.noResponseReason === 'object' && (survey.noResponseReason as any).label) return (survey.noResponseReason as any).label
     if (typeof survey.rejectionReason === 'object' && (survey.rejectionReason as any).label) return (survey.rejectionReason as any).label
     if (typeof survey.noResponseReason === 'string') return survey.noResponseReason
@@ -136,7 +165,7 @@ export function SurveyDetailModal({
   }
 
   const handlePlayAudio = async () => {
-    if (!survey.audioUrl) {
+    if (!survey?.audioUrl) {
       setAudioError(true)
       return
     }
@@ -203,20 +232,27 @@ export function SurveyDetailModal({
         <div className="modal-header">
           <div className="modal-header__content">
             <h2 className="modal-title">Detalle de Encuesta</h2>
-            {survey.isVerified ? (
-              <span className="modal-badge modal-badge--verified">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '4px' }}>
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                </svg>
-                Verificada
-              </span>
-            ) : (
-              <span className="modal-badge modal-badge--not-verified">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '4px' }}>
-                  <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z" />
-                </svg>
-                No Verificada
-              </span>
+            {!loading && survey && (
+              <>
+                <span className={`modal-badge ${isSuccessful ? 'modal-badge--success' : 'modal-badge--danger'}`}>
+                  {isSuccessful ? 'Exitosa' : 'No Exitosa'}
+                </span>
+                {survey.isVerified ? (
+                  <span className="modal-badge modal-badge--verified">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '4px' }}>
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                    </svg>
+                    Verificada
+                  </span>
+                ) : (
+                  <span className="modal-badge modal-badge--not-verified">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '4px' }}>
+                      <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z" />
+                    </svg>
+                    No Verificada
+                  </span>
+                )}
+              </>
             )}
           </div>
           <button className="modal-close" onClick={onClose}>
@@ -228,284 +264,321 @@ export function SurveyDetailModal({
         </div>
 
         <div className="modal-body modal-body--detail">
-          {!isSuccessful ? (
-            // Vista simplificada para encuestas no exitosas
-            <>
-              {/* Razón de No Respuesta */}
-              <section className="detail-section">
-                <h3 className="detail-section__title">Razón de No Respuesta</h3>
-                <div className="detail-grid">
-                  <div className="detail-item detail-item--full">
-                    <span className="detail-item__label">Motivo:</span>
-                    <span className="detail-item__value detail-item__value--highlight">
-                      {getRejectionReason()}
-                    </span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Fecha de Registro:</span>
-                    <span className="detail-item__value">{formatDate(survey.createdAt)}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Autor:</span>
-                    <span className="detail-item__value">
-                      {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
-                    </span>
-                  </div>
-                </div>
-              </section>
-
-              {/* Ubicación Geográfica */}
-              {survey.location && survey.location.coordinates && survey.location.coordinates[0] !== 0 && survey.location.coordinates[1] !== 0 && (
-                <section className="detail-section">
-                  <h3 className="detail-section__title">Ubicación del Intento</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <span className="detail-item__label">Longitud:</span>
-                      <span className="detail-item__value">{survey.location.coordinates[0].toFixed(6)}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-item__label">Latitud:</span>
-                      <span className="detail-item__value">{survey.location.coordinates[1].toFixed(6)}</span>
-                    </div>
-                    <div className="detail-item detail-item--full detail-item--map">
-                      <span className="detail-item__label">Mapa de Ubicación:</span>
-                      <div className="map-container">
-                        <MapContainer
-                          center={[survey.location.coordinates[1], survey.location.coordinates[0]]}
-                          zoom={15}
-                          style={{ height: '250px', width: '100%', borderRadius: '8px' }}
-                        >
-                          <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          />
-                          <Marker
-                            position={[survey.location.coordinates[1], survey.location.coordinates[0]]}
-                            icon={redIcon}
-                          >
-                            <Popup>
-                              <strong>Encuesta no realizada</strong>
-                              <br />
-                              <em>{getRejectionReason()}</em>
-                            </Popup>
-                          </Marker>
-                        </MapContainer>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              )}
-            </>
+          {loading ? (
+            <div className="modal-loading">
+              <div className="modal-loading__spinner"></div>
+              <p>Cargando detalles de la encuesta...</p>
+            </div>
+          ) : !survey ? (
+            <div className="modal-error">
+              <p>No se pudo cargar la información de la encuesta.</p>
+            </div>
           ) : (
-            // Vista completa para encuestas exitosas
             <>
-              {/* Información Personal */}
-              <section className="detail-section">
-                <h3 className="detail-section__title">Información Personal</h3>
-                <div className="detail-grid">
-                  <div className="detail-item">
-                    <span className="detail-item__label">Nombre Completo:</span>
-                    <span className="detail-item__value">{survey.fullName}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Tipo de Identificación:</span>
-                    <span className="detail-item__value">{survey.idType || 'N/A'}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Número de Identificación:</span>
-                    <span className="detail-item__value">{survey.identification}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Género:</span>
-                    <span className="detail-item__value">{survey.gender}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Rango de Edad:</span>
-                    <span className="detail-item__value">{survey.ageRange}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Defensor de la Patria:</span>
-                    <span className="detail-item__value">
-                      {(survey as any).isPatriaDefender ? (
-                        <span style={{ color: '#28a745', fontWeight: 600 }}>✓ Sí</span>
-                      ) : (
-                        <span style={{ color: '#6c757d' }}>✗ No</span>
+              {!isSuccessful ? (
+                // Vista simplificada para encuestas no exitosas
+                <>
+                  {/* Razón de No Respuesta */}
+                  <section className="detail-section">
+                    <h3 className="detail-section__title">Razón de No Respuesta</h3>
+                    <div className="detail-grid">
+                      <div className="detail-item detail-item--full">
+                        <span className="detail-item__label">Motivo:</span>
+                        <span className="detail-item__value detail-item__value--highlight">
+                          {getRejectionReason()}
+                        </span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Fecha de Registro:</span>
+                        <span className="detail-item__value">{formatDate(survey.createdAt)}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Autor:</span>
+                        <span className="detail-item__value">
+                          {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
+                        </span>
+                      </div>
+                      {survey.socializer && (
+                        <>
+                          <div className="detail-item">
+                            <span className="detail-item__label">Socializador:</span>
+                            <span className="detail-item__value">{survey.socializer.fullName}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-item__label">Teléfono Socializador:</span>
+                            <span className="detail-item__value">{survey.socializer.phone}</span>
+                          </div>
+                        </>
                       )}
-                    </span>
-                  </div>
-                </div>
-              </section>
-
-              {/* Información de Contacto */}
-              <section className="detail-section">
-                <h3 className="detail-section__title">Información de Contacto</h3>
-                <div className="detail-grid">
-                  <div className="detail-item">
-                    <span className="detail-item__label">Teléfono:</span>
-                    <span className="detail-item__value">{survey.phone || 'N/A'}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Correo Electrónico:</span>
-                    <span className="detail-item__value">{survey.email || 'N/A'}</span>
-                  </div>
-                  <div className="detail-item detail-item--full">
-                    <span className="detail-item__label">Dirección:</span>
-                    <span className="detail-item__value">{survey.address || 'N/A'}</span>
-                  </div>
-                </div>
-              </section>
-
-              {/* Información de Ubicación */}
-              <section className="detail-section">
-                <h3 className="detail-section__title">Información de Ubicación</h3>
-                <div className="detail-grid">
-                  <div className="detail-item">
-                    <span className="detail-item__label">Departamento:</span>
-                    <span className="detail-item__value">{getStringValue(survey.department) || 'N/A'}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Municipio:</span>
-                    <span className="detail-item__value">{getStringValue(survey.city) || 'N/A'}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Barrio:</span>
-                    <span className="detail-item__value">{survey.neighborhood || 'N/A'}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Estrato:</span>
-                    <span className="detail-item__value">{survey.stratum || 'N/A'}</span>
-                  </div>
-                </div>
-              </section>
-
-              {/* Ubicación Geográfica */}
-              {survey.location && survey.location.coordinates && survey.location.coordinates[0] !== 0 && survey.location.coordinates[1] !== 0 && (
-                <section className="detail-section">
-                  <h3 className="detail-section__title">Ubicación Geográfica</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <span className="detail-item__label">Longitud:</span>
-                      <span className="detail-item__value">{survey.location.coordinates[0].toFixed(6)}</span>
                     </div>
-                    <div className="detail-item">
-                      <span className="detail-item__label">Latitud:</span>
-                      <span className="detail-item__value">{survey.location.coordinates[1].toFixed(6)}</span>
-                    </div>
-                    <div className="detail-item detail-item--full detail-item--map">
-                      <span className="detail-item__label">Mapa de Ubicación:</span>
-                      <div className="map-container">
-                        <MapContainer
-                          center={[survey.location.coordinates[1], survey.location.coordinates[0]]}
-                          zoom={15}
-                          style={{ height: '250px', width: '100%', borderRadius: '8px' }}
-                        >
-                          <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          />
-                          <Marker
-                            position={[survey.location.coordinates[1], survey.location.coordinates[0]]}
-                            icon={defaultIcon}
-                          >
-                            <Popup>
-                              <strong>{survey.fullName}</strong>
-                              <br />
-                              {survey.neighborhood && `${survey.neighborhood}, `}
-                              {getStringValue(survey.city)}
-                            </Popup>
-                          </Marker>
-                        </MapContainer>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              )}
+                  </section>
 
-              {/* Audio e Información Adicional */}
-              <section className="detail-section">
-                <h3 className="detail-section__title">Información Adicional</h3>
-                <div className="detail-grid">
-                  <div className="detail-item">
-                    <span className="detail-item__label">Autor:</span>
-                    <span className="detail-item__value">
-                      {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-item__label">Fecha de Registro:</span>
-                    <span className="detail-item__value">{formatDate(survey.createdAt)}</span>
-                  </div>
-                  {survey.audioUrl && (
-                    <div className="detail-item detail-item--full">
-                      <span className="detail-item__label">Audio de Encuesta:</span>
-                      <div className="audio-player">
-                        <div className="audio-player__controls">
-                          <button
-                            className={`audio-player__btn audio-player__btn--play ${isPlaying ? 'audio-player__btn--playing' : ''}`}
-                            onClick={handlePlayAudio}
-                            disabled={audioError}
-                            title={isPlaying ? 'Pausar' : 'Reproducir'}
-                          >
-                            {isPlaying ? (
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <rect x="6" y="4" width="4" height="16" rx="1" />
-                                <rect x="14" y="4" width="4" height="16" rx="1" />
-                              </svg>
-                            ) : (
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <polygon points="6 3 20 12 6 21 6 3" />
-                              </svg>
-                            )}
-                          </button>
-                          <button
-                            className="audio-player__btn audio-player__btn--stop"
-                            onClick={handleStopAudio}
-                            disabled={audioError || (!isPlaying && audioCurrentTime === 0)}
-                            title="Detener"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                              <rect x="5" y="5" width="14" height="14" rx="2" />
-                            </svg>
-                          </button>
+                  {/* Ubicación Geográfica */}
+                  {survey.location && survey.location.coordinates && survey.location.coordinates[0] !== 0 && survey.location.coordinates[1] !== 0 && (
+                    <section className="detail-section">
+                      <h3 className="detail-section__title">Ubicación del Intento</h3>
+                      <div className="detail-grid">
+                        <div className="detail-item">
+                          <span className="detail-item__label">Longitud:</span>
+                          <span className="detail-item__value">{survey.location.coordinates[0].toFixed(6)}</span>
                         </div>
-
-                        <div className="audio-player__track">
-                          <div
-                            className="audio-player__progress-bar"
-                            onClick={handleSeek}
-                            title="Clic para buscar"
-                          >
-                            <div
-                              className="audio-player__progress-fill"
-                              style={{ width: audioDuration ? `${(audioCurrentTime / audioDuration) * 100}%` : '0%' }}
-                            />
-                            {audioDuration ? (
-                              <div
-                                className="audio-player__progress-thumb"
-                                style={{ left: `${(audioCurrentTime / audioDuration) * 100}%` }}
+                        <div className="detail-item">
+                          <span className="detail-item__label">Latitud:</span>
+                          <span className="detail-item__value">{survey.location.coordinates[1].toFixed(6)}</span>
+                        </div>
+                        <div className="detail-item detail-item--full detail-item--map">
+                          <span className="detail-item__label">Mapa de Ubicación:</span>
+                          <div className="map-container">
+                            <MapContainer
+                              center={[survey.location.coordinates[1], survey.location.coordinates[0]]}
+                              zoom={15}
+                              style={{ height: '250px', width: '100%', borderRadius: '8px' }}
+                            >
+                              <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                               />
-                            ) : null}
-                          </div>
-                          <div className="audio-player__time">
-                            <span>{formatDuration(audioCurrentTime)}</span>
-                            <span>{audioDuration ? formatDuration(audioDuration) : '--:--'}</span>
+                              <Marker
+                                position={[survey.location.coordinates[1], survey.location.coordinates[0]]}
+                                icon={redIcon}
+                              >
+                                <Popup>
+                                  <strong>Encuesta no realizada</strong>
+                                  <br />
+                                  <em>{getRejectionReason()}</em>
+                                </Popup>
+                              </Marker>
+                            </MapContainer>
                           </div>
                         </div>
-
-                        {isPlaying && (
-                          <div className="audio-player__visualizer">
-                            <span /><span /><span /><span /><span />
-                          </div>
-                        )}
-
-                        {audioError && (
-                          <span className="audio-player__error">Error al cargar audio</span>
-                        )}
+                      </div>
+                    </section>
+                  )}
+                </>
+              ) : (
+                // Vista completa para encuestas exitosas
+                <>
+                  {/* Información Personal */}
+                  <section className="detail-section">
+                    <h3 className="detail-section__title">Información Personal</h3>
+                    <div className="detail-grid">
+                      <div className="detail-item">
+                        <span className="detail-item__label">Nombre Completo:</span>
+                        <span className="detail-item__value">{survey.fullName}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Tipo de Identificación:</span>
+                        <span className="detail-item__value">{survey.idType || 'N/A'}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Número de Identificación:</span>
+                        <span className="detail-item__value">{survey.identification}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Género:</span>
+                        <span className="detail-item__value">{survey.gender}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Rango de Edad:</span>
+                        <span className="detail-item__value">{survey.ageRange}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Defensor de la Patria:</span>
+                        <span className="detail-item__value">
+                          {(survey as any).isPatriaDefender ? (
+                            <span style={{ color: '#28a745', fontWeight: 600 }}>✓ Sí</span>
+                          ) : (
+                            <span style={{ color: '#6c757d' }}>✗ No</span>
+                          )}
+                        </span>
                       </div>
                     </div>
+                  </section>
+
+                  {/* Información de Contacto */}
+                  <section className="detail-section">
+                    <h3 className="detail-section__title">Información de Contacto</h3>
+                    <div className="detail-grid">
+                      <div className="detail-item">
+                        <span className="detail-item__label">Teléfono:</span>
+                        <span className="detail-item__value">{survey.phone || 'N/A'}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Correo Electrónico:</span>
+                        <span className="detail-item__value">{survey.email || 'N/A'}</span>
+                      </div>
+                      <div className="detail-item detail-item--full">
+                        <span className="detail-item__label">Dirección:</span>
+                        <span className="detail-item__value">{survey.address || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Información de Ubicación */}
+                  <section className="detail-section">
+                    <h3 className="detail-section__title">Información de Ubicación</h3>
+                    <div className="detail-grid">
+                      <div className="detail-item">
+                        <span className="detail-item__label">Departamento:</span>
+                        <span className="detail-item__value">{getStringValue(survey.department) || 'N/A'}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Municipio:</span>
+                        <span className="detail-item__value">{getStringValue(survey.city) || 'N/A'}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Barrio:</span>
+                        <span className="detail-item__value">{survey.neighborhood || 'N/A'}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Estrato:</span>
+                        <span className="detail-item__value">{survey.stratum || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Ubicación Geográfica */}
+                  {survey.location && survey.location.coordinates && survey.location.coordinates[0] !== 0 && survey.location.coordinates[1] !== 0 && (
+                    <section className="detail-section">
+                      <h3 className="detail-section__title">Ubicación Geográfica</h3>
+                      <div className="detail-grid">
+                        <div className="detail-item">
+                          <span className="detail-item__label">Longitud:</span>
+                          <span className="detail-item__value">{survey.location.coordinates[0].toFixed(6)}</span>
+                        </div>
+                        <div className="detail-item">
+                          <span className="detail-item__label">Latitud:</span>
+                          <span className="detail-item__value">{survey.location.coordinates[1].toFixed(6)}</span>
+                        </div>
+                        <div className="detail-item detail-item--full detail-item--map">
+                          <span className="detail-item__label">Mapa de Ubicación:</span>
+                          <div className="map-container">
+                            <MapContainer
+                              center={[survey.location.coordinates[1], survey.location.coordinates[0]]}
+                              zoom={15}
+                              style={{ height: '250px', width: '100%', borderRadius: '8px' }}
+                            >
+                              <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                              />
+                              <Marker
+                                position={[survey.location.coordinates[1], survey.location.coordinates[0]]}
+                                icon={defaultIcon}
+                              >
+                                <Popup>
+                                  <strong>{survey.fullName}</strong>
+                                  <br />
+                                  {survey.neighborhood && `${survey.neighborhood}, `}
+                                  {getStringValue(survey.city)}
+                                </Popup>
+                              </Marker>
+                            </MapContainer>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
                   )}
-                </div>
-              </section>
+
+                  {/* Audio e Información Adicional */}
+                  <section className="detail-section">
+                    <h3 className="detail-section__title">Información Adicional</h3>
+                    <div className="detail-grid">
+                      <div className="detail-item">
+                        <span className="detail-item__label">Autor:</span>
+                        <span className="detail-item__value">
+                          {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
+                        </span>
+                      </div>
+                      {survey.socializer && (
+                        <>
+                          <div className="detail-item">
+                            <span className="detail-item__label">Socializador:</span>
+                            <span className="detail-item__value">{survey.socializer.fullName}</span>
+                          </div>
+                          <div className="detail-item">
+                            <span className="detail-item__label">Teléfono Socializador:</span>
+                            <span className="detail-item__value">{survey.socializer.phone}</span>
+                          </div>
+                        </>
+                      )}
+                      <div className="detail-item">
+                        <span className="detail-item__label">Fecha de Registro:</span>
+                        <span className="detail-item__value">{formatDate(survey.createdAt)}</span>
+                      </div>
+                      {survey.audioUrl && (
+                        <div className="detail-item detail-item--full">
+                          <span className="detail-item__label">Audio de Encuesta:</span>
+                          <div className="audio-player">
+                            <div className="audio-player__controls">
+                              <button
+                                className={`audio-player__btn audio-player__btn--play ${isPlaying ? 'audio-player__btn--playing' : ''}`}
+                                onClick={handlePlayAudio}
+                                disabled={audioError}
+                                title={isPlaying ? 'Pausar' : 'Reproducir'}
+                              >
+                                {isPlaying ? (
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                                    <rect x="14" y="4" width="4" height="16" rx="1" />
+                                  </svg>
+                                ) : (
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="6 3 20 12 6 21 6 3" />
+                                  </svg>
+                                )}
+                              </button>
+                              <button
+                                className="audio-player__btn audio-player__btn--stop"
+                                onClick={handleStopAudio}
+                                disabled={audioError || (!isPlaying && audioCurrentTime === 0)}
+                                title="Detener"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                  <rect x="5" y="5" width="14" height="14" rx="2" />
+                                </svg>
+                              </button>
+                            </div>
+
+                            <div className="audio-player__track">
+                              <div
+                                className="audio-player__progress-bar"
+                                onClick={handleSeek}
+                                title="Clic para buscar"
+                              >
+                                <div
+                                  className="audio-player__progress-fill"
+                                  style={{ width: audioDuration ? `${(audioCurrentTime / audioDuration) * 100}%` : '0%' }}
+                                />
+                                {audioDuration ? (
+                                  <div
+                                    className="audio-player__progress-thumb"
+                                    style={{ left: `${(audioCurrentTime / audioDuration) * 100}%` }}
+                                  />
+                                ) : null}
+                              </div>
+                              <div className="audio-player__time">
+                                <span>{formatDuration(audioCurrentTime)}</span>
+                                <span>{audioDuration ? formatDuration(audioDuration) : '--:--'}</span>
+                              </div>
+                            </div>
+
+                            {isPlaying && (
+                              <div className="audio-player__visualizer">
+                                <span /><span /><span /><span /><span />
+                              </div>
+                            )}
+
+                            {audioError && (
+                              <span className="audio-player__error">Error al cargar audio</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </>
+              )}
             </>
           )}
         </div>

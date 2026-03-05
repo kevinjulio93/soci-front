@@ -6,10 +6,11 @@
 
 import { useState, useEffect } from 'react'
 import { Sidebar, DataTable, ConfirmModal, SurveyDetailModal, MetricsCard } from '../components'
+import type { MetricsData } from '../components/MetricsCard'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { getSurveysTableColumns, MESSAGES } from '../constants'
-import type { RespondentData } from '../models/ApiResponses'
+import { RespondentData } from '../models/ApiResponses'
 import { useAuth } from '../contexts/AuthContext'
 import '../styles/Dashboard.scss'
 
@@ -25,42 +26,38 @@ export default function SurveysList() {
   const [respondentToDelete, setRespondentToDelete] = useState<{ id: string; name: string } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
-  const [selectedSurvey, setSelectedSurvey] = useState<RespondentData | null>(null)
+  const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null)
   const [itemsPerPage, setItemsPerPage] = useState(50)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const userRole = user?.role?.role?.toLowerCase() || ''
   const isAdmin = userRole === 'admin'
 
-  const loadSurveys = async (page: number, perPage?: number) => {
-    try {
-      setIsLoading(true)
-      const response = await apiService.getRespondents(page, perPage || itemsPerPage)
-      setSurveys(response.data || [])
-      setTotalPages(response.totalPages || 1)
-      setTotalRecords(response.totalItems || 0)
-      setCurrentPage(page)
-    } catch (error) {
-      notificationService.handleApiError(error, MESSAGES.LOAD_ERROR)
-    } finally {
+  const handleMetricsLoaded = (data: MetricsData) => {
+    if (data.surveys) {
+      setSurveys(data.surveys)
+      setTotalPages(data.pagination?.totalPages || 1)
+      setTotalRecords(data.pagination?.total || 0)
+      setCurrentPage(data.pagination?.page || 1)
       setIsLoading(false)
     }
   }
 
-  useEffect(() => {
-    if (isAdmin) {
-      loadSurveys(1)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin])
-
-  const handlePageChange = async (page: number) => {
-    await loadSurveys(page)
+  const handlePageChange = (page: number) => {
+    setIsLoading(true)
+    setCurrentPage(page)
   }
 
   const handleItemsPerPageChange = (perPage: number) => {
+    setIsLoading(true)
     setItemsPerPage(perPage)
-    loadSurveys(1, perPage)
+    setCurrentPage(1)
   }
+
+  useEffect(() => {
+    // No cargar inicialmente, esperar a que MetricsCard dispare onMetricsLoaded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -84,7 +81,7 @@ export default function SurveysList() {
       await apiService.deleteRespondent(respondentToDelete.id)
       notificationService.success(MESSAGES.RESPONDENT_DELETE_SUCCESS)
 
-      await loadSurveys(currentPage)
+      setRefreshKey(prev => prev + 1)
 
       setShowDeleteModal(false)
       setRespondentToDelete(null)
@@ -102,16 +99,13 @@ export default function SurveysList() {
   }
 
   const handleViewDetails = (id: string) => {
-    const survey = surveys.find(s => s._id === id)
-    if (survey) {
-      setSelectedSurvey(survey)
-      setShowDetailModal(true)
-    }
+    setSelectedSurveyId(id)
+    setShowDetailModal(true)
   }
 
   const handleCloseDetailModal = () => {
     setShowDetailModal(false)
-    setSelectedSurvey(null)
+    setSelectedSurveyId(null)
   }
 
   return (
@@ -137,6 +131,11 @@ export default function SurveysList() {
             viewType={userRole as 'admin' | 'coordinador_zona' | 'coordinador_campo' | 'supervisor' | 'socializer'}
             showDailyView={false}
             autoLoad={true}
+            onMetricsLoaded={handleMetricsLoaded}
+            page={currentPage}
+            perPage={itemsPerPage}
+            refreshKey={refreshKey}
+            onLoading={setIsLoading}
           />
 
           {/* Tabla - Solo visible para admin */}
@@ -146,13 +145,13 @@ export default function SurveysList() {
                 <div className="dashboard__header-text">
                   <h2 className="dashboard__section-title">Todas las Encuestas</h2>
                   <p className="dashboard__section-desc">
-                    {totalRecords} encuesta{totalRecords !== 1 ? 's' : ''} registrada{totalRecords !== 1 ? 's' : ''}
+                    {totalRecords} encuesta{totalRecords !== 1 ? 's' : ''} listada{totalRecords !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
 
               <DataTable
-                columns={getSurveysTableColumns(formatDate, handleViewDetails, handleDeleteClick)}
+                columns={getSurveysTableColumns(handleViewDetails, handleDeleteClick)}
                 data={surveys}
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -192,7 +191,7 @@ export default function SurveysList() {
           <SurveyDetailModal
             isOpen={showDetailModal}
             onClose={handleCloseDetailModal}
-            survey={selectedSurvey}
+            surveyId={selectedSurveyId}
             formatDate={formatDate}
           />
         </>

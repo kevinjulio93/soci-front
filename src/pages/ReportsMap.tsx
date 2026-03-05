@@ -67,9 +67,6 @@ const buildPopupHtml = (respondent: RespondentData, isSuccessful: boolean, reaso
       ${respondent.isLinkedHouse ? '<div style="font-size:12px; color:#7c3aed; margin-bottom:4px;"><strong>🏠 Vinculación Extra</strong></div>' : ''}
       ${reasonLine}
       ${neighborhoodLine}
-      <div style="font-size:12px; color:#6b7280;">
-        <strong>Fecha:</strong> ${escapeHtml(formatDateES(respondent.createdAt))}
-      </div>
     </div>
   `.trim()
 }
@@ -140,7 +137,7 @@ function SuperclusterLayer({
       properties: {
         cluster: false,
         respondentId: r._id,
-        isSuccessful: r.willingToRespond,
+        isSuccessful: r.surveyStatus === 'successful',
         fullName: r.fullName,
         isVerified: r.isVerified,
         isLinkedHouse: r.isLinkedHouse,
@@ -356,18 +353,15 @@ export default function ReportsMap() {
   }
 
   // Cargar encuestas del día (una sola llamada)
-  const loadAllRespondents = async () => {
+  const loadAllRespondents = async (overrideStartDate?: string, overrideEndDate?: string) => {
     try {
       setIsLoading(true)
       const today = getTodayISO()
-      const response = await apiService.getReportsBySocializerAndDate(today, today)
-      const report = response.data?.report || []
-
-      const allSurveys: RespondentData[] = report.flatMap((socializer: { allSurveys?: unknown[] }) =>
-        Array.isArray(socializer.allSurveys)
-          ? socializer.allSurveys.map((s) => new RespondentData(s))
-          : []
-      )
+      const sDate = overrideStartDate || today
+      const eDate = overrideEndDate || today
+      const response = await apiService.getReportsBySocializerAndDate(sDate, eDate)
+      const surveysData = response.data?.surveys || []
+      const allSurveys: RespondentData[] = surveysData.filter((s: any) => s != null).map((s: any) => new RespondentData(s))
 
 
       setAllSurveys(allSurveys)
@@ -376,24 +370,24 @@ export default function ReportsMap() {
 
       // Intenta usar los totales del backend, si no, los calcula iterando
       const newStats = calculateSurveyStats(allSurveys)
-      const defensoresCount = resumen?.totalIsPatriaDefender ?? allSurveys.filter(r => (r as any).isPatriaDefender === true).length
-      const verifiedCount = resumen?.totalIsVerified ?? allSurveys.filter(r => r.isVerified === true).length
-      const linkedHouseCount = resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
+      const defensoresCount = resumen?.totalPatriaDefender ?? resumen?.totalIsPatriaDefender ?? allSurveys.filter(r => (r as any).isPatriaDefender === true).length
+      const verifiedCount = resumen?.totalVerified ?? resumen?.totalIsVerified ?? allSurveys.filter(r => r.isVerified === true).length
+      const linkedHouseCount = resumen?.totalLinkedHouse ?? resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
       const linkedHomesCount = resumen?.linkedHomes ?? allSurveys.filter(r => (r as any).linkedHomes === true).length
       const offlineCount = resumen?.totalIsOffline ?? allSurveys.filter(r => (r as any).isOffline === true).length
 
       setStats({
         ...newStats,
         total: resumen?.totalEncuestas ?? newStats.total,
-        successful: resumen?.totalExitosas ?? newStats.successful,
-        unsuccessful: resumen?.totalNoExitosas ?? newStats.unsuccessful,
+        successful: resumen?.totalExitosa ?? resumen?.totalExitosas ?? newStats.successful,
+        unsuccessful: resumen?.totalNoExitosa ?? resumen?.totalNoExitosas ?? newStats.unsuccessful,
         defensores: defensoresCount,
         isVerified: verifiedCount,
         isLinkedHouse: linkedHouseCount,
         linkedHomes: linkedHomesCount,
         isOffline: offlineCount,
       })
-      setFetchedDateRange({ start: today, end: today })
+      setFetchedDateRange({ start: sDate, end: eDate })
     } catch (error) {
       notificationService.handleApiError(error, MESSAGES.RESPONDENT_LOAD_ERROR)
     } finally {
@@ -402,27 +396,25 @@ export default function ReportsMap() {
   }
 
   // Cargar encuestas filtradas por fecha
-  const loadFilteredRespondents = async () => {
-    if (!startDate || !endDate) {
+  const loadFilteredRespondents = async (overrideStartDate?: string, overrideEndDate?: string) => {
+    const sDate = overrideStartDate || startDate
+    const eDate = overrideEndDate || endDate
+
+    if (!sDate || !eDate) {
       notificationService.warning('Por favor seleccione un rango de fechas')
       return
     }
 
-    if (endDate < startDate) {
+    if (eDate < sDate) {
       notificationService.warning('La fecha final no puede ser menor que la fecha inicial')
       return
     }
 
     try {
       setIsLoading(true)
-      const response = await apiService.getReportsBySocializerAndDate(startDate, endDate)
-      const report = response.data?.report || []
-
-      const allSurveys: RespondentData[] = report.flatMap((socializer: { allSurveys?: unknown[] }) =>
-        Array.isArray(socializer.allSurveys)
-          ? socializer.allSurveys.map((s) => new RespondentData(s))
-          : []
-      )
+      const response = await apiService.getReportsBySocializerAndDate(sDate, eDate)
+      const surveysData = response.data?.surveys || []
+      const allSurveys: RespondentData[] = surveysData.filter((s: any) => s != null).map((s: any) => new RespondentData(s))
 
       if (filterRespondentsWithLocation(allSurveys).length === 0 && allSurveys.length > 0) {
         console.warn('⚠️ Todas las encuestas fueron filtradas. Verificar estructura de datos.')
@@ -434,17 +426,17 @@ export default function ReportsMap() {
 
       // Calcular estadísticas usando TODAS las encuestas (con y sin ubicación)
       const newStats = calculateSurveyStats(allSurveys)
-      const defensoresCount = resumen?.totalIsPatriaDefender ?? allSurveys.filter(r => (r as any).isPatriaDefender === true).length
-      const verifiedCount = resumen?.totalIsVerified ?? allSurveys.filter(r => r.isVerified === true).length
-      const linkedHouseCount = resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
+      const defensoresCount = resumen?.totalPatriaDefender ?? resumen?.totalIsPatriaDefender ?? allSurveys.filter(r => (r as any).isPatriaDefender === true).length
+      const verifiedCount = resumen?.totalVerified ?? resumen?.totalIsVerified ?? allSurveys.filter(r => r.isVerified === true).length
+      const linkedHouseCount = resumen?.totalLinkedHouse ?? resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
       const linkedHomesCount = resumen?.linkedHomes ?? allSurveys.filter(r => (r as any).linkedHomes === true).length
       const offlineCount = resumen?.totalIsOffline ?? allSurveys.filter(r => (r as any).isOffline === true).length
 
       setStats({
         ...newStats,
         total: resumen?.totalEncuestas ?? newStats.total,
-        successful: resumen?.totalExitosas ?? newStats.successful,
-        unsuccessful: resumen?.totalNoExitosas ?? newStats.unsuccessful,
+        successful: resumen?.totalExitosa ?? resumen?.totalExitosas ?? newStats.successful,
+        unsuccessful: resumen?.totalNoExitosa ?? resumen?.totalNoExitosas ?? newStats.unsuccessful,
         defensores: defensoresCount,
         isVerified: verifiedCount,
         isLinkedHouse: linkedHouseCount,
@@ -472,10 +464,11 @@ export default function ReportsMap() {
   }
 
   const handleClearFilters = () => {
-    setStartDate(getTodayISO())
-    setEndDate(getTodayISO())
+    const today = getTodayISO()
+    setStartDate(today)
+    setEndDate(today)
     setUseFilters(false)
-    loadAllRespondents()
+    loadAllRespondents(today, today)
   }
 
   const handleStartDateChange = (val: string) => {
@@ -592,6 +585,11 @@ export default function ReportsMap() {
 
           {/* Estadísticas con filtros clickeables */}
           <div className="reports-stats">
+            {isLoading && (
+              <div className="metrics-loading-overlay">
+                <div className="spinner"></div>
+              </div>
+            )}
             <div
               className={`stat-card stat-card--primary ${filter === 'all' ? 'stat-card--active' : ''}`}
               onClick={handleAllClick}
@@ -734,21 +732,22 @@ export default function ReportsMap() {
           )}
 
           {/* Mapa */}
-          {isLoading ? (
-            <div className="loading-container">
-              <p>{MESSAGES.LOADING_DATA}</p>
-            </div>
-          ) : allSurveys.length === 0 ? (
+          {allSurveys.length === 0 && !isLoading ? (
             <div className="empty-state">
               <p>No hay encuestas registradas para este periodo</p>
             </div>
-          ) : respondentsWithLocation.length === 0 ? (
+          ) : respondentsWithLocation.length === 0 && !isLoading ? (
             <div className="empty-state">
               <p>Las encuestas encontradas no tienen ubicación registrada</p>
             </div>
           ) : (
             <>
-              <div className="dashboard-map-container" style={{ position: 'relative' }}>
+              <div className={`dashboard-map-container ${isLoading ? 'dashboard-map-container--loading' : ''}`} style={{ position: 'relative' }}>
+                {isLoading && (
+                  <div className="metrics-loading-overlay" style={{ background: 'transparent' }}>
+                    <div className="spinner"></div>
+                  </div>
+                )}
                 <MapContainer
                   center={mapCenter}
                   zoom={5}

@@ -72,8 +72,12 @@ export const notificationService = {
       return
     }
 
-    // Sin estatus: error de red o desconocido
-    notificationService.error('HTTP - Error de red. Verifique su conexion e intente de nuevo.')
+    // Registrar el error en consola para depuración
+    console.error('API Error details:', error)
+
+    // Sin estatus: error de red, error de lógica o desconocido
+    const errorMessage = error?.message || 'Error desconocido'
+    notificationService.error(`Error: ${errorMessage}. Verifique su conexion e intente de nuevo.`)
   },
 
   /**
