@@ -263,12 +263,62 @@
       border-color: #e74c3c;
     }
   }
+
+  &--with-action {
+    padding-right: 3.5rem !important;
+  }
+}
+
+.form-group__input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.form-group__input-action {
+  position: absolute;
+  right: 1.25rem;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s;
+  z-index: 5;
+  background: none;
+  border: none;
+  padding: 0;
+
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  &:hover {
+    color: $color-primary;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 // Select wrapper with icon
 .form-group__select-wrapper {
   position: relative;
-  
+
   select {
     appearance: none;
     -webkit-appearance: none;
@@ -315,7 +365,7 @@
   height: 20px;
   cursor: pointer;
   accent-color: $color-primary;
-  
+
   &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
@@ -400,6 +450,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -411,6 +462,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -451,6 +503,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .survey-form__container,
   .form-group__input,
   .form-group__select,
@@ -472,7 +525,7 @@
 // Backdrop for mobile dropdown
 .searchable-select__backdrop {
   display: none;
-  
+
   @media (max-width: 768px) {
     display: block;
     position: fixed;
@@ -548,10 +601,15 @@
 
   &--error {
     border-color: #e74c3c;
+
     &:focus {
       box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
       border-color: #e74c3c;
     }
+  }
+
+  &--with-action {
+    padding-right: 3.5rem !important;
   }
 }
 
@@ -608,17 +666,25 @@
 }
 
 @keyframes searchableSelectFadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes searchableSelectFadeInMobile {
-  from { 
-    opacity: 0; 
+  from {
+    opacity: 0;
     transform: translate(-50%, -50%) scale(0.95);
   }
-  to { 
-    opacity: 1; 
+
+  to {
+    opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
 }
@@ -682,9 +748,11 @@
   &::-webkit-scrollbar {
     width: 6px;
   }
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
+
   &::-webkit-scrollbar-thumb {
     background: #d1d5db;
     border-radius: 3px;
