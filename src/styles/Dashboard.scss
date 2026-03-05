@@ -3917,6 +3917,23 @@ input[type="date"].form-group__input {
   }
 }
 
+.map-empty-overlay {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.9);
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-full;
+  box-shadow: $shadow-md;
+  z-index: 1000;
+  pointer-events: none;
+  font-weight: $font-weight-medium;
+  color: $color-dark-text;
+  border: 1px solid $color-border;
+  text-align: center;
+}
+
 // =============================================
 // MAP LEGEND
 // =============================================

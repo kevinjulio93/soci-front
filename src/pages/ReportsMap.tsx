@@ -732,125 +732,126 @@ export default function ReportsMap() {
           )}
 
           {/* Mapa */}
-          {allSurveys.length === 0 && !isLoading ? (
-            <div className="empty-state">
-              <p>No hay encuestas registradas para este periodo</p>
-            </div>
-          ) : respondentsWithLocation.length === 0 && !isLoading ? (
-            <div className="empty-state">
-              <p>Las encuestas encontradas no tienen ubicación registrada</p>
-            </div>
-          ) : (
-            <>
-              <div className={`dashboard-map-container ${isLoading ? 'dashboard-map-container--loading' : ''}`} style={{ position: 'relative' }}>
-                {isLoading && (
-                  <div className="metrics-loading-overlay" style={{ background: 'transparent' }}>
-                    <div className="spinner"></div>
-                  </div>
-                )}
-                <MapContainer
-                  center={mapCenter}
-                  zoom={5}
-                  maxZoom={18}
-                  style={{ height: '100%', width: '100%' }}
-                  preferCanvas={true}
-                >
-                  <TileLayer
-                    attribution={TILE_ATTRIBUTION}
-                    url={TILE_URL}
-                    maxZoom={20}
-                  />
-                  <SuperclusterLayer respondents={filteredRespondents} />
-                </MapContainer>
+          <div className={`dashboard-map-container ${isLoading ? 'dashboard-map-container--loading' : ''}`} style={{ position: 'relative' }}>
+            {isLoading && (
+              <div className="metrics-loading-overlay" style={{ background: 'transparent' }}>
+                <div className="spinner"></div>
+              </div>
+            )}
 
-                {/* Leyenda del mapa - visible solo en desktop como overlay */}
-                <div className="map-legend map-legend--overlay">
-                  <div className="map-legend__title">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="16" x2="12" y2="12" />
-                      <line x1="12" y1="8" x2="12.01" y2="8" />
-                    </svg>
-                    Leyenda
-                  </div>
-                  <div className="map-legend__section">
-                    <span className="map-legend__section-label">Agrupaciones</span>
-                    <div className="map-legend__item">
-                      <span className="map-legend__dot" style={{ background: 'rgba(59, 130, 246, 0.85)' }}></span>
-                      <span>1 – 10</span>
-                    </div>
-                    <div className="map-legend__item">
-                      <span className="map-legend__dot" style={{ background: 'rgba(234, 179, 8, 0.85)' }}></span>
-                      <span>11 – 50</span>
-                    </div>
-                    <div className="map-legend__item">
-                      <span className="map-legend__dot" style={{ background: 'rgba(239, 68, 68, 0.85)' }}></span>
-                      <span>51 – 200</span>
-                    </div>
-                    <div className="map-legend__item">
-                      <span className="map-legend__dot" style={{ background: 'rgba(139, 92, 246, 0.85)' }}></span>
-                      <span>200+</span>
-                    </div>
-                  </div>
-                  <div className="map-legend__section">
-                    <span className="map-legend__section-label">Encuestas</span>
-                    <div className="map-legend__item">
-                      <span className="map-legend__pin" style={{ background: '#3b82f6' }}>✓</span>
-                      <span>Exitosa</span>
-                    </div>
-                    <div className="map-legend__item">
-                      <span className="map-legend__pin" style={{ background: '#ef4444' }}>✗</span>
-                      <span>No exitosa</span>
-                    </div>
-                  </div>
+            {/* Mensajes de aviso si no hay datos para mostrar en el mapa */}
+            {!isLoading && allSurveys.length === 0 && (
+              <div className="map-empty-overlay">
+                <p>No hay encuestas registradas para este periodo</p>
+              </div>
+            )}
+            {!isLoading && allSurveys.length > 0 && respondentsWithLocation.length === 0 && (
+              <div className="map-empty-overlay">
+                <p>Las encuestas encontradas no tienen ubicación registrada</p>
+              </div>
+            )}
+
+            <MapContainer
+              center={mapCenter}
+              zoom={5}
+              maxZoom={18}
+              style={{ height: '100%', width: '100%' }}
+              preferCanvas={true}
+            >
+              <TileLayer
+                attribution={TILE_ATTRIBUTION}
+                url={TILE_URL}
+                maxZoom={20}
+              />
+              <SuperclusterLayer respondents={filteredRespondents} />
+            </MapContainer>
+
+            {/* Leyenda del mapa - visible solo en desktop como overlay */}
+            <div className="map-legend map-legend--overlay">
+              <div className="map-legend__title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="16" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+                Leyenda
+              </div>
+              <div className="map-legend__section">
+                <span className="map-legend__section-label">Agrupaciones</span>
+                <div className="map-legend__item">
+                  <span className="map-legend__dot" style={{ background: 'rgba(59, 130, 246, 0.85)' }}></span>
+                  <span>1 – 10</span>
+                </div>
+                <div className="map-legend__item">
+                  <span className="map-legend__dot" style={{ background: 'rgba(234, 179, 8, 0.85)' }}></span>
+                  <span>11 – 50</span>
+                </div>
+                <div className="map-legend__item">
+                  <span className="map-legend__dot" style={{ background: 'rgba(239, 68, 68, 0.85)' }}></span>
+                  <span>51 – 200</span>
+                </div>
+                <div className="map-legend__item">
+                  <span className="map-legend__dot" style={{ background: 'rgba(139, 92, 246, 0.85)' }}></span>
+                  <span>200+</span>
                 </div>
               </div>
-
-              {/* Leyenda del mapa - visible solo en mobile, debajo del mapa */}
-              <div className="map-legend map-legend--mobile">
-                <div className="map-legend__title">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="16" x2="12" y2="12" />
-                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                  </svg>
-                  Leyenda del Mapa
+              <div className="map-legend__section">
+                <span className="map-legend__section-label">Encuestas</span>
+                <div className="map-legend__item">
+                  <span className="map-legend__pin" style={{ background: '#3b82f6' }}>✓</span>
+                  <span>Exitosa</span>
                 </div>
-                <div className="map-legend__row">
-                  <div className="map-legend__section">
-                    <span className="map-legend__section-label">Agrupaciones</span>
-                    <div className="map-legend__item">
-                      <span className="map-legend__dot" style={{ background: 'rgba(59, 130, 246, 0.85)' }}></span>
-                      <span>1 – 10</span>
-                    </div>
-                    <div className="map-legend__item">
-                      <span className="map-legend__dot" style={{ background: 'rgba(234, 179, 8, 0.85)' }}></span>
-                      <span>11 – 50</span>
-                    </div>
-                    <div className="map-legend__item">
-                      <span className="map-legend__dot" style={{ background: 'rgba(239, 68, 68, 0.85)' }}></span>
-                      <span>51 – 200</span>
-                    </div>
-                    <div className="map-legend__item">
-                      <span className="map-legend__dot" style={{ background: 'rgba(139, 92, 246, 0.85)' }}></span>
-                      <span>200+</span>
-                    </div>
-                  </div>
-                  <div className="map-legend__section">
-                    <span className="map-legend__section-label">Encuestas</span>
-                    <div className="map-legend__item">
-                      <span className="map-legend__pin" style={{ background: '#3b82f6' }}>✓</span>
-                      <span>Exitosa</span>
-                    </div>
-                    <div className="map-legend__item">
-                      <span className="map-legend__pin" style={{ background: '#ef4444' }}>✗</span>
-                      <span>No exitosa</span>
-                    </div>
-                  </div>
+                <div className="map-legend__item">
+                  <span className="map-legend__pin" style={{ background: '#ef4444' }}>✗</span>
+                  <span>No exitosa</span>
                 </div>
               </div>
-            </>
-          )}
+            </div>
+          </div>
+
+          {/* Leyenda del mapa - visible solo en mobile, debajo del mapa */}
+          <div className="map-legend map-legend--mobile">
+            <div className="map-legend__title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              Leyenda del Mapa
+            </div>
+            <div className="map-legend__row">
+              <div className="map-legend__section">
+                <span className="map-legend__section-label">Agrupaciones</span>
+                <div className="map-legend__item">
+                  <span className="map-legend__dot" style={{ background: 'rgba(59, 130, 246, 0.85)' }}></span>
+                  <span>1 – 10</span>
+                </div>
+                <div className="map-legend__item">
+                  <span className="map-legend__dot" style={{ background: 'rgba(234, 179, 8, 0.85)' }}></span>
+                  <span>11 – 50</span>
+                </div>
+                <div className="map-legend__item">
+                  <span className="map-legend__dot" style={{ background: 'rgba(239, 68, 68, 0.85)' }}></span>
+                  <span>51 – 200</span>
+                </div>
+                <div className="map-legend__item">
+                  <span className="map-legend__dot" style={{ background: 'rgba(139, 92, 246, 0.85)' }}></span>
+                  <span>200+</span>
+                </div>
+              </div>
+              <div className="map-legend__section">
+                <span className="map-legend__section-label">Encuestas</span>
+                <div className="map-legend__item">
+                  <span className="map-legend__pin" style={{ background: '#3b82f6' }}>✓</span>
+                  <span>Exitosa</span>
+                </div>
+                <div className="map-legend__item">
+                  <span className="map-legend__pin" style={{ background: '#ef4444' }}>✗</span>
+                  <span>No exitosa</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

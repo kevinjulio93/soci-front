@@ -22,7 +22,7 @@ export const filterRespondentsWithLocation = (respondents: RespondentData[]): Re
  */
 export const calculateMapCenter = (
   respondents: RespondentData[],
-  defaultCenter: [number, number] = [10.9685, -74.7813]
+  defaultCenter: [number, number] = [4.5709, -74.2973]
 ): [number, number] => {
   if (respondents.length === 0) return defaultCenter
 
