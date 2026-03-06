@@ -70,7 +70,7 @@ export function SurveyForm({
   useEffect(() => {
     if (initialData) {
       reset(initialData)
-      
+
       // Asegurarse de que noResponseReason se establezca correctamente
       if (!initialData.willingToRespond && initialData.noResponseReason) {
         setTimeout(() => {
@@ -127,7 +127,7 @@ export function SurveyForm({
   // Restaurar selección de municipio una vez que cities está poblado
   useEffect(() => {
     if (!initialData?.departmentId || cities.length === 0) return
-    
+
     // Buscar municipio: primero por _id, luego por nombre como fallback
     let selectedMuni = undefined
     if (initialData.municipioCode) {
@@ -195,7 +195,7 @@ export function SurveyForm({
         {/* Video Section - Solo mostrar si está dispuesto a responder */}
         {videoUrl && willingToRespond && (
           <div className="survey-form__video-section">
-              <video
+            <video
               className="survey-form__video"
               src={videoUrl}
               controls
@@ -213,12 +213,13 @@ export function SurveyForm({
         {error && <div className="error-message">{error}</div>}
 
         {/* Form */}
-        <form onSubmit={handleSubmit((data) => {onSubmit(data)
+        <form onSubmit={handleSubmit((data) => {
+          onSubmit(data)
         })} className="survey-form__form">
           {/* Información Previa de la Encuesta */}
           <div className="form-section">
             <h3 className="form-section__title">Información de la Visita</h3>
-            
+
             {/* Willing to Respond */}
             <div className="form-group">
               <label className="form-group__label">
@@ -323,7 +324,7 @@ export function SurveyForm({
           {willingToRespond && (
             <div className="form-section">
               <h3 className="form-section__title">Datos del Encuestado</h3>
-            
+
               {/* Full Name */}
               <Input
                 id="fullName"
@@ -368,10 +369,23 @@ export function SurveyForm({
                     placeholder="Ej: 1234567890"
                     disabled={isLoading}
                     required={willingToRespond}
+                    maxLength={10}
                     error={errors.identification?.message}
                     {...register('identification', {
                       required: willingToRespond ? 'El número de identificación es requerido' : false,
+                      maxLength: {
+                        value: 10,
+                        message: 'La identificación debe tener máximo 10 dígitos',
+                      },
+                      pattern: {
+                        value: /^[0-9]+$/,
+                        message: 'La identificación debe contener solo números',
+                      },
                     })}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement
+                      target.value = target.value.replace(/[^0-9]/g, '')
+                    }}
                   />
                 </div>
               </div>
@@ -499,7 +513,7 @@ export function SurveyForm({
               {/* departmentId (hidden), municipioCode (hidden) */}
               <input type="hidden" {...register('departmentId')} />
               <input type="hidden" {...register('municipioCode')} />
-              
+
               <div className="survey-form__row">
                 <div className="survey-form__col">
                   <Select
@@ -521,7 +535,7 @@ export function SurveyForm({
                     })}
                   />
                 </div>
-                
+
                 <div className="survey-form__col">
                   <Select
                     id="city"

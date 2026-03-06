@@ -438,10 +438,23 @@ export function SocializerForm({
             placeholder="1234567890"
             disabled={isLoading}
             required
+            maxLength={10}
             error={errors.idNumber?.message}
             {...register('idNumber', {
               required: 'El número de identificación es obligatorio',
+              maxLength: {
+                value: 10,
+                message: 'La identificación debe tener máximo 10 dígitos',
+              },
+              pattern: {
+                value: /^[0-9]+$/,
+                message: 'La identificación debe contener solo números',
+              },
             })}
+            onInput={(e) => {
+              const target = e.target as HTMLInputElement
+              target.value = target.value.replace(/[^0-9]/g, '')
+            }}
           />
 
           {/* Teléfono */}
