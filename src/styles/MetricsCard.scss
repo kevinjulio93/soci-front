@@ -406,32 +406,75 @@
   }
 
   &__item {
-    background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%);
-    border: 1px solid #fed7d7;
-    border-radius: $border-radius-md;
-    padding: $spacing-lg;
-    text-align: center;
-    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+    border: 1px solid color.adjust(#ef4444, $alpha: -0.8);
+    border-radius: $border-radius-lg;
+    padding: $spacing-md $spacing-lg;
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.05);
 
     &:hover {
-      box-shadow: 0 4px 8px rgba(239, 68, 68, 0.15);
-      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.12);
+      transform: translateY(-3px);
+      border-color: color.adjust(#ef4444, $alpha: -0.5);
+    }
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      text-align: center;
+      gap: $spacing-sm;
+      padding: $spacing-lg;
+    }
+  }
+
+  &__icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0;
+
+    @media (max-width: 480px) {
+      width: 40px;
+      height: 40px;
+      font-size: 1.25rem;
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    @media (max-width: 480px) {
+      align-items: center;
     }
   }
 
   &__count {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: $font-weight-bold;
     color: #ef4444;
     line-height: 1;
-    margin-bottom: $spacing-sm;
+    margin-bottom: 2px;
   }
 
   &__label {
     font-size: $font-size-sm;
     color: #7f1d1d;
-    font-weight: $font-weight-medium;
-    line-height: 1.4;
+    font-weight: $font-weight-semibold;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    opacity: 0.85;
   }
 }
 

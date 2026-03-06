@@ -264,6 +264,13 @@ export default function ReportsMap() {
   const [useFilters, setUseFilters] = useState(false)
   const [fetchedDateRange, setFetchedDateRange] = useState({ start: '', end: '' })
   const [showRejectionBreakdown, setShowRejectionBreakdown] = useState(false)
+  const [noExitosaDetalle, setNoExitosaDetalle] = useState<{
+    noSeEncuentraEnCasa: number
+    noEstaInteresado: number
+    otraRazon: number
+    noTieneTiempo: number
+    preocupacionesDePrivacidad: number
+  } | null>(null)
   const [stats, setStats] = useState({
     total: 0,
     successful: 0,
@@ -286,34 +293,29 @@ export default function ReportsMap() {
     filterRespondentsWithLocation(allSurveys),
     [allSurveys])
 
-  // Calcular estadísticas de motivos de rechazo usando TODAS las encuestas
+  // Construir estadísticas de motivos de rechazo desde el resumen del backend
   const rejectionStats = useMemo(() => {
-    const unsuccessful = allSurveys.filter(r => r.willingToRespond === false)
-    const localStats: { [key: string]: { label: string; count: number } } = {}
+    if (!noExitosaDetalle) return []
 
-    unsuccessful.forEach(r => {
-      const reason = r.noResponseReason || r.rejectionReason
-      if (reason) {
-        const reasonObj = reason as unknown as { value?: string; label?: string }
-        const key = reasonObj.value || 'other'
-        const label = reasonObj.label || 'Otro motivo'
+    const reasonLabels: Record<string, string> = {
+      'noEstaInteresado': 'No está interesado',
+      'noSeEncuentraEnCasa': 'No se encuentra en casa',
+      'noTieneTiempo': 'No tiene tiempo',
+      'otraRazon': 'Otra razón',
+      'preocupacionesDePrivacidad': 'Preocupaciones de privacidad',
+    }
 
-        if (localStats[key]) {
-          localStats[key].count++
-        } else {
-          localStats[key] = { label, count: 1 }
-        }
-      } else {
-        if (localStats['no_specified']) {
-          localStats['no_specified'].count++
-        } else {
-          localStats['no_specified'] = { label: 'No especificado', count: 1 }
-        }
-      }
-    })
+    const items = Object.entries(noExitosaDetalle)
+      .filter(([, count]) => count > 0)
+      .map(([key, count]) => ({
+        key,
+        label: reasonLabels[key] || key,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
 
-    return Object.values(localStats).sort((a: any, b: any) => b.count - a.count)
-  }, [allSurveys])
+    return items
+  }, [noExitosaDetalle])
 
   // Handler para el click en la card de no exitosas
   const handleUnsuccessfulClick = () => {
@@ -376,6 +378,11 @@ export default function ReportsMap() {
       const linkedHomesCount = resumen?.linkedHomes ?? allSurveys.filter(r => (r as any).linkedHomes === true).length
       const offlineCount = resumen?.totalIsOffline ?? allSurveys.filter(r => (r as any).isOffline === true).length
 
+      // Guardar detalle de no exitosas desde el resumen del backend
+      if (resumen?.noExitosaDetalle) {
+        setNoExitosaDetalle(resumen.noExitosaDetalle)
+      }
+
       setStats({
         ...newStats,
         total: resumen?.totalEncuestas ?? newStats.total,
@@ -431,6 +438,11 @@ export default function ReportsMap() {
       const linkedHouseCount = resumen?.totalLinkedHouse ?? resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
       const linkedHomesCount = resumen?.linkedHomes ?? allSurveys.filter(r => (r as any).linkedHomes === true).length
       const offlineCount = resumen?.totalIsOffline ?? allSurveys.filter(r => (r as any).isOffline === true).length
+
+      // Guardar detalle de no exitosas desde el resumen del backend
+      if (resumen?.noExitosaDetalle) {
+        setNoExitosaDetalle(resumen.noExitosaDetalle)
+      }
 
       setStats({
         ...newStats,
@@ -699,35 +711,49 @@ export default function ReportsMap() {
             </div>
           </div>
 
-          {/* Motivos de rechazo */}
+          {/* Motivos de rechazo - Sección dedicada */}
           {showRejectionBreakdown && stats.unsuccessful > 0 && (
-            <div className="rejection-breakdown">
-              <h3 className="rejection-breakdown__title">
-                <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
-                Motivos de Rechazo
-              </h3>
-              <div className="rejection-breakdown__grid">
-                {rejectionStats.map((stat: any, index: number) => (
-                  <div key={index} className="rejection-breakdown__item">
-                    <div className="rejection-breakdown__count">
-                      {stat.count}
-                    </div>
-                    <div className="rejection-breakdown__label">
-                      {stat.label}
-                    </div>
-                  </div>
-                ))}
+            <div className="dashboard__section rejection-breakdown-section" style={{ margin: '2rem 0' }}>
+              <div className="dashboard__header-section" style={{ marginBottom: '1.5rem', padding: 0 }}>
+                <h3 className="dashboard__section-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                  </svg>
+                  Motivos de Rechazo
+                </h3>
+                <p className="dashboard__section-desc">Desglose detallado de las {stats.unsuccessful} encuestas no exitosas</p>
               </div>
-              {rejectionStats.length === 0 && (
-                <div style={{
-                  textAlign: 'center',
-                  color: '#6b7280',
-                  fontSize: '14px',
-                  padding: '20px'
-                }}>
-                  No hay datos de motivos de rechazo disponibles
-                </div>
-              )}
+
+              <div className="rejection-breakdown__grid">
+                {rejectionStats.map((stat: any, index: number) => {
+                  // Determinar icono según la clave
+                  let icon = '❓'
+                  if (stat.key === 'noEstaInteresado' || stat.key === 'no_interest') icon = '🚫'
+                  if (stat.key === 'noSeEncuentraEnCasa' || stat.key === 'not_home') icon = '🏠'
+                  if (stat.key === 'noTieneTiempo' || stat.key === 'no_time') icon = '⏳'
+                  if (stat.key === 'preocupacionesDePrivacidad' || stat.key === 'privacy_concerns') icon = '🔒'
+                  if (stat.key === 'otraRazon' || stat.key === 'other') icon = '📝'
+                  if (stat.key === 'no_specified') icon = '🤷'
+
+                  return (
+                    <div key={index} className="rejection-breakdown__item">
+                      <div className="rejection-breakdown__icon-wrapper">
+                        {icon}
+                      </div>
+                      <div className="rejection-breakdown__info">
+                        <div className="rejection-breakdown__count">
+                          {stat.count}
+                        </div>
+                        <div className="rejection-breakdown__label">
+                          {stat.label}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 

@@ -216,6 +216,13 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   })
   const [isLoading, setIsLoading] = useState(false)
   const [showRejectionBreakdown, setShowRejectionBreakdown] = useState(false)
+  const [noExitosaDetalle, setNoExitosaDetalle] = useState<{
+    noSeEncuentraEnCasa: number
+    noEstaInteresado: number
+    otraRazon: number
+    noTieneTiempo: number
+    preocupacionesDePrivacidad: number
+  } | null>(null)
   const [filter, setFilter] = useState<'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline'>('all')
 
   const userRole = user?.role?.role || ''
@@ -267,6 +274,11 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
 
       const dailyStats = calculateDailyStats(allSurveys)
       const rejectionStats = calculateRejectionStats(allSurveys)
+
+      // Guardar detalle de no exitosas desde el resumen del backend
+      if (resumen?.noExitosaDetalle) {
+        setNoExitosaDetalle(resumen.noExitosaDetalle)
+      }
 
       const newMetrics: MetricsData = {
         total: resumen?.totalEncuestas ?? surveyStats.total,
@@ -521,34 +533,56 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       </div>
 
       {/* Motivos de rechazo */}
-      {permissions.canViewUnsuccessful && showRejectionBreakdown && metrics.unsuccessful > 0 && (
-        <div className="rejection-breakdown">
-          <h3 className="rejection-breakdown__title">
-            <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>
-            Motivos de Rechazo
-          </h3>
-          <div className="rejection-breakdown__grid">
-            {metrics.rejectionStats?.map((stat, index) => (
-              <div key={index} className="rejection-breakdown__item">
-                <div className="rejection-breakdown__count">
-                  {stat.count}
-                </div>
-                <div className="rejection-breakdown__label">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
+      {permissions.canViewUnsuccessful && showRejectionBreakdown && metrics.unsuccessful > 0 && noExitosaDetalle && (
+        <div className="dashboard__section rejection-breakdown-section" style={{ margin: '2rem 0' }}>
+          <div className="dashboard__header-section" style={{ marginBottom: '1.5rem', padding: 0 }}>
+            <h3 className="dashboard__section-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+              Motivos de Rechazo
+            </h3>
+            <p className="dashboard__section-desc">Desglose detallado de las {metrics.unsuccessful} encuestas no exitosas</p>
           </div>
-          {!metrics.rejectionStats || metrics.rejectionStats.length === 0 && (
-            <div style={{
-              textAlign: 'center',
-              color: '#6b7280',
-              fontSize: '14px',
-              padding: '20px'
-            }}>
-              No hay datos de motivos de rechazo disponibles
-            </div>
-          )}
+
+          <div className="rejection-breakdown__grid">
+            {(() => {
+              const reasonLabels: Record<string, string> = {
+                'noEstaInteresado': 'No está interesado',
+                'noSeEncuentraEnCasa': 'No se encuentra en casa',
+                'noTieneTiempo': 'No tiene tiempo',
+                'otraRazon': 'Otra razón',
+                'preocupacionesDePrivacidad': 'Preocupaciones de privacidad',
+              }
+              const reasonIcons: Record<string, string> = {
+                'noEstaInteresado': '🚫',
+                'noSeEncuentraEnCasa': '🏠',
+                'noTieneTiempo': '⏳',
+                'otraRazon': '📝',
+                'preocupacionesDePrivacidad': '🔒',
+              }
+              return Object.entries(noExitosaDetalle)
+                .filter(([, count]) => count > 0)
+                .sort(([, a], [, b]) => b - a)
+                .map(([key, count], index) => (
+                  <div key={index} className="rejection-breakdown__item">
+                    <div className="rejection-breakdown__icon-wrapper">
+                      {reasonIcons[key] || '❓'}
+                    </div>
+                    <div className="rejection-breakdown__info">
+                      <div className="rejection-breakdown__count">
+                        {count}
+                      </div>
+                      <div className="rejection-breakdown__label">
+                        {reasonLabels[key] || key}
+                      </div>
+                    </div>
+                  </div>
+                ))
+            })()}
+          </div>
         </div>
       )}
 
