@@ -250,14 +250,16 @@ function SuperclusterLayer({
   return null
 }
 
-type FilterType = 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline'
+type FilterType = 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline' | 'linkedHomes'
 
 export default function ReportsMap() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [allSurveys, setAllSurveys] = useState<RespondentData[]>([])
+  const [mapSurveys, setMapSurveys] = useState<RespondentData[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isMapLoading, setIsMapLoading] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const [startDate, setStartDate] = useState(getTodayISO())
   const [endDate, setEndDate] = useState(getTodayISO())
@@ -290,8 +292,8 @@ export default function ReportsMap() {
 
   // Encuestas con ubicación para el mapa
   const respondentsWithLocation = useMemo(() =>
-    filterRespondentsWithLocation(allSurveys),
-    [allSurveys])
+    filterRespondentsWithLocation(mapSurveys),
+    [mapSurveys])
 
   // Construir estadísticas de motivos de rechazo desde el resumen del backend
   const rejectionStats = useMemo(() => {
@@ -354,6 +356,11 @@ export default function ReportsMap() {
     setShowRejectionBreakdown(false)
   }
 
+  const handleLinkedHomesClick = () => {
+    setFilter('linkedHomes')
+    setShowRejectionBreakdown(false)
+  }
+
   // Cargar encuestas del día (una sola llamada)
   const loadAllRespondents = async (overrideStartDate?: string, overrideEndDate?: string) => {
     try {
@@ -363,10 +370,15 @@ export default function ReportsMap() {
       const eDate = overrideEndDate || today
       const response = await apiService.getReportsBySocializerAndDate(sDate, eDate)
       const surveysData = response.data?.surveys || []
-      const allSurveys: RespondentData[] = surveysData.filter((s: any) => s != null).map((s: any) => new RespondentData(s))
+      const fetchedSurveys: RespondentData[] = surveysData.filter((s: any) => s != null).map((s: any) => new RespondentData(s))
 
-
-      setAllSurveys(allSurveys)
+      // Guardamos la base entera de encuestas para estadísticas fallback
+      setAllSurveys(fetchedSurveys)
+      if (filter === 'all') {
+        setMapSurveys(fetchedSurveys)
+      } else {
+        fetchMapSurveys(filter, sDate, eDate)
+      }
 
       const resumen = response.data?.resumen || response.resumen
 
@@ -421,23 +433,28 @@ export default function ReportsMap() {
       setIsLoading(true)
       const response = await apiService.getReportsBySocializerAndDate(sDate, eDate)
       const surveysData = response.data?.surveys || []
-      const allSurveys: RespondentData[] = surveysData.filter((s: any) => s != null).map((s: any) => new RespondentData(s))
+      const fetchedSurveys: RespondentData[] = surveysData.filter((s: any) => s != null).map((s: any) => new RespondentData(s))
 
-      if (filterRespondentsWithLocation(allSurveys).length === 0 && allSurveys.length > 0) {
+      if (filterRespondentsWithLocation(fetchedSurveys).length === 0 && fetchedSurveys.length > 0) {
         console.warn('⚠️ Todas las encuestas fueron filtradas. Verificar estructura de datos.')
       }
 
-      setAllSurveys(allSurveys)
+      setAllSurveys(fetchedSurveys)
+      if (filter === 'all') {
+        setMapSurveys(fetchedSurveys)
+      } else {
+        fetchMapSurveys(filter, sDate, eDate)
+      }
 
       const resumen = response.data?.resumen || response.resumen
 
       // Calcular estadísticas usando TODAS las encuestas (con y sin ubicación)
-      const newStats = calculateSurveyStats(allSurveys)
-      const defensoresCount = resumen?.totalPatriaDefender ?? resumen?.totalIsPatriaDefender ?? allSurveys.filter(r => (r as any).isPatriaDefender === true).length
-      const verifiedCount = resumen?.totalVerified ?? resumen?.totalIsVerified ?? allSurveys.filter(r => r.isVerified === true).length
-      const linkedHouseCount = resumen?.totalLinkedHouse ?? resumen?.totalIsLinkedHouse ?? allSurveys.filter(r => r.isLinkedHouse === true).length
-      const linkedHomesCount = resumen?.linkedHomes ?? allSurveys.filter(r => (r as any).linkedHomes === true).length
-      const offlineCount = resumen?.totalIsOffline ?? allSurveys.filter(r => (r as any).isOffline === true).length
+      const newStats = calculateSurveyStats(fetchedSurveys)
+      const defensoresCount = resumen?.totalPatriaDefender ?? resumen?.totalIsPatriaDefender ?? fetchedSurveys.filter(r => (r as any).isPatriaDefender === true).length
+      const verifiedCount = resumen?.totalVerified ?? resumen?.totalIsVerified ?? fetchedSurveys.filter(r => r.isVerified === true).length
+      const linkedHouseCount = resumen?.totalLinkedHouse ?? resumen?.totalIsLinkedHouse ?? fetchedSurveys.filter(r => r.isLinkedHouse === true).length
+      const linkedHomesCount = resumen?.linkedHomes ?? fetchedSurveys.filter(r => (r as any).linkedHomes === true).length
+      const offlineCount = resumen?.totalIsOffline ?? fetchedSurveys.filter(r => (r as any).isOffline === true).length
 
       // Guardar detalle de no exitosas desde el resumen del backend
       if (resumen?.noExitosaDetalle) {
@@ -501,19 +518,36 @@ export default function ReportsMap() {
     loadFilteredRespondents()
   }
 
-  // Memoizar el filtrado para el mapa
-  const filteredRespondents = useMemo(() => {
-    return respondentsWithLocation.filter(r => {
-      if (filter === 'all') return true
-      if (filter === 'successful') return r.willingToRespond === true
-      if (filter === 'unsuccessful') return r.willingToRespond === false
-      if (filter === 'defensores') return (r as any).isPatriaDefender === true
-      if (filter === 'isVerified') return r.isVerified === true
-      if (filter === 'isLinkedHouse') return r.isLinkedHouse === true
-      if (filter === 'isOffline') return (r as any).isOffline === true
-      return true
-    })
-  }, [respondentsWithLocation, filter])
+  // Efecto que re-obtiene las encuestas del mapa cuando se hace click en una métrica
+  useEffect(() => {
+    // Si la carga primaria (isLoading) aún está activa, evitamos hacer doble petición.
+    if (!isLoading) {
+      if (filter === 'all') {
+        setMapSurveys(allSurveys)
+      } else {
+        const sDate = fetchedDateRange.start || startDate
+        const eDate = fetchedDateRange.end || endDate
+        fetchMapSurveys(filter, sDate, eDate)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter])
+
+  const fetchMapSurveys = async (currentFilter: FilterType, sDate: string, eDate: string) => {
+    try {
+      setIsMapLoading(true)
+      const response = await apiService.getReportsBySocializerAndDate(
+        sDate, eDate, undefined, undefined, undefined, currentFilter
+      )
+      const surveysData = response.data?.surveys || []
+      const fetchedSurveys = surveysData.filter((s: any) => s != null).map((s: any) => new RespondentData(s))
+      setMapSurveys(fetchedSurveys)
+    } catch (error) {
+      console.error('Error fetching map surveys for metric:', error)
+    } finally {
+      setIsMapLoading(false)
+    }
+  }
 
   const mapCenter = useMemo(() => calculateMapCenter(respondentsWithLocation), [respondentsWithLocation])
 
@@ -688,8 +722,9 @@ export default function ReportsMap() {
             </div>
 
             <div
-              className={`stat-card stat-card--success`}
-              style={{ cursor: 'default' }}
+              className={`stat-card stat-card--success ${filter === 'linkedHomes' ? 'stat-card--active' : ''}`}
+              onClick={handleLinkedHomesClick}
+              style={{ cursor: 'pointer' }}
             >
               <div className="stat-card__icon">
                 <span style={{ fontSize: '1.5rem' }}>🏠</span>
@@ -771,9 +806,15 @@ export default function ReportsMap() {
                 <p>No hay encuestas registradas para este periodo</p>
               </div>
             )}
-            {!isLoading && allSurveys.length > 0 && respondentsWithLocation.length === 0 && (
+            {!isLoading && allSurveys.length > 0 && respondentsWithLocation.length === 0 && !isMapLoading && (
               <div className="map-empty-overlay">
-                <p>Las encuestas encontradas no tienen ubicación registrada</p>
+                <p>Las encuestas encontradas no tienen ubicación registrada o no hay datos para esta métrica</p>
+              </div>
+            )}
+
+            {isMapLoading && (
+              <div className="metrics-loading-overlay">
+                <div className="spinner"></div>
               </div>
             )}
 
@@ -789,7 +830,7 @@ export default function ReportsMap() {
                 url={TILE_URL}
                 maxZoom={20}
               />
-              <SuperclusterLayer respondents={filteredRespondents} />
+              <SuperclusterLayer respondents={respondentsWithLocation} />
             </MapContainer>
 
             {/* Leyenda del mapa - visible solo en desktop como overlay */}

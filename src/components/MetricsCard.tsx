@@ -223,7 +223,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
     noTieneTiempo: number
     preocupacionesDePrivacidad: number
   } | null>(null)
-  const [filter, setFilter] = useState<'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline'>('all')
+  const [filter, setFilter] = useState<'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline' | 'linkedHomes'>('all')
 
   const userRole = user?.role?.role || ''
   const permissions = useMemo(() => validateMetricsPermissions(userRole), [userRole])
@@ -347,7 +347,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
     setShowRejectionBreakdown(false)
   }
 
-  const handleMetricClick = (metricType: 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline') => {
+  const handleMetricClick = (metricType: 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVerified' | 'isLinkedHouse' | 'isOffline' | 'linkedHomes') => {
     setFilter(metricType)
     if (metricType === 'unsuccessful') {
       setShowRejectionBreakdown(!showRejectionBreakdown)
@@ -509,8 +509,9 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
         </div>
 
         <div
-          className={`stat-card stat-card--success`}
-          style={{ cursor: 'default' }}
+          className={`stat-card stat-card--success ${filter === 'linkedHomes' ? 'stat-card--active' : ''}`}
+          onClick={() => handleMetricClick('linkedHomes')}
+          style={{ cursor: 'pointer' }}
         >
           <div className="stat-card__icon">
             <span style={{ fontSize: '1.5rem' }}>🏠</span>

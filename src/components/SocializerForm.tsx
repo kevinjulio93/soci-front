@@ -652,6 +652,7 @@ export function SocializerForm({
           <Select
             id="status"
             label="Estado"
+            placeholder=""
             options={[
               { value: 'enabled', label: 'Habilitado' },
               { value: 'disabled', label: 'Deshabilitado' },

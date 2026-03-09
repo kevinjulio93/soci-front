@@ -701,7 +701,8 @@ class ApiService {
     endDate: string,
     socializerId?: string,
     page?: number,
-    perPage?: number
+    perPage?: number,
+    metric?: string
   ): Promise<any> {
     const params = new URLSearchParams()
     params.append('startDate', startDate)
@@ -717,6 +718,10 @@ class ApiService {
 
     if (perPage) {
       params.append('perPage', perPage.toString())
+    }
+
+    if (metric && metric !== 'all') {
+      params.append('metric', metric)
     }
 
     const url = `${API_ENDPOINTS.RESPONDENTS_REPORTS_BY_SOCIALIZER_DATE}?${params.toString()}`
