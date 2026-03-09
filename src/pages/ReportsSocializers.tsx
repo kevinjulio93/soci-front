@@ -82,17 +82,6 @@ const TABLE_COLUMNS: ReportTableColumn<SocializerRow>[] = [
     ),
   },
   {
-    key: 'isLinkedHouse',
-    label: 'Vinculaciones Extra',
-    minWidth: '130px',  
-    align: 'center',
-    render: (item) => (
-      <span style={{ fontWeight: 600, color: item.isLinkedHouse > 0 ? '#8b5cf6' : '#999' }}>
-        {item.isLinkedHouse}
-      </span>
-    ),
-  },
-  {
     key: 'linkedHomes',
     label: 'Hogares Vinculados',
     minWidth: '130px',
@@ -100,6 +89,17 @@ const TABLE_COLUMNS: ReportTableColumn<SocializerRow>[] = [
     render: (item) => (
       <span style={{ fontWeight: 600, color: item.linkedHomes > 0 ? '#27ae60' : '#999' }}>
         {item.linkedHomes}
+      </span>
+    ),
+  },
+  {
+    key: 'isLinkedHouse',
+    label: 'Vinculaciones Extra',
+    minWidth: '130px',
+    align: 'center',
+    render: (item) => (
+      <span style={{ fontWeight: 600, color: item.isLinkedHouse > 0 ? '#8b5cf6' : '#999' }}>
+        {item.isLinkedHouse}
       </span>
     ),
   },
@@ -401,19 +401,19 @@ export default function ReportsSocializers() {
                 <div className="stat-card__value">{summaryData?.totalIsPatriaDefender ?? summaryData?.totalDefensores ?? totals.defensores}</div>
                 <div className="stat-card__label">Defensores de la Patria</div>
               </div>
-              <div className="stat-card stat-card--purple">
-                <div className="stat-card__icon">
-                  <span style={{ fontSize: '1.5rem' }}>➕</span>
-                </div>
-                <div className="stat-card__value">{summaryData?.totalIsLinkedHouse ?? totals.isLinkedHouse}</div>
-                <div className="stat-card__label">VINCULACIONES EXTRAS</div>
-              </div>
               <div className="stat-card stat-card--success">
                 <div className="stat-card__icon">
                   <span style={{ fontSize: '1.5rem' }}>🏠</span>
                 </div>
                 <div className="stat-card__value">{summaryData?.linkedHomes ?? summaryData?.totalLinkedHomes ?? totals.linkedHomes}</div>
                 <div className="stat-card__label">HOGARES VINCULADOS</div>
+              </div>
+              <div className="stat-card stat-card--purple">
+                <div className="stat-card__icon">
+                  <span style={{ fontSize: '1.5rem' }}>➕</span>
+                </div>
+                <div className="stat-card__value">{summaryData?.totalIsLinkedHouse ?? totals.isLinkedHouse}</div>
+                <div className="stat-card__label">VINCULACIONES EXTRAS</div>
               </div>
               <div className="stat-card stat-card--info">
                 <div className="stat-card__icon">

@@ -710,18 +710,6 @@ export default function ReportsMap() {
             </div>
 
             <div
-              className={`stat-card stat-card--purple ${filter === 'isLinkedHouse' ? 'stat-card--active' : ''}`}
-              onClick={handleLinkedHouseClick}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="stat-card__icon">
-                <span style={{ fontSize: '1.5rem' }}>➕</span>
-              </div>
-              <div className="stat-card__value">{stats.isLinkedHouse}</div>
-              <div className="stat-card__label">VINCULACIONES EXTRAS</div>
-            </div>
-
-            <div
               className={`stat-card stat-card--success ${filter === 'linkedHomes' ? 'stat-card--active' : ''}`}
               onClick={handleLinkedHomesClick}
               style={{ cursor: 'pointer' }}
@@ -731,6 +719,18 @@ export default function ReportsMap() {
               </div>
               <div className="stat-card__value">{stats.linkedHomes}</div>
               <div className="stat-card__label">HOGARES VINCULADOS</div>
+            </div>
+
+            <div
+              className={`stat-card stat-card--purple ${filter === 'isLinkedHouse' ? 'stat-card--active' : ''}`}
+              onClick={handleLinkedHouseClick}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="stat-card__icon">
+                <span style={{ fontSize: '1.5rem' }}>➕</span>
+              </div>
+              <div className="stat-card__value">{stats.isLinkedHouse}</div>
+              <div className="stat-card__label">VINCULACIONES EXTRAS</div>
             </div>
 
             <div

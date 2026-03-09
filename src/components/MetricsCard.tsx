@@ -497,18 +497,6 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
         </div>
 
         <div
-          className={`stat-card stat-card--purple ${filter === 'isLinkedHouse' ? 'stat-card--active' : ''}`}
-          onClick={() => handleMetricClick('isLinkedHouse')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="stat-card__icon">
-            <span style={{ fontSize: '1.5rem' }}>➕</span>
-          </div>
-          <div className="stat-card__value">{metrics.isLinkedHouse}</div>
-          <div className="stat-card__label">VINCULACIONES EXTRAS</div>
-        </div>
-
-        <div
           className={`stat-card stat-card--success ${filter === 'linkedHomes' ? 'stat-card--active' : ''}`}
           onClick={() => handleMetricClick('linkedHomes')}
           style={{ cursor: 'pointer' }}
@@ -518,6 +506,18 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
           </div>
           <div className="stat-card__value">{metrics.linkedHomes}</div>
           <div className="stat-card__label">HOGARES VINCULADOS</div>
+        </div>
+
+        <div
+          className={`stat-card stat-card--purple ${filter === 'isLinkedHouse' ? 'stat-card--active' : ''}`}
+          onClick={() => handleMetricClick('isLinkedHouse')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="stat-card__icon">
+            <span style={{ fontSize: '1.5rem' }}>➕</span>
+          </div>
+          <div className="stat-card__value">{metrics.isLinkedHouse}</div>
+          <div className="stat-card__label">VINCULACIONES EXTRAS</div>
         </div>
 
         <div

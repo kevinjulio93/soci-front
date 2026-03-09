@@ -126,6 +126,7 @@ type Dashboard002Survey = {
   isPatriaDefender: boolean
   isVerified: boolean
   isLinkedHouse: boolean
+  linkedHomes?: boolean
   location: {
     type: 'Point'
     coordinates: [number, number]

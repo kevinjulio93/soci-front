@@ -34,6 +34,7 @@ interface ReportItem {
   neighborhood?: string
   isPatriaDefender: boolean
   isVerified: boolean
+  linkedHomes: boolean
   isLinkedHouse: boolean
   location: { type: 'Point'; coordinates: [number, number] }
   autor: { _id: string; email: string; role: string }
@@ -114,8 +115,8 @@ const TABLE_COLUMNS: ReportTableColumn<ReportItem>[] = [
     render: (item) => (
       <span
         className={`rg-status-badge ${item.surveyStatus === 'successful'
-            ? 'rg-status-badge--success'
-            : 'rg-status-badge--error'
+          ? 'rg-status-badge--success'
+          : 'rg-status-badge--error'
           }`}
       >
         {item.surveyStatus === 'successful' ? '✓ Exitosa' : '✗ No Exitosa'}
@@ -134,8 +135,19 @@ const TABLE_COLUMNS: ReportTableColumn<ReportItem>[] = [
     ),
   },
   {
+    key: 'linkedHomes',
+    label: 'Hogares vinculados',
+    minWidth: '120px',
+    align: 'center',
+    render: (item) => (
+      <span style={{ color: item.linkedHomes ? '#0066cc' : '#999' }}>
+        {item.linkedHomes ? '✓ Sí' : '—'}
+      </span>
+    ),
+  },
+  {
     key: 'visited',
-    label: 'Persona adicional',
+    label: 'Vinculaciones extra',
     minWidth: '120px',
     align: 'center',
     render: (item) => (
@@ -265,6 +277,7 @@ export default function ReportsGenerate() {
         ...s,
         city: extractStr(s.city),
         department: extractStr(s.department) ?? s.department,
+        linkedHomes: s.linkedHomes || false,
       }))
       setReportData(sanitized)
       setCurrentPage(response.data.currentPage)
