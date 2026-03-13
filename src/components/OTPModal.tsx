@@ -21,9 +21,9 @@ interface OTPModalProps {
 
 type OTPStage = 'sending' | 'input' | 'verifying' | 'verified' | 'error'
 
-const OTP_EXPIRATION = 300 // 5 minutes
+const OTP_EXPIRATION = 120 // 2 minutes
 const CLOSE_BUTTON_DELAY = 30 // seconds before showing close button
-const RESEND_COOLDOWN = 180 // seconds between resend requests
+const RESEND_COOLDOWN = 120 // seconds between resend requests
 
 const OTPModal: React.FC<OTPModalProps> = ({
   isOpen,
