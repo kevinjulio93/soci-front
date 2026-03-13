@@ -5,8 +5,9 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sidebar } from '../components'
+import { Sidebar, ToggleUnsuccessful } from '../components'
 import { ReportFilterPanel, INITIAL_FILTERS } from '../components/ReportFilterPanel'
+import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { ReportTable } from '../components/ReportTable'
 import type { ReportFilters } from '../components/ReportFilterPanel'
 import type { ReportTableColumn } from '../components/ReportTable'
@@ -329,14 +330,6 @@ export default function ReportsGenerate() {
     }
   }
 
-  const clearFilters = () => {
-    setFilters(INITIAL_FILTERS)
-    setCurrentPage(1)
-    setTotalItems(0)
-    setTotalPages(0)
-    setReportData([])
-  }
-
   const activeFiltersCount = Object.entries(filters).filter(
     ([key, value]) => value && key !== 'sortOrder'
   ).length
@@ -359,6 +352,9 @@ export default function ReportsGenerate() {
       return col
     }
   )
+
+  const { showUnsuccessful } = useUnsuccessfulToggle()
+  const displayData = showUnsuccessful ? reportData : reportData.filter(item => item.surveyStatus === 'successful')
 
   return (
     <div className="dashboard-layout">
@@ -412,20 +408,25 @@ export default function ReportsGenerate() {
                     {hasData ? 'Resultados del Reporte' : 'Reporte de Encuestas'}
                   </h3>
                   {hasData && (
-                    <div className="rg-main-header__info">
-                      <span className="rg-badge rg-badge--count">
-                        {totalItems}{' '}
-                        {totalItems === 1 ? 'registro' : 'registros'}
-                      </span>
-                      <span className="rg-badge rg-badge--page">
-                        Pág. {currentPage}/{totalPages}
-                      </span>
-                      {filters.startDate && filters.endDate && (
-                        <span className="rg-badge rg-badge--date">
-                          {filters.startDate} → {filters.endDate}
+                    <>
+                      <div className="rg-main-header__info">
+                        <span className="rg-badge rg-badge--count">
+                          {totalItems}{' '}
+                          {totalItems === 1 ? 'registro' : 'registros'}
                         </span>
-                      )}
-                    </div>
+                        <span className="rg-badge rg-badge--page">
+                          Pág. {currentPage}/{totalPages}
+                        </span>
+                        {filters.startDate && filters.endDate && (
+                          <span className="rg-badge rg-badge--date">
+                            {filters.startDate} → {filters.endDate}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <ToggleUnsuccessful />
+                      </div>
+                    </>
                   )}
                 </div>
                 <div className="rg-main-header__right">
@@ -489,7 +490,7 @@ export default function ReportsGenerate() {
               <div className="rg-table-container">
                 <ReportTable<ReportItem>
                   columns={paginatedColumns}
-                  data={reportData}
+                  data={displayData}
                   getRowKey={(item) => item._id}
                   isLoading={isGenerating}
                   emptyTitle="Configure sus filtros"
@@ -558,7 +559,6 @@ export default function ReportsGenerate() {
                 onFilterChange={handleFilterChange}
                 onGenerate={() => generateReport(1)}
                 onExportCSV={exportToExcel}
-                onClear={clearFilters}
                 isGenerating={isGenerating}
                 hasData={hasData}
               />

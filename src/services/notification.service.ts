@@ -66,6 +66,16 @@ export const notificationService = {
       504: 'Tiempo de espera del servidor. Intente mas tarde.',
     }
 
+    // Si la API envío un mensaje específico, lo mostramos (evitando los generados automáticamente)
+    const customMessage = error?.message && typeof error.message === 'string' && !error.message.startsWith('HTTP ')
+      ? error.message
+      : null
+
+    if (customMessage) {
+      notificationService.error(customMessage)
+      return
+    }
+
     if (typeof status === 'number' && !Number.isNaN(status)) {
       const friendly = friendlyByStatus[status] || defaultMessage
       notificationService.error(`HTTP ${status} - ${friendly}`)

@@ -7,6 +7,7 @@ import { RouterProvider } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { AudioRecorderProvider } from './contexts/AudioRecorderContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { UnsuccessfulToggleProvider } from './contexts/UnsuccessfulToggleContext'
 import { router } from './routes'
 import { useServiceWorker } from './hooks'
 import { useToast } from './contexts/ToastContext'
@@ -31,9 +32,11 @@ export function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <AudioRecorderProvider>
-          <AppContent />
-        </AudioRecorderProvider>
+        <UnsuccessfulToggleProvider>
+          <AudioRecorderProvider>
+            <AppContent />
+          </AudioRecorderProvider>
+        </UnsuccessfulToggleProvider>
       </AuthProvider>
     </ToastProvider>
   )

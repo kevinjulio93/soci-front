@@ -261,9 +261,13 @@ class ApiService {
 
   private async buildError(response: Response): Promise<ApiError> {
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+    let details: any = undefined
     try {
       const errorData = await response.json()
-      if (errorData?.message) {
+      details = errorData
+      if (errorData?.error && typeof errorData.error === 'string') {
+        errorMessage = errorData.error
+      } else if (errorData?.message && typeof errorData.message === 'string') {
         errorMessage = errorData.message
       }
     } catch {
@@ -272,7 +276,8 @@ class ApiService {
 
     return {
       message: errorMessage,
-      code: response.status.toString(),
+      code: details?.code || response.status.toString(),
+      details
     }
   }
 
@@ -797,18 +802,22 @@ class ApiService {
   }
 
   /**
-   * Obtiene datos del dashboard003 - Resumen por socializador
+   * Obtiene datos del dashboard003 - Reporte por Rol
    */
   async getDashboard003Report(params: {
     fecha_inicio: string
     fecha_fin: string
     municipio?: string
+    rol?: string
   }): Promise<Dashboard003Response> {
     const queryParams = new URLSearchParams()
     queryParams.append('fecha_inicio', params.fecha_inicio)
     queryParams.append('fecha_fin', params.fecha_fin)
     if (params.municipio?.trim()) {
       queryParams.append('municipio', params.municipio.trim())
+    }
+    if (params.rol) {
+      queryParams.append('rol', params.rol)
     }
     const url = `${API_ENDPOINTS.DASHBOARD_003}?${queryParams.toString()}`
     return this.get<Dashboard003Response>(url)
@@ -890,6 +899,7 @@ class ApiService {
     fecha_inicio: string
     fecha_fin: string
     municipio?: string
+    rol?: string
   }): Promise<void> {
     const queryParams = new URLSearchParams()
     queryParams.append('fecha_inicio', params.fecha_inicio)
@@ -897,9 +907,12 @@ class ApiService {
     if (params.municipio?.trim()) {
       queryParams.append('municipio', params.municipio.trim())
     }
+    if (params.rol) {
+      queryParams.append('rol', params.rol)
+    }
     const endpoint = `${API_ENDPOINTS.DASHBOARD_003_EXPORT}?${queryParams.toString()}`
-    const muni = params.municipio?.trim() ? `_${params.municipio.trim()}` : ''
-    const filename = `dashboard003_${params.fecha_inicio}_${params.fecha_fin}${muni}.xlsx`
+    const rol = params.rol ? `_${params.rol}` : ''
+    const filename = `reporte_por_rol_${params.fecha_inicio}_${params.fecha_fin}${rol}.xlsx`
     return this.downloadFile(endpoint, filename)
   }
 }

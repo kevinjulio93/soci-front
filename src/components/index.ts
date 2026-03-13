@@ -20,6 +20,7 @@ export { SurveyDetailModal } from './SurveyDetailModal'
 export { BatchAssignCoordinatorModal } from './BatchAssignCoordinatorModal'
 export { Toast } from './Toast'
 export { ToastContainer } from './ToastContainer'
+export { ToggleUnsuccessful } from './ToggleUnsuccessful'
 
 // Form Components
 export { Input } from './Input'

@@ -54,6 +54,7 @@ export interface SocializerFormProps {
   error?: string | null
   initialData?: Partial<ReturnType<SocializerFormData['toFormData']>> | null
   isEditMode?: boolean
+  onCancel?: () => void
 }
 
 // SocializerTable types

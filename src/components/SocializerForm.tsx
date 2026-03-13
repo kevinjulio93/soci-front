@@ -59,6 +59,7 @@ export function SocializerForm({
   error,
   initialData,
   isEditMode = false,
+  onCancel,
 }: SocializerFormProps) {
   const { user } = useAuth()
   const userRole = user?.role?.role?.toLowerCase() || ''
@@ -674,7 +675,7 @@ export function SocializerForm({
           )}
 
           {/* Botones */}
-          <div className="form-group form-group--actions">
+          <div className="form-group form-group--actions" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-start' }}>
             <button
               type="submit"
               className="btn btn--primary"
@@ -682,6 +683,16 @@ export function SocializerForm({
             >
               {isLoading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear Usuario'}
             </button>
+            {onCancel && (
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={onCancel}
+                disabled={isLoading}
+              >
+                Cancelar
+              </button>
+            )}
           </div>
         </form>
       </div>

@@ -8,6 +8,7 @@ import { Select } from './Select'
 import { Input } from './Input'
 import { getTodayISO } from '../utils/dateHelpers'
 import { useState, useEffect } from 'react'
+import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { apiService, type ZoneDepartmentEntry, type ZoneMunicipalityItem } from '../services/api.service'
 
 export interface ReportFilters {
@@ -57,7 +58,6 @@ interface ReportFilterPanelProps {
   onFilterChange: (field: keyof ReportFilters, value: string) => void
   onGenerate: () => void
   onExportCSV: () => void
-  onClear: () => void
   isGenerating: boolean
   hasData: boolean
 }
@@ -69,7 +69,6 @@ export function ReportFilterPanel({
   onFilterChange,
   onGenerate,
   onExportCSV,
-  onClear,
   isGenerating,
   hasData,
 }: ReportFilterPanelProps) {
@@ -81,6 +80,7 @@ export function ReportFilterPanel({
   const [zoneDepartments, setZoneDepartments] = useState<ZoneDepartmentEntry[]>([])
   const [municipalities, setMunicipalities] = useState<ZoneMunicipalityItem[]>([])
   const [loadingDepts, setLoadingDepts] = useState(false)
+  const { showUnsuccessful } = useUnsuccessfulToggle()
 
   const canGenerate = !!filters.startDate && !!filters.endDate && !isGenerating
 
@@ -200,10 +200,10 @@ export function ReportFilterPanel({
             </div>
             <div className="rg-panel__field">
               <Input
-                label="Buscar por nombre o ID"
+                label="Buscar por correo"
                 value={filters.q}
                 onChange={(e) => onFilterChange('q', e.target.value)}
-                placeholder="Nombre, identificación..."
+                placeholder="correo@ejemplo.com"
                 disabled={isGenerating}
               />
             </div>
@@ -216,7 +216,7 @@ export function ReportFilterPanel({
                 options={[
                   { value: '', label: 'Todos' },
                   { value: 'successful', label: '✓ Exitosas' },
-                  { value: 'unsuccessful', label: '✗ No Exitosas' },
+                  ...(showUnsuccessful ? [{ value: 'unsuccessful', label: '✗ No Exitosas' }] as any : []),
                 ]}
               />
             </div>
@@ -435,7 +435,7 @@ export function ReportFilterPanel({
         {/* Footer con botones */}
         <div className="rg-panel__footer">
           <button
-            className="btn btn--primary"
+            className="btn btn--primary btn--with-icon"
             onClick={onGenerate}
             disabled={!canGenerate}
             style={{ width: '100%' }}
@@ -446,7 +446,12 @@ export function ReportFilterPanel({
                 Generando...
               </>
             ) : (
-              <>📊 Generar Reporte</>
+              <>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+                Generar Reporte
+              </>
             )}
           </button>
           <div className="rg-panel__footer-row">
@@ -457,14 +462,6 @@ export function ReportFilterPanel({
               style={{ flex: 1 }}
             >
               📥 Exportar Excel
-            </button>
-            <button
-              className="btn btn--secondary"
-              onClick={onClear}
-              disabled={isGenerating}
-              style={{ flex: 1 }}
-            >
-              🔄 Limpiar
             </button>
           </div>
           <button

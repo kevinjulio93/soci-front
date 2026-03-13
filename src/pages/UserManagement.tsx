@@ -59,6 +59,7 @@ type SocializerApi = {
     _id: string
     email: string
     role: UserRole | unknown
+    status?: string
   }
   email?: string
   role?: UserRole | unknown
@@ -126,11 +127,12 @@ const mapToTableUser = (item: SocializerApi): Socializer => ({
   fullName: item.fullName,
   idNumber: item.idNumber,
   phone: item.phone,
-  status: (item.status as 'enabled' | 'disabled') || 'enabled',
+  status: ((item.user && item.user.status) as 'enabled' | 'disabled') || (item.status as 'enabled' | 'disabled') || 'enabled',
   user: {
     _id: item.user._id,
     email: item.user.email,
     role: (item.user.role as UserRole) || '',
+    status: item.user.status,
   },
   createdAt: item.createdAt,
   updatedAt: item.updatedAt,
@@ -140,7 +142,7 @@ const buildEditUserData = (userData: SocializerApi): EditUserData => ({
   _id: userData.user._id,
   email: userData.email || userData.user.email || '',
   role: normalizeRole(userData.role),
-  status: userData.status,
+  status: (userData.user && userData.user.status) ? userData.user.status : userData.status,
   profile: {
     _id: userData._id,
     fullName: userData.fullName,
@@ -444,7 +446,7 @@ export function UserManagement() {
       email: editingUser.email || '',
       password: '',
       roleId,
-      status: (userProfile.status as 'enabled' | 'disabled') || (editingUser.status as 'enabled' | 'disabled') || 'enabled',
+      status: (editingUser.status as 'enabled' | 'disabled') || (userProfile.status as 'enabled' | 'disabled') || 'enabled',
       ...parentFormField, // Incluir los campos del padre mapeados correctamente
     } as SocializerFormData
   }, [editingUser])
@@ -569,16 +571,9 @@ export function UserManagement() {
                   error={formError}
                   initialData={initialFormData}
                   isEditMode={isEditMode}
+                  onCancel={handleCancelForm}
                 />
               )}
-              <button
-                className="btn btn--secondary"
-                onClick={handleCancelForm}
-                disabled={formLoading}
-                style={{ marginTop: '1rem' }}
-              >
-                Cancelar
-              </button>
             </div>
           )}
 

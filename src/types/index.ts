@@ -105,6 +105,7 @@ export interface Socializer {
       _id: string
       role: string
     } | string
+    status?: string
   }
   // Propiedades opcionales para compatibilidad con nueva estructura de API
   email?: string

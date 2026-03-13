@@ -18,10 +18,10 @@ export default function Reports() {
   return (
     <div className="dashboard-layout">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
+
       <div className="dashboard-layout__content">
         <div className="dashboard-layout__header">
-          <button 
+          <button
             className="dashboard-layout__menu-btn"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
@@ -35,7 +35,7 @@ export default function Reports() {
         <div className="dashboard-layout__body">
           <div className="reports-menu">
             <div className="reports-menu__grid">
-              <Link 
+              <Link
                 to={ROUTES.ADMIN_REPORTS_REALTIME}
                 className={`reports-menu__card ${isActive(ROUTES.ADMIN_REPORTS_REALTIME) ? 'reports-menu__card--active' : ''}`}
               >
@@ -56,7 +56,7 @@ export default function Reports() {
                 </div>
               </Link>
 
-              <Link 
+              <Link
                 to={ROUTES.ADMIN_REPORTS_MAP}
                 className={`reports-menu__card ${isActive(ROUTES.ADMIN_REPORTS_MAP) ? 'reports-menu__card--active' : ''}`}
               >
@@ -77,7 +77,7 @@ export default function Reports() {
                 </div>
               </Link>
 
-              <Link 
+              <Link
                 to={ROUTES.ADMIN_REPORTS_GENERATE}
                 className={`reports-menu__card ${isActive(ROUTES.ADMIN_REPORTS_GENERATE) ? 'reports-menu__card--active' : ''}`}
               >
@@ -98,7 +98,7 @@ export default function Reports() {
                 </div>
               </Link>
 
-              <Link 
+              <Link
                 to={ROUTES.ADMIN_REPORTS_SOCIALIZERS}
                 className={`reports-menu__card ${isActive(ROUTES.ADMIN_REPORTS_SOCIALIZERS) ? 'reports-menu__card--active' : ''}`}
               >
@@ -107,9 +107,9 @@ export default function Reports() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <h3 className="reports-menu__title">Resumen por Socializador</h3>
+                <h3 className="reports-menu__title">Reporte por Rol</h3>
                 <p className="reports-menu__description">
-                  Resumen de intervenciones, exitosas, no exitosas y defensores agrupados por socializador
+                  Resumen de intervenciones y métricas agrupadas por rol y usuario seleccionado
                 </p>
                 <div className="reports-menu__badge reports-menu__badge--secondary">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -129,7 +129,7 @@ export default function Reports() {
                 <div className="info-card__content">
                   <h4 className="info-card__title">Acerca de los Reportes</h4>
                   <p className="info-card__text">
-                    Los reportes te permiten monitorear la actividad de los socializadores y generar análisis detallados del trabajo de campo. 
+                    Los reportes te permiten monitorear la actividad de los socializadores y generar análisis detallados del trabajo de campo.
                     Los datos se actualizan en tiempo real y puedes exportarlos para análisis externos.
                   </p>
                 </div>

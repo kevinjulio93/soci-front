@@ -5,7 +5,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { Sidebar, StatCard, LoadingState, EmptyState, MenuIcon, DateInput, Select } from '../components'
+import { Sidebar, StatCard, LoadingState, EmptyState, MenuIcon, DateInput, Select, ToggleUnsuccessful } from '../components'
+import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { MESSAGES } from '../constants'
@@ -47,6 +48,8 @@ export default function AdminDashboard() {
   const [zoneCoordinators, setZoneCoordinators] = useState<Array<{ value: string; label: string }>>([])
   const [fieldCoordinators, setFieldCoordinators] = useState<Array<{ value: string; label: string }>>([])
   const [supervisors, setSupervisors] = useState<Array<{ value: string; label: string }>>([])
+
+  const { showUnsuccessful } = useUnsuccessfulToggle()
 
 
   // Determinar rol del usuario (useMemo para evitar recalcular)
@@ -334,8 +337,8 @@ export default function AdminDashboard() {
                 className="btn btn--primary btn--with-icon"
                 onClick={handleGenerateReport}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
                 </svg>
                 Generar Reporte
               </button>
@@ -350,6 +353,8 @@ export default function AdminDashboard() {
                 Exportar Excel
               </button>
             </div>
+
+            <ToggleUnsuccessful />
           </div>
 
           {isLoading ? (
@@ -392,9 +397,11 @@ export default function AdminDashboard() {
                           <span className="ranking-item__detail ranking-item__detail--success">
                             {item.successfulSurveys} exitosas
                           </span>
-                          <span className="ranking-item__detail ranking-item__detail--unsuccessful">
-                            {item.unsuccessfulSurveys} no exitosas
-                          </span>
+                          {showUnsuccessful && (
+                            <span className="ranking-item__detail ranking-item__detail--unsuccessful">
+                              {item.unsuccessfulSurveys} no exitosas
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -411,6 +418,6 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
-    </div>
+    </div >
   )
 }

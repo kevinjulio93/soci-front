@@ -9,7 +9,8 @@ import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import * as L from 'leaflet'
 import Supercluster from 'supercluster'
-import { Sidebar, DateInput } from '../components'
+import { Sidebar, ToggleUnsuccessful, DateInput } from '../components'
+import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { apiService } from '../services/api.service'
 import { ROUTES, MESSAGES } from '../constants'
 import { notificationService } from '../services/notification.service'
@@ -263,7 +264,6 @@ export default function ReportsMap() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [startDate, setStartDate] = useState(getTodayISO())
   const [endDate, setEndDate] = useState(getTodayISO())
-  const [useFilters, setUseFilters] = useState(false)
   const [fetchedDateRange, setFetchedDateRange] = useState({ start: '', end: '' })
   const [showRejectionBreakdown, setShowRejectionBreakdown] = useState(false)
   const [noExitosaDetalle, setNoExitosaDetalle] = useState<{
@@ -273,6 +273,8 @@ export default function ReportsMap() {
     noTieneTiempo: number
     preocupacionesDePrivacidad: number
   } | null>(null)
+
+  const { showUnsuccessful } = useUnsuccessfulToggle()
   const [stats, setStats] = useState({
     total: 0,
     successful: 0,
@@ -472,7 +474,6 @@ export default function ReportsMap() {
         linkedHomes: linkedHomesCount,
         isOffline: offlineCount,
       })
-      setUseFilters(true)
       setFetchedDateRange({ start: startDate, end: endDate })
 
       notificationService.success('Encuestas filtradas correctamente')
@@ -492,13 +493,6 @@ export default function ReportsMap() {
     navigate(ROUTES.ADMIN_REPORTS)
   }
 
-  const handleClearFilters = () => {
-    const today = getTodayISO()
-    setStartDate(today)
-    setEndDate(today)
-    setUseFilters(false)
-    loadAllRespondents(today, today)
-  }
 
   const handleStartDateChange = (val: string) => {
     setStartDate(val)
@@ -604,20 +598,14 @@ export default function ReportsMap() {
 
             <div className="filter-card__actions">
               <button
-                className="btn btn--primary"
+                className="btn btn--primary btn--with-icon"
                 onClick={handleApplyFilters}
                 disabled={!startDate || !endDate || isLoading}
               >
-                <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
                 Actualizar Mapa
-              </button>
-              <button
-                className="btn btn--primary"
-                onClick={handleClearFilters}
-                disabled={isLoading || !useFilters}
-              >
-                <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><polyline points="23 20 23 14 17 14" /><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" /></svg>
-                Limpiar Filtros
               </button>
             </div>
 
@@ -627,6 +615,8 @@ export default function ReportsMap() {
                 Mostrando métricas del {formatDateES(fetchedDateRange.start)} al {formatDateES(fetchedDateRange.end)}
               </div>
             )}
+
+            <ToggleUnsuccessful />
           </div>
 
           {/* Estadísticas con filtros clickeables */}
@@ -665,21 +655,14 @@ export default function ReportsMap() {
               <div className="stat-card__value">{stats.successful}</div>
               <div className="stat-card__label">Exitosas</div>
             </div>
-            {canViewUnsuccessful && (
+            {canViewUnsuccessful && showUnsuccessful && (
               <div
                 className={`stat-card stat-card--danger ${filter === 'unsuccessful' ? 'stat-card--active' : ''}`}
                 onClick={handleUnsuccessfulClick}
                 style={{ cursor: 'pointer' }}
               >
                 <div className="stat-card__icon">
-                  <div style={{
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '50%',
-                    backgroundColor: '#ef4444',
-                    border: '2px solid white',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                  }}></div>
+                  <span style={{ fontSize: '1.5rem' }}>❌</span>
                 </div>
                 <div className="stat-card__value">{stats.unsuccessful}</div>
                 <div className="stat-card__label">No Exitosas</div>
@@ -747,7 +730,7 @@ export default function ReportsMap() {
           </div>
 
           {/* Motivos de rechazo - Sección dedicada */}
-          {showRejectionBreakdown && stats.unsuccessful > 0 && (
+          {canViewUnsuccessful && showUnsuccessful && showRejectionBreakdown && stats.unsuccessful > 0 && noExitosaDetalle && (
             <div className="dashboard__section rejection-breakdown-section" style={{ margin: '2rem 0' }}>
               <div className="dashboard__header-section" style={{ marginBottom: '1.5rem', padding: 0 }}>
                 <h3 className="dashboard__section-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
