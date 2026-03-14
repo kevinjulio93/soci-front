@@ -9,7 +9,10 @@ import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import * as L from 'leaflet'
 import Supercluster from 'supercluster'
-import { Sidebar, ToggleUnsuccessful, DateInput } from '../components'
+import { DashboardLayout, ToggleUnsuccessful, ChartIcon, DateRangeFilter } from '../components'
+import { MapStats } from './ReportsMapComponents/MapStats'
+import { MapLegend } from './ReportsMapComponents/MapLegend'
+import { RejectionBreakdown } from './ReportsMapComponents/RejectionBreakdown'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { apiService } from '../services/api.service'
 import { ROUTES, MESSAGES } from '../constants'
@@ -18,8 +21,7 @@ import { useAuth } from '../contexts/AuthContext'
 import {
   filterRespondentsWithLocation,
   calculateMapCenter,
-  calculateSurveyStats,
-  formatDateES
+  calculateSurveyStats
 } from '../utils'
 import { getTodayISO } from '../utils/dateHelpers'
 import { RespondentData } from '../models/ApiResponses'
@@ -256,7 +258,6 @@ type FilterType = 'all' | 'successful' | 'unsuccessful' | 'defensores' | 'isVeri
 export default function ReportsMap() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [allSurveys, setAllSurveys] = useState<RespondentData[]>([])
   const [mapSurveys, setMapSurveys] = useState<RespondentData[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -321,46 +322,10 @@ export default function ReportsMap() {
     return items
   }, [noExitosaDetalle])
 
-  // Handler para el click en la card de no exitosas
-  const handleUnsuccessfulClick = () => {
-    setFilter('unsuccessful')
-    setShowRejectionBreakdown(!showRejectionBreakdown)
-  }
-
-  // Handlers para otras cards que ocultan los motivos de rechazo
-  const handleAllClick = () => {
-    setFilter('all')
-    setShowRejectionBreakdown(false)
-  }
-
-  const handleSuccessfulClick = () => {
-    setFilter('successful')
-    setShowRejectionBreakdown(false)
-  }
-
-  const handleDefensoresClick = () => {
-    setFilter('defensores')
-    setShowRejectionBreakdown(false)
-  }
-
-  const handleVerifiedClick = () => {
-    setFilter('isVerified')
-    setShowRejectionBreakdown(false)
-  }
-
-  const handleLinkedHouseClick = () => {
-    setFilter('isLinkedHouse')
-    setShowRejectionBreakdown(false)
-  }
-
-  const handleOfflineClick = () => {
-    setFilter('isOffline')
-    setShowRejectionBreakdown(false)
-  }
-
-  const handleLinkedHomesClick = () => {
-    setFilter('linkedHomes')
-    setShowRejectionBreakdown(false)
+  const handleStatCardClick = (newFilter: string) => {
+    const filterType = newFilter as FilterType
+    setFilter(filterType)
+    setShowRejectionBreakdown(filterType === 'unsuccessful' && !showRejectionBreakdown)
   }
 
   // Cargar encuestas del día (una sola llamada)
@@ -494,19 +459,7 @@ export default function ReportsMap() {
   }
 
 
-  const handleStartDateChange = (val: string) => {
-    setStartDate(val)
-    if (val && endDate && val > endDate) {
-      setEndDate(val)
-    }
-  }
 
-  const handleEndDateChange = (val: string) => {
-    setEndDate(val)
-    if (val && startDate && val < startDate) {
-      setStartDate(val)
-    }
-  }
 
   const handleApplyFilters = () => {
     loadFilteredRespondents()
@@ -546,364 +499,89 @@ export default function ReportsMap() {
   const mapCenter = useMemo(() => calculateMapCenter(respondentsWithLocation), [respondentsWithLocation])
 
   return (
-    <div className="dashboard-layout">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <DashboardLayout
+      title="Mapa de Encuestas"
+      onBack={handleBackToReports}
+    >
+      <div className="dashboard-layout__body">
+        {/* Filtros de fecha */}
+        <DateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onApply={handleApplyFilters}
+          isLoading={isLoading}
+          applyIcon={<ChartIcon size={20} />}
+          applyLabel="Generar Reporte"
+          extraActions={<ToggleUnsuccessful />}
+        />
 
-      <div className="dashboard-layout__content">
-        <div className="dashboard-layout__header">
-          <button
-            className="dashboard-layout__menu-btn"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+        {/* Estadísticas con filtros clickeables */}
+        <MapStats
+          stats={stats}
+          filter={filter}
+          onFilterChange={handleStatCardClick}
+          canViewUnsuccessful={canViewUnsuccessful}
+          showUnsuccessful={showUnsuccessful}
+        />
+
+        {/* Motivos de rechazo - Sección dedicada */}
+        <RejectionBreakdown
+          stats={stats}
+          rejectionStats={rejectionStats}
+          visible={canViewUnsuccessful && showUnsuccessful && showRejectionBreakdown && !!noExitosaDetalle}
+        />
+
+        {/* Mapa */}
+        <div className={`dashboard-map-container ${isLoading ? 'dashboard-map-container--loading' : ''}`} style={{ position: 'relative' }}>
+          {isLoading ? (
+            <div className="metrics-loading-overlay" style={{ background: 'transparent' }}>
+              <div className="spinner"></div>
+            </div>
+          ) : null}
+
+          {/* Mensajes de aviso si no hay datos para mostrar en el mapa */}
+          {!isLoading && allSurveys.length === 0 ? (
+            <div className="map-empty-overlay">
+              <p>No hay encuestas registradas para este periodo</p>
+            </div>
+          ) : null}
+          {!isLoading && allSurveys.length > 0 && respondentsWithLocation.length === 0 && !isMapLoading ? (
+            <div className="map-empty-overlay">
+              <p>Las encuestas encontradas no tienen ubicación registrada o no hay datos para esta métrica</p>
+            </div>
+          ) : null}
+
+          {isMapLoading ? (
+            <div className="metrics-loading-overlay">
+              <div className="spinner"></div>
+            </div>
+          ) : null}
+
+          <MapContainer
+            center={mapCenter}
+            zoom={5}
+            maxZoom={18}
+            style={{ height: '100%', width: '100%' }}
+            preferCanvas={true}
           >
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <button className="btn-back" onClick={handleBackToReports}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="dashboard-layout__title">Mapa de Encuestas</h1>
+            <TileLayer
+              attribution={TILE_ATTRIBUTION}
+              url={TILE_URL}
+              maxZoom={20}
+            />
+            <SuperclusterLayer respondents={respondentsWithLocation} />
+          </MapContainer>
+
+          {/* Leyenda del mapa - visible solo en desktop como overlay */}
+          <MapLegend />
         </div>
 
-        <div className="dashboard-layout__body">
-          {/* Filtros de fecha */}
-          <div className="filter-card">
-            <h3 className="filter-card__title">
-              Filtrar por Rango de Fechas
-            </h3>
-            <div className="filter-card__grid">
-              <div className="filter-card__field">
-                <DateInput
-                  label="Fecha Inicio"
-                  value={startDate}
-                  max={endDate}
-                  onChange={(e) => handleStartDateChange(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-              <div className="filter-card__field">
-                <DateInput
-                  label="Fecha Fin"
-                  value={endDate}
-                  min={startDate}
-                  onChange={(e) => handleEndDateChange(e.target.value)}
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="filter-card__actions">
-              <button
-                className="btn btn--primary btn--with-icon"
-                onClick={handleApplyFilters}
-                disabled={!startDate || !endDate || isLoading}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
-                Actualizar Mapa
-              </button>
-            </div>
-
-            {fetchedDateRange.start && fetchedDateRange.end && (
-              <div className="filter-card__info">
-                <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-                Mostrando métricas del {formatDateES(fetchedDateRange.start)} al {formatDateES(fetchedDateRange.end)}
-              </div>
-            )}
-
-            <ToggleUnsuccessful />
-          </div>
-
-          {/* Estadísticas con filtros clickeables */}
-          <div className="reports-stats">
-            {isLoading && (
-              <div className="metrics-loading-overlay">
-                <div className="spinner"></div>
-              </div>
-            )}
-            <div
-              className={`stat-card stat-card--primary ${filter === 'all' ? 'stat-card--active' : ''}`}
-              onClick={handleAllClick}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="stat-card__icon">
-                <span style={{ fontSize: '1.2rem' }}>📊</span>
-              </div>
-              <div className="stat-card__value">{stats.total}</div>
-              <div className="stat-card__label">Total de Intervenciones</div>
-            </div>
-            <div
-              className={`stat-card stat-card--success ${filter === 'successful' ? 'stat-card--active' : ''}`}
-              onClick={handleSuccessfulClick}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="stat-card__icon">
-                <div style={{
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  backgroundColor: '#3b82f6',
-                  border: '2px solid white',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                }}></div>
-              </div>
-              <div className="stat-card__value">{stats.successful}</div>
-              <div className="stat-card__label">Exitosas</div>
-            </div>
-            {canViewUnsuccessful && showUnsuccessful && (
-              <div
-                className={`stat-card stat-card--danger ${filter === 'unsuccessful' ? 'stat-card--active' : ''}`}
-                onClick={handleUnsuccessfulClick}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className="stat-card__icon">
-                  <span style={{ fontSize: '1.5rem' }}>❌</span>
-                </div>
-                <div className="stat-card__value">{stats.unsuccessful}</div>
-                <div className="stat-card__label">No Exitosas</div>
-              </div>
-            )}
-            <div
-              className={`stat-card stat-card--warning ${filter === 'defensores' ? 'stat-card--active' : ''}`}
-              onClick={handleDefensoresClick}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="stat-card__icon">
-                <span style={{ fontSize: '1.5rem' }}>⭐</span>
-              </div>
-              <div className="stat-card__value">{stats.defensores}</div>
-              <div className="stat-card__label">Defensores de la Patria</div>
-            </div>
-
-            <div
-              className={`stat-card stat-card--info ${filter === 'isVerified' ? 'stat-card--active' : ''}`}
-              onClick={handleVerifiedClick}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="stat-card__icon">
-                <span style={{ fontSize: '1.5rem' }}>✅</span>
-              </div>
-              <div className="stat-card__value">{stats.isVerified}</div>
-              <div className="stat-card__label">Verificadas</div>
-            </div>
-
-            <div
-              className={`stat-card stat-card--success ${filter === 'linkedHomes' ? 'stat-card--active' : ''}`}
-              onClick={handleLinkedHomesClick}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="stat-card__icon">
-                <span style={{ fontSize: '1.5rem' }}>🏠</span>
-              </div>
-              <div className="stat-card__value">{stats.linkedHomes}</div>
-              <div className="stat-card__label">HOGARES VINCULADOS</div>
-            </div>
-
-            <div
-              className={`stat-card stat-card--purple ${filter === 'isLinkedHouse' ? 'stat-card--active' : ''}`}
-              onClick={handleLinkedHouseClick}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="stat-card__icon">
-                <span style={{ fontSize: '1.5rem' }}>➕</span>
-              </div>
-              <div className="stat-card__value">{stats.isLinkedHouse}</div>
-              <div className="stat-card__label">VINCULACIONES EXTRAS</div>
-            </div>
-
-            <div
-              className={`stat-card stat-card--darkblue ${filter === 'isOffline' ? 'stat-card--active' : ''}`}
-              onClick={handleOfflineClick}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className="stat-card__icon">
-                <span style={{ fontSize: '1.5rem' }}>📡</span>
-              </div>
-              <div className="stat-card__value">{stats.isOffline}</div>
-              <div className="stat-card__label">Registro Sin Conexión</div>
-            </div>
-          </div>
-
-          {/* Motivos de rechazo - Sección dedicada */}
-          {canViewUnsuccessful && showUnsuccessful && showRejectionBreakdown && stats.unsuccessful > 0 && noExitosaDetalle && (
-            <div className="dashboard__section rejection-breakdown-section" style={{ margin: '2rem 0' }}>
-              <div className="dashboard__header-section" style={{ marginBottom: '1.5rem', padding: 0 }}>
-                <h3 className="dashboard__section-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10" />
-                    <line x1="12" y1="20" x2="12" y2="4" />
-                    <line x1="6" y1="20" x2="6" y2="14" />
-                  </svg>
-                  Motivos de Rechazo
-                </h3>
-                <p className="dashboard__section-desc">Desglose detallado de las {stats.unsuccessful} encuestas no exitosas</p>
-              </div>
-
-              <div className="rejection-breakdown__grid">
-                {rejectionStats.map((stat: any, index: number) => {
-                  // Determinar icono según la clave
-                  let icon = '❓'
-                  if (stat.key === 'noEstaInteresado' || stat.key === 'no_interest') icon = '🚫'
-                  if (stat.key === 'noSeEncuentraEnCasa' || stat.key === 'not_home') icon = '🏠'
-                  if (stat.key === 'noTieneTiempo' || stat.key === 'no_time') icon = '⏳'
-                  if (stat.key === 'preocupacionesDePrivacidad' || stat.key === 'privacy_concerns') icon = '🔒'
-                  if (stat.key === 'otraRazon' || stat.key === 'other') icon = '📝'
-                  if (stat.key === 'no_specified') icon = '🤷'
-
-                  return (
-                    <div key={index} className="rejection-breakdown__item">
-                      <div className="rejection-breakdown__icon-wrapper">
-                        {icon}
-                      </div>
-                      <div className="rejection-breakdown__info">
-                        <div className="rejection-breakdown__count">
-                          {stat.count}
-                        </div>
-                        <div className="rejection-breakdown__label">
-                          {stat.label}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Mapa */}
-          <div className={`dashboard-map-container ${isLoading ? 'dashboard-map-container--loading' : ''}`} style={{ position: 'relative' }}>
-            {isLoading && (
-              <div className="metrics-loading-overlay" style={{ background: 'transparent' }}>
-                <div className="spinner"></div>
-              </div>
-            )}
-
-            {/* Mensajes de aviso si no hay datos para mostrar en el mapa */}
-            {!isLoading && allSurveys.length === 0 && (
-              <div className="map-empty-overlay">
-                <p>No hay encuestas registradas para este periodo</p>
-              </div>
-            )}
-            {!isLoading && allSurveys.length > 0 && respondentsWithLocation.length === 0 && !isMapLoading && (
-              <div className="map-empty-overlay">
-                <p>Las encuestas encontradas no tienen ubicación registrada o no hay datos para esta métrica</p>
-              </div>
-            )}
-
-            {isMapLoading && (
-              <div className="metrics-loading-overlay">
-                <div className="spinner"></div>
-              </div>
-            )}
-
-            <MapContainer
-              center={mapCenter}
-              zoom={5}
-              maxZoom={18}
-              style={{ height: '100%', width: '100%' }}
-              preferCanvas={true}
-            >
-              <TileLayer
-                attribution={TILE_ATTRIBUTION}
-                url={TILE_URL}
-                maxZoom={20}
-              />
-              <SuperclusterLayer respondents={respondentsWithLocation} />
-            </MapContainer>
-
-            {/* Leyenda del mapa - visible solo en desktop como overlay */}
-            <div className="map-legend map-legend--overlay">
-              <div className="map-legend__title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="16" x2="12" y2="12" />
-                  <line x1="12" y1="8" x2="12.01" y2="8" />
-                </svg>
-                Leyenda
-              </div>
-              <div className="map-legend__section">
-                <span className="map-legend__section-label">Agrupaciones</span>
-                <div className="map-legend__item">
-                  <span className="map-legend__dot" style={{ background: 'rgba(59, 130, 246, 0.85)' }}></span>
-                  <span>1 – 10</span>
-                </div>
-                <div className="map-legend__item">
-                  <span className="map-legend__dot" style={{ background: 'rgba(234, 179, 8, 0.85)' }}></span>
-                  <span>11 – 50</span>
-                </div>
-                <div className="map-legend__item">
-                  <span className="map-legend__dot" style={{ background: 'rgba(239, 68, 68, 0.85)' }}></span>
-                  <span>51 – 200</span>
-                </div>
-                <div className="map-legend__item">
-                  <span className="map-legend__dot" style={{ background: 'rgba(139, 92, 246, 0.85)' }}></span>
-                  <span>200+</span>
-                </div>
-              </div>
-              <div className="map-legend__section">
-                <span className="map-legend__section-label">Encuestas</span>
-                <div className="map-legend__item">
-                  <span className="map-legend__pin" style={{ background: '#3b82f6' }}>✓</span>
-                  <span>Exitosa</span>
-                </div>
-                <div className="map-legend__item">
-                  <span className="map-legend__pin" style={{ background: '#ef4444' }}>✗</span>
-                  <span>No exitosa</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Leyenda del mapa - visible solo en mobile, debajo del mapa */}
-          <div className="map-legend map-legend--mobile">
-            <div className="map-legend__title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="16" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12.01" y2="8" />
-              </svg>
-              Leyenda del Mapa
-            </div>
-            <div className="map-legend__row">
-              <div className="map-legend__section">
-                <span className="map-legend__section-label">Agrupaciones</span>
-                <div className="map-legend__item">
-                  <span className="map-legend__dot" style={{ background: 'rgba(59, 130, 246, 0.85)' }}></span>
-                  <span>1 – 10</span>
-                </div>
-                <div className="map-legend__item">
-                  <span className="map-legend__dot" style={{ background: 'rgba(234, 179, 8, 0.85)' }}></span>
-                  <span>11 – 50</span>
-                </div>
-                <div className="map-legend__item">
-                  <span className="map-legend__dot" style={{ background: 'rgba(239, 68, 68, 0.85)' }}></span>
-                  <span>51 – 200</span>
-                </div>
-                <div className="map-legend__item">
-                  <span className="map-legend__dot" style={{ background: 'rgba(139, 92, 246, 0.85)' }}></span>
-                  <span>200+</span>
-                </div>
-              </div>
-              <div className="map-legend__section">
-                <span className="map-legend__section-label">Encuestas</span>
-                <div className="map-legend__item">
-                  <span className="map-legend__pin" style={{ background: '#3b82f6' }}>✓</span>
-                  <span>Exitosa</span>
-                </div>
-                <div className="map-legend__item">
-                  <span className="map-legend__pin" style={{ background: '#ef4444' }}>✗</span>
-                  <span>No exitosa</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Leyenda del mapa - visible solo en mobile, debajo del mapa */}
+        <MapLegend isMobile />
       </div>
-    </div>
+    </DashboardLayout>
   )
 }
+

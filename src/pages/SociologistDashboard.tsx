@@ -5,7 +5,8 @@
  */
 
 import { useNavigate } from 'react-router-dom'
-import { DashboardHeader, PageHeader, MetricsCard } from '../components'
+import { useCallback } from 'react'
+import { DashboardHeader, PageHeader, MetricsCard, PlusIcon, LocationIcon, RefreshIcon } from '../components'
 import { useAuth } from '../contexts/AuthContext'
 import { useSyncStatus, useGeolocationTracking, useLogout } from '../hooks'
 import { ROUTES } from '../constants'
@@ -23,11 +24,11 @@ export default function SociologistDashboard() {
   })  // Hook centralizado para logout
   const handleLogout = useLogout()
 
-  const handleManualSync = async () => {
+  const handleManualSync = useCallback(async () => {
     await manualSync()
-  }
+  }, [manualSync])
 
-  const handleNewSurvey = () => {
+  const handleNewSurvey = useCallback(() => {
     // Navegar a la página de nueva encuesta, la grabación iniciará allí
     navigate(ROUTES.SURVEY_PARTICIPANT('new'), {
       state: {
@@ -35,7 +36,7 @@ export default function SociologistDashboard() {
         editMode: false
       }
     })
-  }
+  }, [navigate])
 
   return (
     <div className="dashboard">
@@ -52,37 +53,34 @@ export default function SociologistDashboard() {
         >
           <div className="dashboard__header-actions-group">
             {/* Indicador de tracking GPS */}
-            {isTracking && (
+            {isTracking ? (
               <div className="location-indicator">
-                <span className="location-indicator__icon">📍</span>
+                <LocationIcon size={16} className="location-indicator__icon" />
                 <span className="location-indicator__text">GPS Activo</span>
               </div>
-            )}
-            {geoError && permissionState !== 'denied' && (
+            ) : null}
+            {geoError && permissionState !== 'denied' ? (
               <div className="location-error">
                 <span className="location-error__text">{geoError}</span>
               </div>
-            )}
-            {!isOnline && (
+            ) : null}
+            {!isOnline ? (
               <div className="offline-indicator">
                 <span className="offline-indicator__text">Sin conexión</span>
               </div>
-            )}
-            {pendingCount > 0 && (
+            ) : null}
+            {pendingCount > 0 ? (
               <button
                 className="btn btn--sync"
                 onClick={handleManualSync}
                 disabled={isSyncing || !isOnline}
               >
-                <span className="btn__icon">{isSyncing ? '🔄' : '🔁'}</span>
+                <RefreshIcon size={16} className={`btn__icon ${isSyncing ? 'animate-spin' : ''}`} />
                 {isSyncing ? 'Sincronizando...' : `Sincronizar (${pendingCount})`}
               </button>
-            )}
+            ) : null}
             <button className="btn btn--primary" onClick={handleNewSurvey}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
+              <PlusIcon size={20} />
               <span>Nueva Encuesta</span>
             </button>
           </div>
@@ -107,11 +105,7 @@ export default function SociologistDashboard() {
             itemsPerPage={10}
             onPageChange={handlePageChange}
             isLoading={isLoading}
-            emptyStateIcon={
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            }
+            emptyStateIcon={<FileIcon size={80} strokeWidth={1.5} />}
             emptyStateTitle="No hay encuestas"
             emptyStateDescription="Aún no has registrado encuestas. Comienza creando una nueva encuesta."
             getRowKey={(survey) => survey._id}

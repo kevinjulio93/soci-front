@@ -5,7 +5,7 @@
 
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sidebar, DateInput, Select, ToggleUnsuccessful } from '../components'
+import { DashboardLayout, Select, ToggleUnsuccessful, ChartIcon, CheckIcon, StarIcon, HomeIcon, PlusIcon, WifiIcon, XIcon, StatCard, DateRangeFilter, StatsGrid, VerifiedIcon, ExcelIcon } from '../components'
 import { ReportTable } from '../components/ReportTable'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { useAuth } from '../contexts/AuthContext'
@@ -140,7 +140,6 @@ const TABLE_COLUMNS: ReportTableColumn<SocializerRow>[] = [
 export default function ReportsSocializers() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [startDate, setStartDate] = useState(getTodayString())
   const [endDate, setEndDate] = useState(getTodayString())
@@ -166,21 +165,17 @@ export default function ReportsSocializers() {
     return ROLE_HIERARCHY.filter(r => childRoles.includes(r.value))
   }, [userRole])
 
+  // Optimización: Memoizar las columnas de la tabla para evitar re-renders innecesarios en DataTable
+  // Basado en la regla: rerender-memo
+  const memoizedColumns = useMemo(() => {
+    return showUnsuccessful
+      ? TABLE_COLUMNS
+      : TABLE_COLUMNS.filter(c => c.key !== 'unsuccessful')
+  }, [showUnsuccessful])
+
   const handleBackToReports = () => navigate(ROUTES.ADMIN_REPORTS)
 
-  const handleStartDateChange = (val: string) => {
-    setStartDate(val)
-    if (val && endDate && val > endDate) {
-      setEndDate(val)
-    }
-  }
 
-  const handleEndDateChange = (val: string) => {
-    setEndDate(val)
-    if (val && startDate && val < startDate) {
-      setStartDate(val)
-    }
-  }
 
   const generateReport = async () => {
     if (!startDate || !endDate) {
@@ -246,212 +241,138 @@ export default function ReportsSocializers() {
     }
   }
 
-  // Totales
-  const totals = reportData.reduce(
-    (acc, r) => ({
-      interventions: acc.interventions + r.interventions,
-      successful: acc.successful + r.successful,
-      unsuccessful: acc.unsuccessful + r.unsuccessful,
-      defensores: acc.defensores + r.defensores,
-      isLinkedHouse: acc.isLinkedHouse + r.isLinkedHouse,
-      linkedHomes: acc.linkedHomes + r.linkedHomes,
-      verificados: acc.verificados + r.verificados,
-      isOffline: acc.isOffline + r.isOffline,
-    }),
-    { interventions: 0, successful: 0, unsuccessful: 0, defensores: 0, isLinkedHouse: 0, linkedHomes: 0, verificados: 0, isOffline: 0 }
-  )
+  // Totales - Memoizado para evitar el cálculo en cada render si no hay cambios en la data
+  const totals = useMemo(() => {
+    return reportData.reduce(
+      (acc, r) => ({
+        interventions: acc.interventions + r.interventions,
+        successful: acc.successful + r.successful,
+        unsuccessful: acc.unsuccessful + r.unsuccessful,
+        defensores: acc.defensores + r.defensores,
+        isLinkedHouse: acc.isLinkedHouse + r.isLinkedHouse,
+        linkedHomes: acc.linkedHomes + r.linkedHomes,
+        verificados: acc.verificados + r.verificados,
+        isOffline: acc.isOffline + r.isOffline,
+      }),
+      { interventions: 0, successful: 0, unsuccessful: 0, defensores: 0, isLinkedHouse: 0, linkedHomes: 0, verificados: 0, isOffline: 0 }
+    )
+  }, [reportData])
 
   const hasData = reportData.length > 0
 
   return (
-    <div className="dashboard-layout">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      <div className="dashboard-layout__content">
-        {/* Header */}
-        <div className="dashboard-layout__header">
-          <button
-            className="dashboard-layout__menu-btn"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <button className="btn-back" onClick={handleBackToReports}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="dashboard-layout__title">Reportes - Reporte por Rol</h1>
-        </div>
-
-        <div className="dashboard-layout__body">
-          {/* Filtros */}
-          <div className="filter-card" style={{ marginBottom: '1.5rem' }}>
-            <h3 className="filter-card__title">
-              <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-              </svg>
-              Filtros del Reporte
-            </h3>
-
-            <div className="filter-card__grid">
-              <div className="filter-card__field">
-                <DateInput
-                  label="Fecha Inicio"
-                  value={startDate}
-                  max={endDate}
-                  onChange={(e) => handleStartDateChange(e.target.value)}
-                  disabled={isGenerating}
-                  required
-                />
-              </div>
-              <div className="filter-card__field">
-                <DateInput
-                  label="Fecha Fin"
-                  value={endDate}
-                  min={startDate}
-                  onChange={(e) => handleEndDateChange(e.target.value)}
-                  disabled={isGenerating}
-                  required
-                />
-              </div>
-              <div className="filter-card__field">
-                <Select
-                  label="Rol"
-                  options={availableRoles}
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  disabled={isGenerating}
-                />
-              </div>
+    <DashboardLayout
+      title="Reportes - Reporte por Rol"
+      onBack={handleBackToReports}
+    >
+      <div className="dashboard-layout__body">
+        {/* Filtros */}
+        <DateRangeFilter
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onApply={generateReport}
+          isLoading={isGenerating}
+          applyIcon={<ChartIcon size={20} />}
+          applyLabel="Generar Reporte"
+          disabled={isGenerating}
+          extraFields={
+            <div className="filter-card__field">
+              <Select
+                label="Rol"
+                options={availableRoles}
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                disabled={isGenerating}
+              />
             </div>
-
-            <div className="filter-card__actions">
-              <button
-                className="btn btn--primary btn--with-icon"
-                onClick={generateReport}
-                disabled={!startDate || !endDate || isGenerating}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
-                Generar Reporte
-              </button>
+          }
+          extraActions={
+            <>
               {hasData && (
                 <button
-                  className="btn btn--secondary"
+                  className="btn btn--excel"
                   onClick={exportToExcel}
                   disabled={isGenerating}
                 >
-                  <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
+                  <ExcelIcon size={16} />
                   Exportar Excel
                 </button>
               )}
-            </div>
+              <ToggleUnsuccessful />
+            </>
+          }
+        />
 
-            {/* Info de filtros activos */}
-            {hasData && (
-              <div className="filter-card__info">
-                <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                {startDate} al {endDate}
-                {selectedRole && ` — Rol: ${availableRoles.find(r => r.value === selectedRole)?.label || selectedRole}`}
-                {` — ${reportData.length} usuarios, ${totals.interventions} intervenciones`}
-              </div>
-            )}
-
-            <ToggleUnsuccessful />
-          </div>
-
-          {/* Totales */}
-          {hasData && (
-            <div className="reports-stats" style={{ marginBottom: '1.5rem' }}>
-              <div className="stat-card stat-card--primary">
-                <div className="stat-card__icon">
-                  <span style={{ fontSize: '1.2rem' }}>📊</span>
-                </div>
-                <div className="stat-card__value">{summaryData?.totalEncuestas ?? summaryData?.totalIntervenciones ?? totals.interventions}</div>
-                <div className="stat-card__label">Total de Intervenciones</div>
-              </div>
-              <div className="stat-card stat-card--success">
-                <div className="stat-card__icon">
-                  <div style={{
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '50%',
-                    backgroundColor: '#3b82f6',
-                    border: '2px solid white',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                  }}></div>
-                </div>
-                <div className="stat-card__value">{summaryData?.totalExitosas ?? totals.successful}</div>
-                <div className="stat-card__label">Exitosas</div>
-              </div>
-              {showUnsuccessful && (
-                <div className="stat-card stat-card--danger">
-                  <div className="stat-card__icon">
-                    <span style={{ fontSize: '1.5rem' }}>❌</span>
-                  </div>
-                  <div className="stat-card__value">{summaryData?.totalNoExitosas ?? totals.unsuccessful}</div>
-                  <div className="stat-card__label">No Exitosas</div>
-                </div>
-              )}
-              <div className="stat-card stat-card--warning">
-                <div className="stat-card__icon">
-                  <span style={{ fontSize: '1.5rem' }}>⭐</span>
-                </div>
-                <div className="stat-card__value">{summaryData?.totalIsPatriaDefender ?? summaryData?.totalDefensores ?? totals.defensores}</div>
-                <div className="stat-card__label">Defensores de la Patria</div>
-              </div>
-              <div className="stat-card stat-card--success">
-                <div className="stat-card__icon">
-                  <span style={{ fontSize: '1.5rem' }}>🏠</span>
-                </div>
-                <div className="stat-card__value">{summaryData?.linkedHomes ?? summaryData?.totalLinkedHomes ?? totals.linkedHomes}</div>
-                <div className="stat-card__label">HOGARES VINCULADOS</div>
-              </div>
-              <div className="stat-card stat-card--purple">
-                <div className="stat-card__icon">
-                  <span style={{ fontSize: '1.5rem' }}>➕</span>
-                </div>
-                <div className="stat-card__value">{summaryData?.totalIsLinkedHouse ?? totals.isLinkedHouse}</div>
-                <div className="stat-card__label">VINCULACIONES EXTRAS</div>
-              </div>
-              <div className="stat-card stat-card--info">
-                <div className="stat-card__icon">
-                  <span style={{ fontSize: '1.5rem' }}>✅</span>
-                </div>
-                <div className="stat-card__value">{summaryData?.totalIsVerified ?? summaryData?.totalVerificados ?? totals.verificados}</div>
-                <div className="stat-card__label">Verificadas</div>
-              </div>
-              <div className="stat-card stat-card--darkblue">
-                <div className="stat-card__icon">
-                  <span style={{ fontSize: '1.2rem' }}>📡</span>
-                </div>
-                <div className="stat-card__value">{summaryData?.totalIsOffline ?? totals.isOffline}</div>
-                <div className="stat-card__label">Registro Sin Conexión</div>
-              </div>
-            </div>
-          )}
-
-          {/* Tabla */}
-          <div className="rg-table-container">
-            <ReportTable<SocializerRow>
-              columns={showUnsuccessful ? TABLE_COLUMNS : TABLE_COLUMNS.filter(c => c.key !== 'unsuccessful')}
-              data={reportData}
-              getRowKey={(item) => item.socializerId}
-              isLoading={isGenerating}
-              emptyTitle="Sin datos"
-              emptyDescription="Seleccione un rango de fechas, un rol y haga clic en Generar Reporte para ver el resumen."
+        {/* Totales */}
+        {hasData && (
+          <StatsGrid className="reports-stats" style={{ marginBottom: '1.5rem' }}>
+            <StatCard
+              icon={<ChartIcon size={24} />}
+              value={summaryData?.totalEncuestas ?? summaryData?.totalIntervenciones ?? totals.interventions}
+              label="Total de Intervenciones"
+              variant="primary"
             />
-          </div>
+            <StatCard
+              icon={<CheckIcon size={24} />}
+              value={summaryData?.totalExitosas ?? totals.successful}
+              label="Exitosas"
+              variant="success"
+            />
+            {showUnsuccessful && (
+              <StatCard
+                icon={<XIcon size={24} />}
+                value={summaryData?.totalNoExitosas ?? totals.unsuccessful}
+                label="No Exitosas"
+                variant="danger"
+              />
+            )}
+            <StatCard
+              icon={<StarIcon size={24} />}
+              value={summaryData?.totalIsPatriaDefender ?? summaryData?.totalDefensores ?? totals.defensores}
+              label="Defensores de la Patria"
+              variant="warning"
+            />
+            <StatCard
+              icon={<VerifiedIcon size={24} />}
+              value={summaryData?.totalIsVerified ?? summaryData?.totalVerified ?? totals.verificados}
+              label="Verificadas"
+              variant="info"
+            />
+            <StatCard
+              icon={<HomeIcon size={24} />}
+              value={summaryData?.linkedHomes ?? summaryData?.totalLinkedHomes ?? totals.linkedHomes}
+              label="Hogares Vinculados"
+              variant="success"
+            />
+            <StatCard
+              icon={<PlusIcon size={24} />}
+              value={summaryData?.totalIsLinkedHouse ?? totals.isLinkedHouse}
+              label="Vinculaciones Extras"
+              variant="purple"
+            />
+            <StatCard
+              icon={<WifiIcon size={24} />}
+              value={summaryData?.totalIsOffline ?? totals.isOffline}
+              label="Registro Sin Conexión"
+              variant="info"
+            />
+          </StatsGrid>
+        )}
+
+        {/* Tabla */}
+        <div className="rg-table-container">
+          <ReportTable<SocializerRow>
+            columns={memoizedColumns}
+            data={reportData}
+            getRowKey={(item) => item.socializerId}
+            isLoading={isGenerating}
+            emptyTitle="Sin datos"
+            emptyDescription="Seleccione un rango de fechas, un rol y haga clic en Generar Reporte para ver el resumen."
+          />
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

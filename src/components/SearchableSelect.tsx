@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { ChevronDownIcon, SearchIcon, CheckIcon } from './Icons'
 
 interface SelectOption {
   readonly value: string | number
@@ -118,19 +119,15 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           <span className={`searchable-select__value ${!selectedOption ? 'searchable-select__value--placeholder' : ''}`}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <svg
+          <ChevronDownIcon
             className="searchable-select__chevron"
-            width="16" height="16" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="2"
-            strokeLinecap="round" strokeLinejoin="round"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+            size={16}
+          />
         </button>
 
         {/* Backdrop for mobile */}
         {isOpen && (
-          <div 
+          <div
             className="searchable-select__backdrop"
             onClick={handleToggle}
             aria-hidden="true"
@@ -141,14 +138,11 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         {isOpen && (
           <div className="searchable-select__dropdown">
             <div className="searchable-select__search-wrapper">
-              <svg
-                width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              <SearchIcon
+                size={14}
+                color="#999"
                 className="searchable-select__search-icon"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+              />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -197,9 +191,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                   >
                     <span className="searchable-select__option-text">{option.label}</span>
                     {String(option.value) === String(value) && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
+                      <CheckIcon size={14} strokeWidth={3} />
                     )}
                   </div>
                 ))

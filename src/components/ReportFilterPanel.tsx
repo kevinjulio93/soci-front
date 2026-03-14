@@ -10,6 +10,7 @@ import { getTodayISO } from '../utils/dateHelpers'
 import { useState, useEffect } from 'react'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { apiService, type ZoneDepartmentEntry, type ZoneMunicipalityItem } from '../services/api.service'
+import { FilterIcon, XIcon, CalendarIcon, SearchIcon, SlidersIcon, ChevronDownIcon, ChartIcon, ExcelIcon } from './Icons'
 
 export interface ReportFilters {
   startDate: string
@@ -136,9 +137,7 @@ export function ReportFilterPanel({
         {/* Header */}
         <div className="rg-panel__header">
           <div className="rg-panel__header-left">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-            </svg>
+            <FilterIcon size={20} />
             <h3 className="rg-panel__title">Filtros de Reporte</h3>
           </div>
           <button
@@ -146,10 +145,7 @@ export function ReportFilterPanel({
             onClick={onClose}
             title="Cerrar filtros"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <XIcon size={20} />
           </button>
         </div>
 
@@ -158,12 +154,7 @@ export function ReportFilterPanel({
           {/* Rango de Fechas */}
           <div className="rg-panel__section">
             <div className="rg-panel__section-title">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4a7c6f" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+              <CalendarIcon size={16} color="#4a7c6f" />
               <span>Rango de Fechas</span>
               <span className="rg-panel__required">*</span>
             </div>
@@ -192,10 +183,7 @@ export function ReportFilterPanel({
           {/* Búsqueda y Estado */}
           <div className="rg-panel__section">
             <div className="rg-panel__section-title">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4a7c6f" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+              <SearchIcon size={16} color="#4a7c6f" />
               <span>Búsqueda y Estado</span>
             </div>
             <div className="rg-panel__field">
@@ -282,33 +270,16 @@ export function ReportFilterPanel({
               type="button"
             >
               <div className="rg-panel__collapse-left">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4a7c6f" strokeWidth="2">
-                  <line x1="4" y1="21" x2="4" y2="14" />
-                  <line x1="4" y1="10" x2="4" y2="3" />
-                  <line x1="12" y1="21" x2="12" y2="12" />
-                  <line x1="12" y1="8" x2="12" y2="3" />
-                  <line x1="20" y1="21" x2="20" y2="16" />
-                  <line x1="20" y1="12" x2="20" y2="3" />
-                  <line x1="1" y1="14" x2="7" y2="14" />
-                  <line x1="9" y1="8" x2="15" y2="8" />
-                  <line x1="17" y1="16" x2="23" y2="16" />
-                </svg>
+                <SlidersIcon size={16} color="#4a7c6f" />
                 <span>Filtros Avanzados</span>
               </div>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+              <ChevronDownIcon
+                size={16}
                 style={{
                   transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)',
                   transition: 'transform 0.3s ease',
                 }}
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              />
             </button>
 
             {showAdvanced && (
@@ -447,21 +418,20 @@ export function ReportFilterPanel({
               </>
             ) : (
               <>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
+                <ChartIcon size={20} />
                 Generar Reporte
               </>
             )}
           </button>
           <div className="rg-panel__footer-row">
             <button
-              className="btn btn--secondary"
+              className="btn btn--excel"
               onClick={onExportCSV}
               disabled={isGenerating || !hasData}
-              style={{ flex: 1 }}
+              style={{ flex: 1, width: '100%' }}
             >
-              📥 Exportar Excel
+              <ExcelIcon size={20} />
+              Exportar Excel
             </button>
           </div>
           <button

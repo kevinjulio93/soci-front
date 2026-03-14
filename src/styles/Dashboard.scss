@@ -2,6 +2,11 @@
 @use './variables' as *;
 @use 'sass:color';
 
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+
 // =============================================
 // DASHBOARD - BEM NAMING CONVENTION
 // =============================================
@@ -254,19 +259,20 @@
   font-family: $font-family-primary;
   transition: all $transition-base;
   border-radius: $border-radius-md;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
+  padding: $spacing-sm $spacing-lg;
+  font-size: $font-size-sm;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  white-space: nowrap;
+  line-height: 1.25;
 
   // Modifier: .btn--primary
   &--primary {
     background-color: $color-primary;
     color: $color-dark-text;
-    padding: $spacing-sm $spacing-lg;
-    font-size: $font-size-sm;
-    font-weight: $font-weight-semibold;
-    display: flex;
-    align-items: center;
-    gap: $spacing-sm;
-    white-space: nowrap;
 
     svg {
       flex-shrink: 0;
@@ -296,12 +302,6 @@
     background-color: $color-white;
     color: $color-dark-text;
     border: 1px solid $color-border;
-    padding: $spacing-xs $spacing-lg;
-    font-size: $font-size-sm;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: $spacing-xs;
 
     svg {
       flex-shrink: 0;
@@ -313,19 +313,6 @@
     }
   }
 
-  // Modifier: .btn--small
-  &--small {
-    padding: $spacing-xs $spacing-md;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-  }
-
-  // Modifier: .btn--sm (alias)
-  &--sm {
-    padding: $spacing-xs $spacing-md;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-  }
 
   // Modifier: .btn--refresh
   &--refresh {
@@ -410,6 +397,65 @@
     @media (max-width: 768px) {
       width: 100%;
       justify-content: center;
+    }
+  }
+
+  // Modifier: .btn--excel
+  &--excel {
+    background-color: #16a34a; // Excel green
+    color: $color-white;
+    padding: $spacing-sm $spacing-lg;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-sm;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      background-color: #15803d;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      background-color: #86efac;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  // Modifier: .btn--danger
+  &--danger {
+    background-color: $color-danger;
+    color: $color-white;
+
+    &:hover:not(:disabled) {
+      filter: brightness(0.9);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba($color-danger, 0.3);
+    }
+  }
+
+  // Modifier: .btn--outline
+  &--outline {
+    background-color: transparent;
+    color: $color-dark-text;
+    border: 2px solid $color-border;
+
+    &:hover:not(:disabled) {
+      background-color: $color-background;
+      border-color: #c9c9c9;
     }
   }
 }
@@ -3744,8 +3790,8 @@ input[type="date"].date-input {
   max-width: 100% !important;
   box-sizing: border-box !important;
   display: block;
-  height: 50px !important;
-  line-height: 50px !important; // Key for vertical centering in iOS
+  height: 48px !important;
+  line-height: 48px !important; // Key for vertical centering in iOS
   margin: 0;
   padding: 0 45px 0 15px !important; // Right padding for icon
   border-radius: 40px !important;
@@ -4440,52 +4486,6 @@ input[type="date"].date-input {
   }
 }
 
-.btn--primary {
-  background-color: #eef622;
-  color: $color-dark-text;
-  border: none;
-  padding: $spacing-md $spacing-xl;
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-semibold;
-  cursor: pointer;
-  transition: all $transition-base;
-  font-family: $font-family-primary;
-
-  &:hover {
-    background-color: #d9e01e;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-.btn--outline {
-  background-color: transparent;
-  color: $color-dark-text;
-  border: 2px solid #e5e7eb;
-  padding: calc(#{$spacing-md} - 2px) calc(#{$spacing-xl} - 2px);
-  border-radius: $border-radius-md;
-  font-weight: $font-weight-semibold;
-  cursor: pointer;
-  transition: all $transition-base;
-  font-family: $font-family-primary;
-
-  &:hover {
-    background-color: #f9fafb;
-    border-color: #d1d5db;
-  }
-
-  &:active {
-    background-color: #f3f4f6;
-  }
-
-  svg {
-    color: #6b7280;
-  }
-}
 
 // =============================================
 // REPORT FILTER PANEL (rg-panel)
@@ -5103,5 +5103,92 @@ input[type="date"].date-input {
 @keyframes otpSpin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+// =============================================
+// CARD - Componente genérico reutilizable
+// =============================================
+.card {
+  background-color: $color-white;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-sm;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: $spacing-lg;
+
+  @media (min-width: 1024px) {
+    margin-bottom: $spacing-xl;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-md;
+    padding: $spacing-md $spacing-md 0;
+
+    @media (min-width: 640px) {
+      padding: $spacing-lg $spacing-lg 0;
+    }
+
+    @media (min-width: 1024px) {
+      padding: $spacing-xl $spacing-xl 0;
+    }
+  }
+
+  &__title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    min-width: 0;
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: $color-secondary;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: $color-dark-text;
+
+    @media (min-width: 640px) {
+      font-size: $font-size-lg;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    padding: $spacing-md;
+
+    @media (min-width: 640px) {
+      padding: $spacing-lg;
+    }
+
+    @media (min-width: 1024px) {
+      padding: $spacing-xl;
+    }
+  }
+
+  &__footer {
+    padding: $spacing-md;
+    border-top: 1px solid $color-border;
+
+    @media (min-width: 640px) {
+      padding: $spacing-lg;
+    }
   }
 }

@@ -80,6 +80,89 @@
 }
 
 // Filtros de rango de fechas
+
+// =============================================
+// TOGGLE SWITCH — Modern iOS-style
+// =============================================
+.toggle-switch-container {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid $color-border;
+  border-radius: $border-radius-full;
+  white-space: nowrap;
+
+  &__label {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: $color-dark-text;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1.2;
+  }
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin: 0;
+
+  &__input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+
+    // Checked state — slider
+    &:checked+.toggle-switch__slider {
+      background: linear-gradient(135deg, #4a7c6f 0%, #3d6b60 100%);
+      border-color: #3d6b60;
+      box-shadow: 0 0 0 3px rgba(74, 124, 111, 0.15);
+    }
+
+    // Checked state — knob moves right
+    &:checked+.toggle-switch__slider::before {
+      transform: translateX(20px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    // Focus state
+    &:focus-visible+.toggle-switch__slider {
+      box-shadow: 0 0 0 3px rgba(74, 124, 111, 0.3);
+    }
+  }
+
+  &__slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background: #cbd5e1;
+    border: 1px solid #94a3b8;
+    border-radius: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    // Knob
+    &::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: $color-white;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+}
+
 .filter-card {
   background-color: $color-white;
   border: 1px solid $color-border;

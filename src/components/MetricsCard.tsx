@@ -7,13 +7,15 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { DateInput } from './DateInput'
+import { ChartIcon, StarIcon, CheckIcon, HomeIcon, PlusIcon, WifiIcon, XIcon, VerifiedIcon } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
-import { getTodayISO, formatDateES } from '../utils'
+import { getTodayISO } from '../utils'
 import { ToggleUnsuccessful } from './ToggleUnsuccessful'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { RespondentData } from '../models/ApiResponses'
+import { StatCard, StatsGrid } from './'
 import { calculateSurveyStats } from '../utils'
 import '../styles/MetricsCard.scss'
 
@@ -194,7 +196,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   viewType: _viewType,
   // showDailyView = false,
   onMetricsLoaded,
-  buttonLabel = 'Generar',
+  buttonLabel = 'Generar Reporte',
   autoLoad = false,
   page,
   perPage,
@@ -385,155 +387,103 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
             onClick={handleApplyFilters}
             disabled={!startDate || !endDate || isLoading}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-            </svg>
+            <ChartIcon size={20} />
             {buttonLabel}
           </button>
+          {permissions.canViewUnsuccessful && (
+            <ToggleUnsuccessful />
+          )}
         </div>
-
-        {metrics.loadedAt && startDate && endDate && (
-          <div className="filter-card__info">
-            <svg style={{ display: 'inline-block', width: '1em', height: '1em', marginRight: '0.5rem', verticalAlign: 'middle' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-            Mostrando métricas del {formatDateES(startDate)} al {formatDateES(endDate)}
-          </div>
-        )}
-
-        {permissions.canViewUnsuccessful && (
-          <ToggleUnsuccessful />
-        )}
       </div>
 
       {/* Estadísticas */}
-      <div className="reports-stats">
+      <StatsGrid className="reports-stats">
         {isLoading && (
           <div className="metrics-loading-overlay">
             <div className="spinner"></div>
           </div>
         )}
-        <div
-          className={`stat-card stat-card--primary ${filter === 'all' ? 'stat-card--active' : ''}`}
+        <StatCard
+          icon={<ChartIcon size={24} />}
+          value={metrics.total}
+          label="Total de Intervenciones"
+          variant="primary"
+          isActive={filter === 'all'}
           onClick={() => handleMetricClick('all')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="stat-card__icon">
-            <span style={{ fontSize: '1.2rem' }}>📊</span>
-          </div>
-          <div className="stat-card__value">{metrics.total}</div>
-          <div className="stat-card__label">Total de Intervenciones</div>
-        </div>
+        />
 
-        <div
-          className={`stat-card stat-card--success ${filter === 'successful' ? 'stat-card--active' : ''}`}
+        <StatCard
+          icon={<CheckIcon size={24} />}
+          value={metrics.successful}
+          label="Exitosas"
+          variant="success"
+          isActive={filter === 'successful'}
           onClick={() => handleMetricClick('successful')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="stat-card__icon">
-            <div style={{
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              backgroundColor: '#3b82f6',
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            }}></div>
-          </div>
-          <div className="stat-card__value">{metrics.successful}</div>
-          <div className="stat-card__label">Exitosas</div>
-        </div>
+        />
 
         {permissions.canViewUnsuccessful && showUnsuccessful && (
-          <div
-            className={`stat-card stat-card--danger ${filter === 'unsuccessful' ? 'stat-card--active' : ''}`}
+          <StatCard
+            icon={<XIcon size={24} />}
+            value={metrics.unsuccessful}
+            label="No Exitosas"
+            variant="danger"
+            isActive={filter === 'unsuccessful'}
             onClick={() => handleMetricClick('unsuccessful')}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="stat-card__icon">
-              <div style={{
-                width: '16px',
-                height: '16px',
-                borderRadius: '50%',
-                backgroundColor: '#ef4444',
-                border: '2px solid white',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              }}></div>
-            </div>
-            <div className="stat-card__value">{metrics.unsuccessful}</div>
-            <div className="stat-card__label">No Exitosas</div>
-          </div>
+          />
         )}
 
-        <div
-          className={`stat-card stat-card--warning ${filter === 'defensores' ? 'stat-card--active' : ''}`}
+        <StatCard
+          icon={<StarIcon size={24} />}
+          value={metrics.defensores}
+          label="Defensores de la Patria"
+          variant="warning"
+          isActive={filter === 'defensores'}
           onClick={() => handleMetricClick('defensores')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="stat-card__icon">
-            <span style={{ fontSize: '1.5rem' }}>⭐</span>
-          </div>
-          <div className="stat-card__value">{metrics.defensores}</div>
-          <div className="stat-card__label">Defensores de la Patria</div>
-        </div>
+        />
 
-        <div
-          className={`stat-card stat-card--info ${filter === 'isVerified' ? 'stat-card--active' : ''}`}
+        <StatCard
+          icon={<VerifiedIcon size={24} />}
+          value={metrics.isVerified}
+          label="Verificadas"
+          variant="info"
+          isActive={filter === 'isVerified'}
           onClick={() => handleMetricClick('isVerified')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="stat-card__icon">
-            <span style={{ fontSize: '1.5rem' }}>✅</span>
-          </div>
-          <div className="stat-card__value">{metrics.isVerified}</div>
-          <div className="stat-card__label">Verificadas</div>
-        </div>
+        />
 
-        <div
-          className={`stat-card stat-card--success ${filter === 'linkedHomes' ? 'stat-card--active' : ''}`}
+        <StatCard
+          icon={<HomeIcon size={24} />}
+          value={metrics.linkedHomes}
+          label="Hogares Vinculados"
+          variant="success"
+          isActive={filter === 'linkedHomes'}
           onClick={() => handleMetricClick('linkedHomes')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="stat-card__icon">
-            <span style={{ fontSize: '1.5rem' }}>🏠</span>
-          </div>
-          <div className="stat-card__value">{metrics.linkedHomes}</div>
-          <div className="stat-card__label">HOGARES VINCULADOS</div>
-        </div>
+        />
 
-        <div
-          className={`stat-card stat-card--purple ${filter === 'isLinkedHouse' ? 'stat-card--active' : ''}`}
+        <StatCard
+          icon={<PlusIcon size={24} />}
+          value={metrics.isLinkedHouse}
+          label="Vinculaciones Extras"
+          variant="purple"
+          isActive={filter === 'isLinkedHouse'}
           onClick={() => handleMetricClick('isLinkedHouse')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="stat-card__icon">
-            <span style={{ fontSize: '1.5rem' }}>➕</span>
-          </div>
-          <div className="stat-card__value">{metrics.isLinkedHouse}</div>
-          <div className="stat-card__label">VINCULACIONES EXTRAS</div>
-        </div>
+        />
 
-        <div
-          className={`stat-card stat-card--darkblue ${filter === 'isOffline' ? 'stat-card--active' : ''}`}
+        <StatCard
+          icon={<WifiIcon size={24} />}
+          value={metrics.isOffline}
+          label="Registro Sin Conexión"
+          variant="darkblue"
+          isActive={filter === 'isOffline'}
           onClick={() => handleMetricClick('isOffline')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="stat-card__icon">
-            <span style={{ fontSize: '1.2rem' }}>📡</span>
-          </div>
-          <div className="stat-card__value">{metrics.isOffline}</div>
-          <div className="stat-card__label">Registro Sin Conexión</div>
-        </div>
-      </div>
+        />
+      </StatsGrid>
 
       {/* Motivos de rechazo */}
       {permissions.canViewUnsuccessful && showUnsuccessful && showRejectionBreakdown && metrics.rejectionStats && metrics.rejectionStats.length > 0 && (
         <div className="dashboard__section rejection-breakdown-section" style={{ margin: '2rem 0' }}>
           <div className="dashboard__header-section" style={{ marginBottom: '1.5rem', padding: 0 }}>
             <h3 className="dashboard__section-subtitle" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="20" x2="18" y2="10" />
-                <line x1="12" y1="20" x2="12" y2="4" />
-                <line x1="6" y1="20" x2="6" y2="14" />
-              </svg>
+              <ChartIcon size={20} />
               Motivos de Rechazo
             </h3>
             <p className="dashboard__section-desc">Desglose detallado de las {metrics.unsuccessful} encuestas no exitosas</p>
@@ -548,12 +498,12 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
                 'otraRazon': 'Otra razón',
                 'preocupacionesDePrivacidad': 'Preocupaciones de privacidad',
               }
-              const reasonIcons: Record<string, string> = {
-                'noEstaInteresado': '🚫',
-                'noSeEncuentraEnCasa': '🏠',
-                'noTieneTiempo': '⏳',
-                'otraRazon': '📝',
-                'preocupacionesDePrivacidad': '🔒',
+              const reasonIconComponents: Record<string, React.ReactNode> = {
+                'noEstaInteresado': <XIcon size={24} />,
+                'noSeEncuentraEnCasa': <HomeIcon size={24} />,
+                'noTieneTiempo': <ChartIcon size={24} />,
+                'otraRazon': <PlusIcon size={24} />,
+                'preocupacionesDePrivacidad': <VerifiedIcon size={24} />,
               }
               const details: Record<string, number> = noExitosaDetalle || {}
               return Object.entries(details)
@@ -562,7 +512,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
                 .map(([key, count], index) => (
                   <div key={index} className="rejection-breakdown__item">
                     <div className="rejection-breakdown__icon-wrapper">
-                      {reasonIcons[key] || '❓'}
+                      {reasonIconComponents[key] || <XIcon size={24} />}
                     </div>
                     <div className="rejection-breakdown__info">
                       <div className="rejection-breakdown__count">

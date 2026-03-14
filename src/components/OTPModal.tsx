@@ -1,7 +1,7 @@
 /**
  * OTPModal - Modal de verificación OTP para encuestas
  * Se muestra al guardar una encuesta para validar el teléfono del encuestado.
- * Después de 30 segundos muestra un botón para cerrar.
+ * Después de 15 segundos muestra un botón para cerrar.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
@@ -21,9 +21,9 @@ interface OTPModalProps {
 
 type OTPStage = 'sending' | 'input' | 'verifying' | 'verified' | 'error'
 
-const OTP_EXPIRATION = 120 // 2 minutes
-const CLOSE_BUTTON_DELAY = 30 // seconds before showing close button
-const RESEND_COOLDOWN = 120 // seconds between resend requests
+const OTP_EXPIRATION = 60 // 1 minute
+const CLOSE_BUTTON_DELAY = 15 // seconds before showing close button
+const RESEND_COOLDOWN = 30 // seconds between resend requests
 
 const OTPModal: React.FC<OTPModalProps> = ({
   isOpen,
@@ -65,7 +65,7 @@ const OTPModal: React.FC<OTPModalProps> = ({
 
     if (result.success) {
       setStage('input')
-      setTimeLeft(result.expiresIn ?? OTP_EXPIRATION)
+      setTimeLeft(OTP_EXPIRATION)
 
       // Start expiration countdown
       timerRef.current = setInterval(() => {
@@ -143,7 +143,7 @@ const OTPModal: React.FC<OTPModalProps> = ({
       setStage('input')
       setCode('')
       setMessage('¡Listo! Te enviamos un nuevo código.')
-      setTimeLeft(result.expiresIn ?? OTP_EXPIRATION)
+      setTimeLeft(OTP_EXPIRATION)
 
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
@@ -207,8 +207,10 @@ const OTPModal: React.FC<OTPModalProps> = ({
 
   // --- Format timer ---
   const formatTime = (seconds: number): string => {
-    const m = Math.floor(seconds / 60)
-    const s = seconds % 60
+    const totalSeconds = Math.max(0, Math.floor(seconds))
+    if (!isFinite(totalSeconds)) return '0:00'
+    const m = Math.floor(totalSeconds / 60)
+    const s = totalSeconds % 60
     return `${m}:${s.toString().padStart(2, '0')}`
   }
 

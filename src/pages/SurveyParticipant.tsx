@@ -5,7 +5,7 @@
  */
 
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { SurveyForm, DashboardHeader, PageHeader, SuccessModal } from '../components'
 import OTPModal from '../components/OTPModal'
 import { useAuth } from '../contexts/AuthContext'
@@ -75,11 +75,11 @@ export default function SurveyParticipant() {
 
   // Hook centralizado para logout con limpieza de grabación
   const handleLogout = useLogout({
-    onBeforeLogout: async () => {
+    onBeforeLogout: useCallback(async () => {
       if (isRecording) {
         await stopRecording()
       }
-    }
+    }, [isRecording, stopRecording])
   })
 
   // Inicializar IndexedDB
@@ -90,7 +90,7 @@ export default function SurveyParticipant() {
   }, [])
 
   // Cargar datos del respondent si está en modo edición
-  const loadRespondentData = async () => {
+  const loadRespondentData = useCallback(async () => {
     if (!editMode || !respondentId) {
       setIsLoadingData(false)
       return
@@ -99,7 +99,7 @@ export default function SurveyParticipant() {
     try {
       setIsLoadingData(true)
       const response = await apiService.getRespondentById(respondentId)
-      
+
       // Usar directamente response.data (debería tener todas las propiedades)
       const respondent = Respondent.fromDTO(response.data)
       const formData = respondent.toFormData()
@@ -125,7 +125,7 @@ export default function SurveyParticipant() {
     } finally {
       setIsLoadingData(false)
     }
-  }
+  }, [editMode, respondentId])
 
   useEffect(() => {
     loadRespondentData()
@@ -139,18 +139,17 @@ export default function SurveyParticipant() {
       stoppedForNoConsentRef.current = false
       startRecording()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editMode])
+  }, [editMode, clearRecording, startRecording])
 
   // Detener grabación cuando el usuario NO autoriza
-  const handleWillingToRespondChange = (audioConsent: boolean) => {
+  const handleWillingToRespondChange = useCallback((audioConsent: boolean) => {
     if (!audioConsent) {
       stoppedForNoConsentRef.current = true
       if (isRecording) {
         stopRecording()
       }
     }
-  }
+  }, [isRecording, stopRecording])
 
   // Cleanup: detener grabación y liberar micrófono cuando se desmonte el componente
   useEffect(() => {
@@ -161,15 +160,15 @@ export default function SurveyParticipant() {
     }
   }, [isRecording, stopRecording])
 
-  const handleBackToDashboard = async () => {
+  const handleBackToDashboard = useCallback(async () => {
     // Detener grabación si está activa
     if (isRecording) {
       await stopRecording()
     }
     navigate(ROUTES.DASHBOARD)
-  }
+  }, [isRecording, stopRecording, navigate])
 
-  const handleSubmit = async (data: SurveyParticipantData) => {
+  const handleSubmit = useCallback(async (data: SurveyParticipantData) => {
     try {
       setIsSubmitting(true)
 
@@ -254,7 +253,7 @@ export default function SurveyParticipant() {
           defendorDePatria: false,
         } : {})
       })
-      
+
       // Validar datos básicos solo si está dispuesto a responder
       if (willingToRespond && !respondent.isValid()) {
         return
@@ -273,10 +272,10 @@ export default function SurveyParticipant() {
           respondentDTO,
           recordedBlob ?? undefined
         )
-        
+
         // Limpiar audio de memoria
         clearRecording()
-        
+
         // Retornar al dashboard
         navigate(ROUTES.DASHBOARD)
         return
@@ -306,7 +305,7 @@ export default function SurveyParticipant() {
         } finally {
           clearRecording()
         }
-      } 
+      }
       // O subir audio si hay consentimiento
       else if (recordedBlob && !editMode && createdRespondentId && audioConsent) {
         try {
@@ -316,7 +315,7 @@ export default function SurveyParticipant() {
         } finally {
           clearRecording()
         }
-      } 
+      }
       // Si no hay consentimiento y no hay grabación, solo limpiar
       else if (!audioConsent) {
         clearRecording()
@@ -343,7 +342,7 @@ export default function SurveyParticipant() {
     } finally {
       setIsSubmitting(false)
     }
-  }
+  }, [editMode, respondentId, isRecording, audioBlob, stopRecording, clearRecording, isOnline, navigate])
 
   return (
     <div className="dashboard">
@@ -363,11 +362,11 @@ export default function SurveyParticipant() {
           </button>
         </PageHeader>
 
-        {recordingError && (
+        {recordingError ? (
           <div className="error-message" style={{ marginBottom: '1rem' }}>
             {MESSAGES.RECORDING_ERROR}: {recordingError}
           </div>
-        )}
+        ) : null}
 
         <section className="dashboard__content">
           {isLoadingData ? (
@@ -396,7 +395,7 @@ export default function SurveyParticipant() {
         respondentId={otpRespondentId}
         phoneNumber={otpPhoneNumber}
         allowSkip={OTP_CONFIG.ALLOW_SKIP}
-        onVerified={() => {
+        onVerified={useCallback(() => {
           setShowOTPModal(false)
           notificationService.success('Teléfono verificado correctamente.')
           if (isDefensorDePatria) {
@@ -405,8 +404,8 @@ export default function SurveyParticipant() {
           } else {
             navigate(ROUTES.DASHBOARD)
           }
-        }}
-        onClose={() => {
+        }, [isDefensorDePatria, navigate])}
+        onClose={useCallback(() => {
           setShowOTPModal(false)
           if (isDefensorDePatria) {
             setShowWhatsAppQR(true)
@@ -414,17 +413,17 @@ export default function SurveyParticipant() {
           } else {
             navigate(ROUTES.DASHBOARD)
           }
-        }}
+        }, [isDefensorDePatria, navigate])}
       />
 
       {/* QR Modal - se muestra si es defensor de la patria */}
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={() => {
+        onClose={useCallback(() => {
           setShowSuccessModal(false)
           setShowWhatsAppQR(false)
           navigate(ROUTES.DASHBOARD)
-        }}
+        }, [navigate])}
         showQR={showWhatsAppQR}
         qrImageUrl={EXTERNAL_URLS.WHATSAPP_QR_CODE}
       />

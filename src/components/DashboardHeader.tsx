@@ -4,6 +4,7 @@
  * Props: user, onLogout
  */
 
+import { LogoutIcon } from './Icons'
 import type { User } from '../types'
 import '../styles/Dashboard.scss'
 
@@ -22,7 +23,8 @@ export function DashboardHeader({ title, user, onLogout }: DashboardHeaderProps)
         </div>
         <div className="dashboard__user-info">
           <span>Bienvenido, {user?.profile?.name || user?.fullName || user?.profile?.fullName || user?.email}</span>
-          <button onClick={onLogout} className="dashboard__logout-btn">
+          <button onClick={onLogout} className="dashboard__logout-btn btn--with-icon">
+            <LogoutIcon size={18} />
             Cerrar Sesión
           </button>
         </div>

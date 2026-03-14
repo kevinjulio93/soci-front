@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { apiService } from '../services/api.service'
 import { Select } from './Select'
 import { Textarea } from './Textarea'
+import { XIcon } from './Icons'
 import '../styles/Modal.scss'
 
 interface BatchAssignCoordinatorModalProps {
@@ -55,7 +56,7 @@ export function BatchAssignCoordinatorModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (action === 'assign' && !selectedCoordinatorId) {
       setError('Debe seleccionar un coordinador')
       return
@@ -124,9 +125,7 @@ export function BatchAssignCoordinatorModal({
             onClick={handleClose}
             type="button"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <XIcon size={24} />
           </button>
         </div>
 
@@ -260,8 +259,8 @@ export function BatchAssignCoordinatorModal({
                 {isLoading
                   ? 'Procesando...'
                   : action === 'assign'
-                  ? 'Asignar'
-                  : 'Desasignar'}
+                    ? 'Asignar'
+                    : 'Desasignar'}
               </button>
             </div>
           </form>

@@ -3,11 +3,11 @@
  * Muestra un mapa con las ubicaciones actuales de todos los socializadores
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Icon } from 'leaflet'
-import { Sidebar, StatCard, LoadingState, EmptyState, MapPopup, MenuIcon, RefreshIcon, BackIcon } from '../components'
+import { DashboardLayout, StatCard, LoadingState, EmptyState, MapPopup, RefreshIcon, MapIcon, XIcon, UsersIcon } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { useAuth } from '../contexts/AuthContext'
@@ -58,43 +58,42 @@ const defaultIcon = new Icon({
 export default function ReportsRealtime() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [socializers, setSocializers] = useState<SocializerLocation[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleBackToReports = () => {
+  const handleBackToReports = useCallback(() => {
     navigate(ROUTES.ADMIN_REPORTS)
-  }
+  }, [navigate])
 
   useEffect(() => {
     loadSocializers()
-    
+
     // Actualizar cada 30 segundos
     const interval = setInterval(loadSocializers, SYNC_CONFIG.AUTO_SYNC_INTERVAL)
-    
+
     return () => clearInterval(interval)
   }, [])
 
-  const loadSocializers = async () => {
+  const loadSocializers = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
-      
+
       const response = await apiService.getSocializersWithLocations()
-      
+
       // El endpoint ya devuelve solo socializadores con ubicaciones
       let socializersList = response.data || []
 
-      
+
       // Si el usuario es coordinador, filtrar solo sus socializadores asignados
       const userRole = user?.role?.role?.toLowerCase()
       if (userRole === 'coordinador' || userRole === 'coordinator') {
-        socializersList = socializersList.filter((s: SocializerLocation) => 
+        socializersList = socializersList.filter((s: SocializerLocation) =>
           s.coordinator && s.coordinator.user === user?.id
         )
       }
-      
+
       setSocializers(socializersList)
     } catch (err) {
       notificationService.handleApiError(err, MESSAGES.LOCATION_LOAD_ERROR)
@@ -102,11 +101,11 @@ export default function ReportsRealtime() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [user?.id, user?.role?.role])
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = useCallback((dateString?: string) => {
     if (!dateString) return MESSAGES.NO_DATA
-    
+
     const date = new Date(dateString)
     return date.toLocaleString(LOCALE_CONFIG.DEFAULT_LOCALE, {
       year: 'numeric',
@@ -115,21 +114,23 @@ export default function ReportsRealtime() {
       hour: '2-digit',
       minute: '2-digit',
     })
-  }
+  }, [])
 
-  const socializersWithLocation = socializers.filter(s => 
-    s.latestLocation && 
-    s.latestLocation.latitude != null && 
-    s.latestLocation.longitude != null &&
-    s.latestLocation.latitude !== 0 &&
-    s.latestLocation.longitude !== 0
-  )
-  
-  // Aplicar pequeño offset a marcadores que comparten la misma ubicación
-  const getAdjustedPosition = (socializer: SocializerLocation, index: number): [number, number] => {
+  const socializersWithLocation = useMemo(() => {
+    return socializers.filter(s =>
+      s.latestLocation &&
+      s.latestLocation.latitude != null &&
+      s.latestLocation.longitude != null &&
+      s.latestLocation.latitude !== 0 &&
+      s.latestLocation.longitude !== 0
+    )
+  }, [socializers])
+
+  // Aplicar pequeño offset a marcadores que comparten la misma ubicación - Memoizado
+  const getAdjustedPosition = useCallback((socializer: SocializerLocation, index: number): [number, number] => {
     const lat = socializer.latestLocation!.latitude
     const long = socializer.latestLocation!.longitude
-    
+
     // Verificar si hay otros socializadores en la misma ubicación (hasta 4 decimales)
     const sameLocationCount = socializersWithLocation.filter((s, i) => {
       if (i >= index) return false // Solo contar los anteriores
@@ -137,117 +138,109 @@ export default function ReportsRealtime() {
       const sLong = s.latestLocation!.longitude
       return Math.abs(sLat - lat) < 0.0001 && Math.abs(sLong - long) < 0.0001
     }).length
-    
+
     if (sameLocationCount > 0) {
       // Aplicar offset pequeño en círculo alrededor del punto original
       const angle = (sameLocationCount * 60) * (Math.PI / 180) // 60 grados entre cada marcador
       const offsetDistance = 0.0002 // ~20 metros
       const latOffset = Math.sin(angle) * offsetDistance
       const longOffset = Math.cos(angle) * offsetDistance
-      
+
       return [lat + latOffset, long + longOffset]
     }
-    
+
     return [lat, long]
-  }
-  
-  const socializersWithoutLocation = socializers.filter(s => !s.latestLocation)
+  }, [socializersWithLocation])
+
+  const socializersWithoutLocation = useMemo(() => {
+    return socializers.filter(s => !s.latestLocation)
+  }, [socializers])
 
   // Calcular el centro del mapa basado en las ubicaciones actuales
-  const getMapCenter = (): [number, number] => {
+  const mapCenter: [number, number] = useMemo(() => {
     if (socializersWithLocation.length === 0) {
       return [4.6097, -74.0817] // Bogotá por defecto
     }
 
     const avgLat = socializersWithLocation.reduce((sum, s) => sum + s.latestLocation!.latitude, 0) / socializersWithLocation.length
     const avgLong = socializersWithLocation.reduce((sum, s) => sum + s.latestLocation!.longitude, 0) / socializersWithLocation.length
-    
+
     return [avgLat, avgLong]
-  }
+  }, [socializersWithLocation])
 
   // Generar un key único basado en todas las posiciones para forzar actualización del mapa
-  const getMapKey = (): string => {
+  const mapKey = useMemo(() => {
     const positionsHash = socializersWithLocation
       .map(s => `${s._id}-${s.latestLocation?.latitude}-${s.latestLocation?.longitude}-${s.latestLocation?.timestamp}`)
       .join('|')
     return `map-${positionsHash}`
-  }
+  }, [socializersWithLocation])
 
   return (
-    <div className="dashboard-layout">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      <div className="dashboard-layout__content">
-        <div className="dashboard-layout__header">
-          <button 
-            className="dashboard-layout__menu-btn"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <MenuIcon size={24} />
-          </button>
-          <button className="btn-back" onClick={handleBackToReports}>
-            <BackIcon size={20} />
-          </button>
-          <h1 className="dashboard-layout__title">Reportes - Ubicaciones en Tiempo Real</h1>
-        </div>
+    <DashboardLayout
+      title="Reportes - Ubicaciones en Tiempo Real"
+      onBack={handleBackToReports}
+    >
+      <div className="dashboard-layout__body">
+        {error ? (
+          <div className="survey-form__error" style={{ marginBottom: '1rem' }}>
+            <p>{error}</p>
+          </div>
+        ) : null}
 
-        <div className="dashboard-layout__body">
-          {error && (
-            <div className="survey-form__error" style={{ marginBottom: '1rem' }}>
-              <p>{error}</p>
-            </div>
-          )}
-
-          {isLoading && socializers.length === 0 ? (
-            <LoadingState message={MESSAGES.LOADING_LOCATIONS} />
-          ) : socializers.length === 0 && !isLoading ? (
-            <EmptyState 
-              title={MESSAGES.EMPTY_LOCATIONS_TITLE}
-              description={MESSAGES.EMPTY_LOCATIONS_DESC}
-              action={{
-                label: MESSAGES.BTN_TRY_AGAIN,
-                onClick: loadSocializers
-              }}
-            />
-          ) : (
-            <div className="reports-realtime">
-              <div className="reports-realtime__header">
-                <div className="reports-realtime__stats">
-                  <StatCard 
-                    value={socializersWithLocation.length.toString()}
-                    label="Con ubicación"
-                    variant="success"
-                  />
-                  <StatCard 
-                    value={socializersWithoutLocation.length.toString()}
-                    label="Sin ubicación"
-                    variant="warning"
-                  />
-                  <StatCard 
-                    value={socializers.length.toString()}
-                    label="Total socializadores"
-                    variant="primary"
-                  />
-                </div>
-                <button 
-                  className="btn btn--refresh"
-                  onClick={loadSocializers}
-                  disabled={isLoading}
-                >
-                  <RefreshIcon size={16} />
-                  {isLoading ? 'Actualizando...' : 'Actualizar'}
-                </button>
+        {isLoading && socializers.length === 0 ? (
+          <LoadingState message={MESSAGES.LOADING_LOCATIONS} />
+        ) : socializers.length === 0 && !isLoading ? (
+          <EmptyState
+            title={MESSAGES.EMPTY_LOCATIONS_TITLE}
+            description={MESSAGES.EMPTY_LOCATIONS_DESC}
+            action={{
+              label: MESSAGES.BTN_TRY_AGAIN,
+              onClick: loadSocializers
+            }}
+          />
+        ) : (
+          <div className="reports-realtime">
+            <div className="reports-realtime__header">
+              <div className="reports-realtime__stats">
+                <StatCard
+                  icon={<MapIcon size={32} />}
+                  value={socializersWithLocation.length.toString()}
+                  label="Con ubicación"
+                  variant="success"
+                />
+                <StatCard
+                  icon={<XIcon size={32} />}
+                  value={socializersWithoutLocation.length.toString()}
+                  label="Sin ubicación"
+                  variant="warning"
+                />
+                <StatCard
+                  icon={<UsersIcon size={32} />}
+                  value={socializers.length.toString()}
+                  label="Total socializadores"
+                  variant="primary"
+                />
               </div>
+              <button
+                className="btn btn--refresh"
+                onClick={loadSocializers}
+                disabled={isLoading}
+              >
+                <RefreshIcon size={16} />
+                {isLoading ? 'Actualizando...' : 'Actualizar'}
+              </button>
+            </div>
 
-              <div className="reports-realtime__content">
-                {socializersWithLocation.length > 0 ? (
+            <div className="reports-realtime__content">
+              {socializersWithLocation.length > 0 ? (
                 <div className="reports-realtime__map-container">
                   <h3 style={{ marginBottom: '1rem', color: '#4a7c6f' }}>
                     Mapa de Ubicaciones ({socializersWithLocation.length} {socializersWithLocation.length === 1 ? 'socializador' : 'socializadores'})
                   </h3>
                   <MapContainer
-                    key={getMapKey()}
-                    center={getMapCenter()}
+                    key={mapKey}
+                    center={mapCenter}
                     zoom={socializersWithLocation.length === 1 ? 15 : 11}
                     style={{ height: '500px', width: '100%', borderRadius: '8px' }}
                     scrollWheelZoom={true}
@@ -257,40 +250,39 @@ export default function ReportsRealtime() {
                       url={EXTERNAL_URLS.LEAFLET_TILE_URL}
                     />
                     {socializersWithLocation.map((socializer, index) => (
-                          <Marker
-                            key={`${socializer._id}-${socializer.latestLocation!.timestamp}`}
-                            position={getAdjustedPosition(socializer, index)}
-                            icon={defaultIcon}
-                          >
-                          <Popup>
-                            <MapPopup 
-                              title={socializer.fullName}
-                              fields={[
-                                { label: 'ID', value: socializer.idNumber },
-                                { label: 'Email', value: socializer.user.email },
-                                ...(socializer.coordinator ? [{ label: 'Supervisor', value: socializer.coordinator.fullName }] : []),
-                                { label: 'Coordenadas', value: `Lat: ${socializer.latestLocation!.latitude?.toFixed(6) || 'N/A'}\nLong: ${socializer.latestLocation!.longitude?.toFixed(6) || 'N/A'}` },
-                                ...(socializer.latestLocation!.accuracy != null ? [{ label: 'Precisión', value: `±${socializer.latestLocation!.accuracy.toFixed(1)}m` }] : []),
-                                ...(socializer.latestLocation!.speed != null ? [{ label: 'Velocidad', value: `${socializer.latestLocation!.speed.toFixed(1)} m/s` }] : []),
-                                { label: 'Última actualización', value: formatDate(socializer.latestLocation!.timestamp) }
-                              ]}
-                            />
-                          </Popup>
-                        </Marker>
-                      ))}
+                      <Marker
+                        key={`${socializer._id}-${socializer.latestLocation!.timestamp}`}
+                        position={getAdjustedPosition(socializer, index)}
+                        icon={defaultIcon}
+                      >
+                        <Popup>
+                          <MapPopup
+                            title={socializer.fullName}
+                            fields={[
+                              { label: 'ID', value: socializer.idNumber },
+                              { label: 'Email', value: socializer.user.email },
+                              ...(socializer.coordinator ? [{ label: 'Supervisor', value: socializer.coordinator.fullName }] : []),
+                              { label: 'Coordenadas', value: `Lat: ${socializer.latestLocation!.latitude?.toFixed(6) || 'N/A'}\nLong: ${socializer.latestLocation!.longitude?.toFixed(6) || 'N/A'}` },
+                              ...(socializer.latestLocation!.accuracy != null ? [{ label: 'Precisión', value: `±${socializer.latestLocation!.accuracy.toFixed(1)}m` }] : []),
+                              ...(socializer.latestLocation!.speed != null ? [{ label: 'Velocidad', value: `${socializer.latestLocation!.speed.toFixed(1)} m/s` }] : []),
+                              { label: 'Última actualización', value: formatDate(socializer.latestLocation!.timestamp) }
+                            ]}
+                          />
+                        </Popup>
+                      </Marker>
+                    ))}
                   </MapContainer>
                 </div>
               ) : (
-                <EmptyState 
+                <EmptyState
                   title={MESSAGES.EMPTY_NO_LOCATION_FOUND}
                   description={MESSAGES.EMPTY_NO_LOCATION_DESC}
                 />
               )}
             </div>
           </div>
-          )}
-        </div>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

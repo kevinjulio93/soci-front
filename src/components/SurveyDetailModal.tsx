@@ -12,6 +12,7 @@ import '../styles/Modal.scss'
 import { RespondentData } from '../models/ApiResponses'
 import { EXTERNAL_URLS, MAP_CONFIG } from '../constants'
 import { apiService } from '../services/api.service'
+import { CheckIcon, XIcon, PlayIcon, PauseIcon, StopIcon } from './Icons'
 import { notificationService } from '../services/notification.service'
 
 interface SurveyDetailModalProps {
@@ -158,7 +159,8 @@ export function SurveyDetailModal({
     return 'No especificada'
   }
 
-  const formatDuration = (seconds: number): string => {
+  const formatDuration = (seconds: number | null | undefined): string => {
+    if (seconds === null || seconds === undefined || !isFinite(seconds)) return '0:00'
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins}:${secs.toString().padStart(2, '0')}`
@@ -239,16 +241,12 @@ export function SurveyDetailModal({
                 </span>
                 {survey.isVerified ? (
                   <span className="modal-badge modal-badge--verified">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '4px' }}>
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                    </svg>
+                    <CheckIcon size={16} style={{ marginRight: '4px' }} strokeWidth={3} />
                     Verificada
                   </span>
                 ) : (
                   <span className="modal-badge modal-badge--not-verified">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '4px' }}>
-                      <path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z" />
-                    </svg>
+                    <XIcon size={16} style={{ marginRight: '4px' }} strokeWidth={3} />
                     No Verificada
                   </span>
                 )}
@@ -256,10 +254,7 @@ export function SurveyDetailModal({
             )}
           </div>
           <button className="modal-close" onClick={onClose}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <XIcon size={24} />
           </button>
         </div>
 
@@ -518,14 +513,9 @@ export function SurveyDetailModal({
                                 title={isPlaying ? 'Pausar' : 'Reproducir'}
                               >
                                 {isPlaying ? (
-                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                    <rect x="6" y="4" width="4" height="16" rx="1" />
-                                    <rect x="14" y="4" width="4" height="16" rx="1" />
-                                  </svg>
+                                  <PauseIcon size={18} fill="currentColor" stroke="none" />
                                 ) : (
-                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                    <polygon points="6 3 20 12 6 21 6 3" />
-                                  </svg>
+                                  <PlayIcon size={18} fill="currentColor" stroke="none" />
                                 )}
                               </button>
                               <button
@@ -534,9 +524,7 @@ export function SurveyDetailModal({
                                 disabled={audioError || (!isPlaying && audioCurrentTime === 0)}
                                 title="Detener"
                               >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                  <rect x="5" y="5" width="14" height="14" rx="2" />
-                                </svg>
+                                <StopIcon size={16} fill="currentColor" stroke="none" />
                               </button>
                             </div>
 
@@ -548,9 +536,9 @@ export function SurveyDetailModal({
                               >
                                 <div
                                   className="audio-player__progress-fill"
-                                  style={{ width: audioDuration ? `${(audioCurrentTime / audioDuration) * 100}%` : '0%' }}
+                                  style={{ width: audioDuration && isFinite(audioDuration) ? `${(audioCurrentTime / audioDuration) * 100}%` : '0%' }}
                                 />
-                                {audioDuration ? (
+                                {audioDuration && isFinite(audioDuration) ? (
                                   <div
                                     className="audio-player__progress-thumb"
                                     style={{ left: `${(audioCurrentTime / audioDuration) * 100}%` }}
@@ -559,7 +547,7 @@ export function SurveyDetailModal({
                               </div>
                               <div className="audio-player__time">
                                 <span>{formatDuration(audioCurrentTime)}</span>
-                                <span>{audioDuration ? formatDuration(audioDuration) : '--:--'}</span>
+                                <span>{formatDuration(audioDuration)}</span>
                               </div>
                             </div>
 

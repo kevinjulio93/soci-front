@@ -9,10 +9,11 @@ export interface StatCardProps {
   icon?: ReactNode
   value: number | string
   label: string
-  variant?: 'default' | 'primary' | 'success' | 'danger' | 'warning'
+  variant?: 'default' | 'primary' | 'success' | 'danger' | 'warning' | 'info' | 'purple' | 'darkblue'
   onClick?: () => void
   isActive?: boolean
   className?: string
+  style?: React.CSSProperties
 }
 
 export function StatCard({
@@ -23,6 +24,7 @@ export function StatCard({
   onClick,
   isActive = false,
   className = '',
+  style,
 }: StatCardProps) {
   const variantClass = variant !== 'default' ? `stat-card--${variant}` : ''
   const activeClass = isActive ? 'stat-card--active' : ''
@@ -32,7 +34,10 @@ export function StatCard({
     <div
       className={`stat-card ${variantClass} ${activeClass} ${clickableClass} ${className}`.trim()}
       onClick={onClick}
-      style={onClick ? { cursor: 'pointer' } : undefined}
+      style={{
+        ...(onClick ? { cursor: 'pointer' } : {}),
+        ...style
+      }}
     >
       {icon && <div className="stat-card__icon">{icon}</div>}
       <div className="stat-card__value">{value}</div>

@@ -3,9 +3,9 @@
  * Página de bienvenida con navegación a diferentes secciones
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { Sidebar, StatCard, LoadingState, EmptyState, MenuIcon, DateInput, Select, ToggleUnsuccessful } from '../components'
+import { DashboardLayout, StatCard, LoadingState, EmptyState, Select, ToggleUnsuccessful, ChartIcon, FileIcon, Card, DateRangeFilter, StatsGrid, ExcelIcon } from '../components'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
@@ -22,7 +22,6 @@ interface FilterState {
 }
 
 export default function AdminDashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user } = useAuth()
   const [totalSurveys, setTotalSurveys] = useState<number>(0)
   const [topSocializers, setTopSocializers] = useState<Array<{
@@ -81,7 +80,7 @@ export default function AdminDashboard() {
     return 'ALL'
   }
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     if (!filters.startDate || !filters.endDate) return
 
     try {
@@ -116,7 +115,7 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [filters])
 
   useEffect(() => {
     loadDashboardData()
@@ -197,7 +196,7 @@ export default function AdminDashboard() {
     loadSupervisorsForField()
   }, [filters.fieldCoordinator])
 
-  const handleFilterChange = (field: keyof FilterState, value: string) => {
+  const handleFilterChange = useCallback((field: keyof FilterState, value: string) => {
     setFilters(prev => {
       const updated = { ...prev, [field]: value }
 
@@ -221,13 +220,13 @@ export default function AdminDashboard() {
 
       return updated
     })
-  }
+  }, [])
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = useCallback(() => {
     loadDashboardData()
-  }
+  }, [loadDashboardData])
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = useCallback(async () => {
     if (!filters.startDate || !filters.endDate) {
       notificationService.warning('Por favor seleccione un rango de fechas')
       return
@@ -243,181 +242,139 @@ export default function AdminDashboard() {
     } catch (error) {
       notificationService.handleApiError(error, 'Error al exportar el reporte')
     }
-  }
+  }, [filters])
 
   return (
-    <div className="dashboard-layout">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      <div className="dashboard-layout__content">
-        <div className="dashboard-layout__header">
-          <button
-            className="dashboard-layout__menu-btn"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            <MenuIcon size={24} />
-          </button>
-          <h1 className="dashboard-layout__title">Dashboard Administrativo</h1>
+    <DashboardLayout title="Dashboard Administrativo">
+      <div className="dashboard-layout__body">
+        <div className="dashboard__header-section">
+          <div className="dashboard__header-text">
+            <h2 className="dashboard__section-title">¡Bienvenido, {user?.profile?.name || user?.fullName || user?.profile?.fullName || user?.email}!</h2>
+            <p className="dashboard__section-desc">
+              Resumen general del sistema
+            </p>
+          </div>
         </div>
 
-        <div className="dashboard-layout__body">
-          <div className="dashboard__header-section">
-            <div className="dashboard__header-text">
-              <h2 className="dashboard__section-title">¡Bienvenido, {user?.profile?.name || user?.fullName || user?.profile?.fullName || user?.email}!</h2>
-              <p className="dashboard__section-desc">
-                Resumen general del sistema
-              </p>
-            </div>
-          </div>
-
-          {/* Filtros de Reporte */}
-          <div className="report-filters-card">
-            <h3 className="report-filters-card__title">Filtros de Reporte</h3>
-
-            <div className="report-filters-grid">
-              {/* Fechas - siempre visibles */}
-              <DateInput
-                label="Fecha Inicio"
-                required
-                value={filters.startDate}
-                max={filters.endDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                placeholder="dd/mm/yyyy"
-              />
-
-              <DateInput
-                label="Fecha Fin"
-                required
-                value={filters.endDate}
-                min={filters.startDate}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                placeholder="dd/mm/yyyy"
-              />
-
-              {/* Coordinador de Zona - solo admin */}
+        {/* Filtros de Reporte */}
+        <DateRangeFilter
+          startDate={filters.startDate}
+          endDate={filters.endDate}
+          onStartDateChange={(val) => handleFilterChange('startDate', val)}
+          onEndDateChange={(val) => handleFilterChange('endDate', val)}
+          onApply={handleGenerateReport}
+          isLoading={isLoading}
+          applyIcon={<ChartIcon size={20} />}
+          applyLabel="Generar Reporte"
+          extraFields={
+            <>
               {showFilters.zoneCoordinator && (
-                <Select
-                  label="Coordinador de Zona"
-                  options={zoneCoordinators}
-                  value={filters.zoneCoordinator}
-                  onChange={(e) => handleFilterChange('zoneCoordinator', e.target.value)}
-                  placeholder="Todos los coordinadores de zona"
-                />
+                <div className="filter-card__field">
+                  <Select
+                    label="Coordinador de Zona"
+                    options={zoneCoordinators}
+                    value={filters.zoneCoordinator}
+                    onChange={(e) => handleFilterChange('zoneCoordinator', e.target.value)}
+                    placeholder="Todos los coordinadores de zona"
+                  />
+                </div>
               )}
-
-              {/* Coordinador de Campo - admin y coordinador de zona */}
               {showFilters.fieldCoordinator && (
-                <Select
-                  label="Coordinador de Campo"
-                  options={fieldCoordinators}
-                  value={filters.fieldCoordinator}
-                  onChange={(e) => handleFilterChange('fieldCoordinator', e.target.value)}
-                  placeholder="Todos los coordinadores de campo"
-                  disabled={userRole === 'admin' && !filters.zoneCoordinator}
-                />
+                <div className="filter-card__field">
+                  <Select
+                    label="Coordinador de Campo"
+                    options={fieldCoordinators}
+                    value={filters.fieldCoordinator}
+                    onChange={(e) => handleFilterChange('fieldCoordinator', e.target.value)}
+                    placeholder="Todos los coordinadores de campo"
+                    disabled={userRole === 'admin' && !filters.zoneCoordinator}
+                  />
+                </div>
               )}
-
-              {/* Supervisor - admin, coordinador de zona y coordinador de campo */}
               {showFilters.supervisor && (
-                <Select
-                  label="Supervisor"
-                  options={supervisors}
-                  value={filters.supervisor}
-                  onChange={(e) => handleFilterChange('supervisor', e.target.value)}
-                  placeholder="Todos los supervisores"
-                  disabled={userRole === 'admin' && !filters.fieldCoordinator}
-                />
+                <div className="filter-card__field">
+                  <Select
+                    label="Supervisor"
+                    options={supervisors}
+                    value={filters.supervisor}
+                    onChange={(e) => handleFilterChange('supervisor', e.target.value)}
+                    placeholder="Todos los supervisores"
+                    disabled={userRole === 'admin' && !filters.fieldCoordinator}
+                  />
+                </div>
               )}
-
-
-            </div>
-
-            <div className="report-filters-card__actions">
+            </>
+          }
+          extraActions={
+            <>
               <button
-                className="btn btn--primary btn--with-icon"
-                onClick={handleGenerateReport}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
-                Generar Reporte
-              </button>
-
-              <button
-                className="btn btn--outline btn--with-icon"
+                className="btn btn--excel btn--with-icon"
                 onClick={handleExportExcel}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
+                <ExcelIcon size={20} />
                 Exportar Excel
               </button>
-            </div>
+              <ToggleUnsuccessful />
+            </>
+          }
+        />
 
-            <ToggleUnsuccessful />
-          </div>
 
-          {isLoading ? (
-            <LoadingState message="Cargando estadísticas..." />
-          ) : (
-            <>
-              <div className="stats-grid">
-                <StatCard
-                  icon={(
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  )}
-                  value={totalSurveys.toLocaleString()}
-                  label="Total Intervenciones"
-                  variant="primary"
-                />
-              </div>
+        {isLoading ? (
+          <LoadingState message="Cargando estadísticas..." />
+        ) : (
+          <>
+            <StatsGrid>
+              <StatCard
+                icon={<FileIcon size={32} />}
+                value={totalSurveys.toLocaleString()}
+                label="Total Intervenciones"
+                variant="primary"
+              />
+            </StatsGrid>
 
-              <div className="dashboard__section" style={{ marginTop: '2rem' }}>
-                <h3 className="dashboard__section-subtitle">Top 10 Socializadores</h3>
-                <div className="ranking-list">
-                  {topSocializers.map((item, index) => (
-                    <div key={item.socializerId} className="ranking-item">
-                      <div className="ranking-item__position">
-                        <span className={`ranking-badge ${index < 3 ? `ranking-badge--${index + 1}` : ''}`}>
-                          #{index + 1}
+            <Card title="Top 10 Socializadores" icon={<ChartIcon size={20} />}>
+              <div className="ranking-list">
+                {topSocializers.map((item, index) => (
+                  <div key={item.socializerId} className="ranking-item">
+                    <div className="ranking-item__position">
+                      <span className={`ranking-badge ${index < 3 ? `ranking-badge--${index + 1}` : ''}`}>
+                        #{index + 1}
+                      </span>
+                    </div>
+                    <div className="ranking-item__info">
+                      <h4 className="ranking-item__name">{item.fullName}</h4>
+                      <p className="ranking-item__email">{item.email}</p>
+                    </div>
+                    <div className="ranking-item__stats">
+                      <div className="ranking-item__main">
+                        <span className="ranking-item__count">{item.totalSurveys}</span>
+                        <span className="ranking-item__label">total</span>
+                      </div>
+                      <div className="ranking-item__breakdown">
+                        <span className="ranking-item__detail ranking-item__detail--success">
+                          {item.successfulSurveys} exitosas
                         </span>
-                      </div>
-                      <div className="ranking-item__info">
-                        <h4 className="ranking-item__name">{item.fullName}</h4>
-                        <p className="ranking-item__email">{item.email}</p>
-                      </div>
-                      <div className="ranking-item__stats">
-                        <div className="ranking-item__main">
-                          <span className="ranking-item__count">{item.totalSurveys}</span>
-                          <span className="ranking-item__label">total</span>
-                        </div>
-                        <div className="ranking-item__breakdown">
-                          <span className="ranking-item__detail ranking-item__detail--success">
-                            {item.successfulSurveys} exitosas
+                        {showUnsuccessful ? (
+                          <span className="ranking-item__detail ranking-item__detail--unsuccessful">
+                            {item.unsuccessfulSurveys} no exitosas
                           </span>
-                          {showUnsuccessful && (
-                            <span className="ranking-item__detail ranking-item__detail--unsuccessful">
-                              {item.unsuccessfulSurveys} no exitosas
-                            </span>
-                          )}
-                        </div>
+                        ) : null}
                       </div>
                     </div>
-                  ))}
-                  {topSocializers.length === 0 && (
-                    <EmptyState
-                      title="No hay datos disponibles"
-                      description="Aún no se han registrado socializadores"
-                    />
-                  )}
-                </div>
+                  </div>
+                ))}
+                {topSocializers.length === 0 && (
+                  <EmptyState
+                    title="No hay datos disponibles"
+                    description="Aún no se han registrado socializadores"
+                  />
+                )}
               </div>
-            </>
-          )}
-        </div>
+            </Card>
+          </>
+        )}
       </div>
-    </div >
+    </DashboardLayout>
   )
 }

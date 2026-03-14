@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { Sidebar, SocializerForm, DataTable, LocationModal, ConfirmModal } from '../components'
+import { DashboardLayout, SocializerForm, DataTable, LocationModal, ConfirmModal, SearchInput, PlusIcon, UsersIcon } from '../components'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { ROUTES, getSocializersTableColumns, MESSAGES } from '../constants'
@@ -161,7 +161,6 @@ export function UserManagement() {
   const location = useLocation()
   const { id } = useParams<{ id: string }>()
 
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [users, setUsers] = useState<Socializer[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -276,8 +275,8 @@ export function UserManagement() {
     }
   }, [id, isEditMode, loadUserForEdit])
 
-  // Manejar creación/edición
-  const handleSubmit = async (data: any) => {
+  // Manejar creación/edición - Memoizado para estabilidad
+  const handleSubmit = useCallback(async (data: any) => {
     try {
       setFormLoading(true)
       setFormError(null)
@@ -357,23 +356,23 @@ export function UserManagement() {
     } finally {
       setFormLoading(false)
     }
-  }
+  }, [editingUser, navigate])
 
   // Manejar eliminación - abrir modal
-  const handleDelete = (_id: string, name: string) => {
+  const handleDelete = useCallback((_id: string, name: string) => {
     setUserToDelete({ id: _id, name })
     setDeleteModalOpen(true)
-  }
+  }, [])
 
   // Confirmar eliminación
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!userToDelete) return
 
     try {
       setIsDeleting(true)
       await apiService.deleteSocializer(userToDelete.id)
       notificationService.success(MESSAGES.USER_DELETE_SUCCESS)
-      await loadUsers(currentPage)
+      await loadUsers(currentPage, debouncedSearch)
       setDeleteModalOpen(false)
       setUserToDelete(null)
     } catch (err) {
@@ -381,49 +380,49 @@ export function UserManagement() {
     } finally {
       setIsDeleting(false)
     }
-  }
+  }, [userToDelete, currentPage, debouncedSearch, loadUsers])
 
   // Cancelar eliminación
-  const handleCancelDelete = () => {
+  const handleCancelDelete = useCallback(() => {
     setDeleteModalOpen(false)
     setUserToDelete(null)
-  }
+  }, [])
 
   // Manejar edición - usar user._id de la estructura de la lista
-  const handleEdit = (_userData: Socializer) => {
+  const handleEdit = useCallback((_userData: Socializer) => {
     const userId = _userData.user?._id || _userData._id
     navigate(ROUTES.ADMIN_SOCIALIZERS_EDIT(userId))
-  }
+  }, [navigate])
 
   // Manejar visualización de ubicación
-  const handleViewLocation = (_userData: Socializer) => {
+  const handleViewLocation = useCallback((_userData: Socializer) => {
     if (_userData.user?._id) {
       setSelectedUser(_userData)
       setLocationModalOpen(true)
     } else {
       notificationService.error(MESSAGES.LOCATION_UNAVAILABLE)
     }
-  }
+  }, [])
 
-  const handleCloseLocationModal = () => {
+  const handleCloseLocationModal = useCallback(() => {
     setLocationModalOpen(false)
     setSelectedUser(null)
-  }
+  }, [])
 
   // Manejar cambio de página
-  const handlePageChange = (_page: number) => {
+  const handlePageChange = useCallback((_page: number) => {
     setCurrentPage(_page)
-  }
+  }, [])
 
   // Abrir formulario para nuevo usuario
-  const handleNewUser = () => {
+  const handleNewUser = useCallback(() => {
     navigate(ROUTES.ADMIN_SOCIALIZERS_NEW)
-  }
+  }, [navigate])
 
   // Cancelar formulario
-  const handleCancelForm = () => {
+  const handleCancelForm = useCallback(() => {
     navigate(ROUTES.ADMIN_SOCIALIZERS)
-  }
+  }, [navigate])
 
   // Datos iniciales del formulario
   const initialFormData = useMemo<SocializerFormData | undefined>(() => {
@@ -451,179 +450,113 @@ export function UserManagement() {
     } as SocializerFormData
   }, [editingUser])
 
+  // Memoizar columnas para evitar re-renders innecesarios
+  // Basado en: rerender-memo
+  const columns = useMemo(() =>
+    getSocializersTableColumns(handleEdit, handleDelete, handleViewLocation, isLoading, isReadOnly),
+    [handleEdit, handleDelete, handleViewLocation, isLoading, isReadOnly]
+  )
+
   return (
-    <div className="dashboard-layout">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <DashboardLayout title="Gestión de Usuarios">
+      <div className="dashboard-layout__body">
+        {error ? (
+          <div className="alert alert--error">
+            <p>{error}</p>
+            <button onClick={() => loadUsers(currentPage, debouncedSearch)} className="btn btn--secondary">
+              Reintentar
+            </button>
+          </div>
+        ) : null}
 
-      <div className="dashboard-layout__content">
-        <div className="dashboard-layout__header">
-          <button
-            className="dashboard-layout__menu-btn"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle menu"
-          >
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <h1 className="dashboard-layout__title">Gestión de Usuarios</h1>
-        </div>
+        {!showForm ? (
+          <div className="dashboard-layout__actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Buscar por nombre, email o identificación..."
+            />
 
-        <div className="dashboard-layout__body">
-          {error && (
-            <div className="alert alert--error">
-              <p>{error}</p>
-              <button onClick={() => loadUsers(currentPage, debouncedSearch)} className="btn btn--small">
-                Reintentar
-              </button>
-            </div>
-          )}
-
-          {!showForm && !isReadOnly && (
-            <div className="dashboard-layout__actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <div className="dashboard-layout__search">
-                <svg
-                  width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999"
-                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre, email o identificación..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="dashboard-layout__search-input"
-                />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm('')}
-                    className="dashboard-layout__search-clear"
-                    title="Limpiar búsqueda"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
+            {!isReadOnly ? (
               <button
                 className="btn btn--primary"
                 onClick={handleNewUser}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <PlusIcon size={20} />
                 <span>Nuevo Usuario</span>
               </button>
-            </div>
-          )}
+            ) : null}
+          </div>
+        ) : null}
 
-          {!showForm && isReadOnly && (
-            <div className="dashboard-layout__actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <div className="dashboard-layout__search">
-                <svg
-                  width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999"
-                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre, email o identificación..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="dashboard-layout__search-input"
-                />
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchTerm('')}
-                    className="dashboard-layout__search-clear"
-                    title="Limpiar búsqueda"
-                  >
-                    ×
+        {showForm ? (
+          <div className="dashboard-layout__form">
+            {isEditMode && !editingUser ? (
+              <div className="loading-state" style={{ padding: '2rem', textAlign: 'center' }}>
+                <p>{formError || 'Cargando datos del usuario...'}</p>
+                {formError ? (
+                  <button onClick={() => id && loadUserForEdit(id)} className="btn btn--secondary" style={{ marginTop: '0.5rem' }}>
+                    Reintentar
                   </button>
-                )}
+                ) : null}
               </div>
-            </div>
-          )}
+            ) : (
+              <SocializerForm
+                onSubmit={handleSubmit}
+                isLoading={formLoading}
+                error={formError}
+                initialData={initialFormData}
+                isEditMode={isEditMode}
+                onCancel={handleCancelForm}
+              />
+            )}
+          </div>
+        ) : null}
 
-          {showForm && (
-            <div className="dashboard-layout__form">
-              {isEditMode && !editingUser ? (
-                <div className="loading-state" style={{ padding: '2rem', textAlign: 'center' }}>
-                  <p>{formError || 'Cargando datos del usuario...'}</p>
-                  {formError && (
-                    <button onClick={() => id && loadUserForEdit(id)} className="btn btn--small" style={{ marginTop: '0.5rem' }}>
-                      Reintentar
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <SocializerForm
-                  onSubmit={handleSubmit}
-                  isLoading={formLoading}
-                  error={formError}
-                  initialData={initialFormData}
-                  isEditMode={isEditMode}
-                  onCancel={handleCancelForm}
-                />
-              )}
-            </div>
-          )}
+        {!showForm ? (
+          <DataTable<Socializer>
+            columns={columns}
+            data={users}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={setItemsPerPage}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            isLoading={isLoading}
+            emptyStateIcon={
+              <UsersIcon size={64} />
+            }
+            emptyStateTitle="No hay usuarios registrados"
+            emptyStateDescription="Comienza creando el primer usuario para tu equipo"
+            getRowKey={(userData) => userData._id}
+          />
+        ) : null}
 
-          {!showForm && (
-            <DataTable<Socializer>
-              columns={getSocializersTableColumns(handleEdit, handleDelete, handleViewLocation, isLoading, isReadOnly)}
-              data={users}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={setItemsPerPage}
-              pageSizeOptions={PAGE_SIZE_OPTIONS}
-              isLoading={isLoading}
-              emptyStateIcon={
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              }
-              emptyStateTitle="No hay usuarios registrados"
-              emptyStateDescription="Comienza creando el primer usuario para tu equipo"
-              getRowKey={(userData) => userData._id}
-            />
-          )}
-        </div>
-      </div>
+        {/* Modal de ubicación */}
+        {selectedUser ? (
+          <LocationModal
+            isOpen={locationModalOpen}
+            onClose={handleCloseLocationModal}
+            userId={selectedUser.user?._id || ''}
+            socializerName={selectedUser.fullName}
+          />
+        ) : null}
 
-      {/* Modal de ubicación */}
-      {selectedUser && (
-        <LocationModal
-          isOpen={locationModalOpen}
-          onClose={handleCloseLocationModal}
-          userId={selectedUser.user?._id || ''}
-          socializerName={selectedUser.fullName}
+        {/* Modal de confirmación de eliminación */}
+        <ConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={handleCancelDelete}
+          onConfirm={handleConfirmDelete}
+          title="Eliminar Usuario"
+          message={`¿Está seguro de eliminar a ${userToDelete?.name || 'este usuario'}? Esta acción no se puede deshacer.`}
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+          isLoading={isDeleting}
+          variant="danger"
         />
-      )}
-
-      {/* Modal de confirmación de eliminación */}
-      <ConfirmModal
-        isOpen={deleteModalOpen}
-        onClose={handleCancelDelete}
-        onConfirm={handleConfirmDelete}
-        title="Eliminar Usuario"
-        message={`¿Está seguro de eliminar a ${userToDelete?.name || 'este usuario'}? Esta acción no se puede deshacer.`}
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-        isLoading={isDeleting}
-        variant="danger"
-      />
-    </div>
+      </div>
+    </DashboardLayout>
   )
 }

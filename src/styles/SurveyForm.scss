@@ -228,7 +228,7 @@
 .form-group__input,
 .form-group__select {
   width: 100%;
-  padding: $spacing-md $spacing-lg;
+  padding: 0 $spacing-lg;
   border: 1px solid $color-border;
   border-radius: $border-radius-full;
   font-size: $font-size-base;
@@ -267,6 +267,18 @@
   &--with-action {
     padding-right: 3.5rem !important;
   }
+}
+
+// Unified height for single-line controls (not textareas)
+input.form-group__input,
+select.form-group__select {
+  height: 48px;
+}
+
+// Textareas need vertical padding back
+textarea.form-group__input {
+  padding: $spacing-md $spacing-lg;
+  height: auto;
 }
 
 .form-group__input-wrapper {
@@ -571,7 +583,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: $spacing-md $spacing-lg;
+  padding: 0 $spacing-lg;
   font-size: $font-size-base;
   font-family: $font-family-primary;
   border: 1px solid $color-border;
@@ -580,7 +592,8 @@
   cursor: pointer;
   transition: all $transition-base;
   text-align: left;
-  min-height: 44px;
+  height: 48px;
+  box-sizing: border-box;
   color: $color-dark-text;
 
   &:hover:not(:disabled) {
