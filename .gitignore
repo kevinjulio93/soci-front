@@ -31,3 +31,7 @@ dist-ssr
 
 # Deploy scripts
 deploy-*.sh
+
+# AI Agents
+.agents/
+
