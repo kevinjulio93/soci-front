@@ -4,8 +4,8 @@
  * Tabla: visible solo para el rol admin
  */
 
-import { useState, useCallback, useMemo } from 'react'
-import { DashboardLayout, DataTable, ConfirmModal, SurveyDetailModal, MetricsCard, FileIcon } from '../components'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { DashboardLayout, DataTable, ConfirmModal, SurveyDetailModal, MetricsCard, FileIcon, SearchableSelect } from '../components'
 import type { MetricsData } from '../components/MetricsCard'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
@@ -32,6 +32,56 @@ export default function SurveysList() {
   const userRole = user?.role?.role?.toLowerCase() || ''
   const isAdmin = userRole === 'admin'
 
+  const [selectedZoneCoord, setSelectedZoneCoord] = useState('')
+  const [selectedFieldCoord, setSelectedFieldCoord] = useState('')
+  const [selectedSupervisor, setSelectedSupervisor] = useState('')
+  const [selectedSocializer, setSelectedSocializer] = useState('')
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [zoneCoords, setZoneCoords] = useState<any[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [fieldCoords, setFieldCoords] = useState<any[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [supervisors, setSupervisors] = useState<any[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [socializers, setSocializers] = useState<any[]>([])
+
+  useEffect(() => {
+    if (isAdmin) {
+      apiService.getZoneCoordinators().then(setZoneCoords).catch(console.error)
+    }
+  }, [isAdmin])
+
+  useEffect(() => {
+    if (selectedZoneCoord) {
+      apiService.getSubordinatesByRole(selectedZoneCoord, 'fieldcoordinator').then(setFieldCoords).catch(console.error)
+    } else {
+      setFieldCoords([])
+    }
+  }, [selectedZoneCoord])
+
+  useEffect(() => {
+    if (selectedFieldCoord) {
+      apiService.getSubordinatesByRole(selectedFieldCoord, 'supervisor').then(setSupervisors).catch(console.error)
+    } else {
+      setSupervisors([])
+    }
+  }, [selectedFieldCoord])
+
+  useEffect(() => {
+    if (selectedSupervisor) {
+      apiService.getSubordinatesByRole(selectedSupervisor, 'socializer').then(setSocializers).catch(console.error)
+    } else {
+      setSocializers([])
+    }
+  }, [selectedSupervisor])
+
+  const hierarchyFiltersObj = useMemo(() => ({
+    zoneCoordinator: selectedZoneCoord || undefined,
+    fieldCoordinator: selectedFieldCoord || undefined,
+    supervisor: selectedSupervisor || undefined,
+    socializer: selectedSocializer || undefined,
+  }), [selectedZoneCoord, selectedFieldCoord, selectedSupervisor, selectedSocializer])
   const handleMetricsLoaded = useCallback((data: MetricsData) => {
     if (data.surveys) {
       setSurveys(data.surveys)
@@ -110,7 +160,7 @@ export default function SurveysList() {
   return (
     <DashboardLayout title="Encuestas">
       <div className="dashboard-layout__body">
-        {/* Métricas - Visible para todos los roles */}
+        {/* Métricas y Filtros - Visible para todos los roles (filtros extra solo admin) */}
         <MetricsCard
           viewType={userRole as 'admin' | 'coordinador_zona' | 'coordinador_campo' | 'supervisor' | 'socializer'}
           showDailyView={false}
@@ -120,6 +170,84 @@ export default function SurveysList() {
           perPage={itemsPerPage}
           refreshKey={refreshKey}
           onLoading={setIsLoading}
+          hierarchyFilters={hierarchyFiltersObj}
+          extraFilters={
+            isAdmin && (
+              <div className="filter-card__grid" style={{ marginTop: '0.5rem' }}>
+                <div className="filter-card__field">
+                  <SearchableSelect
+                    label="Coordinador de Zona"
+                    value={selectedZoneCoord}
+                    onChange={(val) => {
+                      setSelectedZoneCoord(val)
+                      setSelectedFieldCoord('')
+                      setSelectedSupervisor('')
+                      setSelectedSocializer('')
+                    }}
+                    placeholder="Selecione coord. de zona..."
+                    options={[
+                      ...zoneCoords.map(u => ({
+                        value: u._id,
+                        label: `${u.fullName} - ${u.email || ''}`
+                      }))
+                    ]}
+                  />
+                </div>
+                <div className="filter-card__field">
+                  <SearchableSelect
+                    label="Coordinador de Campo"
+                    value={selectedFieldCoord}
+                    onChange={(val) => {
+                      setSelectedFieldCoord(val)
+                      setSelectedSupervisor('')
+                      setSelectedSocializer('')
+                    }}
+                    placeholder="Selecione coord. de campo..."
+                    disabled={!selectedZoneCoord}
+                    options={[
+                      ...fieldCoords.map(u => ({
+                        value: u._id,
+                        label: `${u.fullName} - ${u.email || ''}`
+                      }))
+                    ]}
+                  />
+                </div>
+                <div className="filter-card__field">
+                  <SearchableSelect
+                    label="Supervisor"
+                    value={selectedSupervisor}
+                    onChange={(val) => {
+                      setSelectedSupervisor(val)
+                      setSelectedSocializer('')
+                    }}
+                    placeholder="Selecione supervisor..."
+                    disabled={!selectedFieldCoord}
+                    options={[
+                      ...supervisors.map(u => ({
+                        value: u._id,
+                        label: `${u.fullName} - ${u.email || ''}`
+                      }))
+                    ]}
+                  />
+                </div>
+                <div className="filter-card__field">
+                  <SearchableSelect
+                    label="Socializador"
+                    value={selectedSocializer}
+                    onChange={setSelectedSocializer}
+                    placeholder="Selecione socializador..."
+                    disabled={!selectedSupervisor}
+                    options={[
+                      ...socializers.map(u => ({
+                        value: u.userId || u._id,
+                        label: `${u.fullName} - ${u.email || ''}`
+                      }))
+                    ]}
+                  />
+                </div>
+              </div>
+            )
+          }
         />
 
         {/* Tabla - Solo visible para admin */}

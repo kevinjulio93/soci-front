@@ -41,6 +41,7 @@ interface ApiError {
 
 type UserListItem = {
   _id: string
+  userId?: string
   fullName: string
   email: string
 }
@@ -631,6 +632,7 @@ class ApiService {
     const data = Array.isArray(response?.data) ? response.data : Array.isArray(response) ? response : []
     return data.map((item: any) => ({
       _id: item._id,
+      userId: item.user?._id || (typeof item.user === 'string' ? item.user : undefined),
       fullName: item.fullName,
       email: item.user?.email || item.email || '',
     }))
@@ -708,7 +710,13 @@ class ApiService {
     socializerId?: string,
     page?: number,
     perPage?: number,
-    metric?: string
+    metric?: string,
+    hierarchyFilters?: {
+      zoneCoordinator?: string
+      fieldCoordinator?: string
+      supervisor?: string
+      socializer?: string
+    }
   ): Promise<any> {
     const params = new URLSearchParams()
     params.append('startDate', startDate)
@@ -716,6 +724,13 @@ class ApiService {
 
     if (socializerId) {
       params.append('socializerId', socializerId)
+    }
+
+    if (hierarchyFilters) {
+      if (hierarchyFilters.zoneCoordinator) params.append('zoneCoordinator', hierarchyFilters.zoneCoordinator)
+      if (hierarchyFilters.fieldCoordinator) params.append('fieldCoordinator', hierarchyFilters.fieldCoordinator)
+      if (hierarchyFilters.supervisor) params.append('supervisor', hierarchyFilters.supervisor)
+      if (hierarchyFilters.socializer) params.append('socializerId', hierarchyFilters.socializer)
     }
 
     if (page) {
@@ -807,12 +822,20 @@ class ApiService {
   async getDashboard003Report(params: {
     fecha_inicio: string
     fecha_fin: string
+    departamentoId?: string
+    municipioId?: string
     municipio?: string
     rol?: string
   }): Promise<Dashboard003Response> {
     const queryParams = new URLSearchParams()
     queryParams.append('fecha_inicio', params.fecha_inicio)
     queryParams.append('fecha_fin', params.fecha_fin)
+    if (params.departamentoId) {
+      queryParams.append('departamento_id', params.departamentoId)
+    }
+    if (params.municipioId) {
+      queryParams.append('municipio_id', params.municipioId)
+    }
     if (params.municipio?.trim()) {
       queryParams.append('municipio', params.municipio.trim())
     }
@@ -898,12 +921,20 @@ class ApiService {
   async exportDashboard003(params: {
     fecha_inicio: string
     fecha_fin: string
+    departamentoId?: string
+    municipioId?: string
     municipio?: string
     rol?: string
   }): Promise<void> {
     const queryParams = new URLSearchParams()
     queryParams.append('fecha_inicio', params.fecha_inicio)
     queryParams.append('fecha_fin', params.fecha_fin)
+    if (params.departamentoId) {
+      queryParams.append('departamento_id', params.departamentoId)
+    }
+    if (params.municipioId) {
+      queryParams.append('municipio_id', params.municipioId)
+    }
     if (params.municipio?.trim()) {
       queryParams.append('municipio', params.municipio.trim())
     }

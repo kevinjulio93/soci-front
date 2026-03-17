@@ -38,6 +38,17 @@ interface MetricsCardProps {
   refreshKey?: number
   /** Callback para notificar estado de carga */
   onLoading?: (isLoading: boolean) => void
+  /** ID del usuario para filtrar métricas */
+  userId?: string
+  /** Filtros extra a renderizar en la tarjeta de filtros */
+  extraFilters?: React.ReactNode
+  /** Filtros de jerarquía opcionales para la petición al API */
+  hierarchyFilters?: {
+    zoneCoordinator?: string
+    fieldCoordinator?: string
+    supervisor?: string
+    socializer?: string
+  }
 }
 
 export interface MetricsData {
@@ -202,6 +213,9 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   perPage,
   refreshKey,
   onLoading,
+  userId,
+  extraFilters,
+  hierarchyFilters,
 }) => {
   const { user } = useAuth()
   const [startDate, setStartDate] = useState(getTodayISO())
@@ -255,9 +269,11 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       const response = await apiService.getReportsBySocializerAndDate(
         sDate,
         eDate,
-        undefined,
+        userId,
         page,
-        perPage
+        perPage,
+        undefined,
+        hierarchyFilters
       )
 
       const surveysData = response.data?.surveys || []
@@ -322,7 +338,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
       loadMetrics()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoLoad, page, perPage, refreshKey])
+  }, [autoLoad, page, perPage, refreshKey, userId])
 
   const handleApplyFilters = () => {
     loadMetrics()
@@ -380,6 +396,8 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
             />
           </div>
         </div>
+
+        {extraFilters}
 
         <div className="filter-card__actions">
           <button

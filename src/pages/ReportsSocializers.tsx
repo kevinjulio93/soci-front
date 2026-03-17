@@ -3,14 +3,14 @@
  * Muestra intervenciones, exitosas, no exitosas y defensores agrupados por usuario del rol seleccionado
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DashboardLayout, Select, ToggleUnsuccessful, ChartIcon, CheckIcon, StarIcon, HomeIcon, PlusIcon, WifiIcon, XIcon, StatCard, DateRangeFilter, StatsGrid, VerifiedIcon, ExcelIcon } from '../components'
+import { DashboardLayout, Select, SearchableSelect, ToggleUnsuccessful, ChartIcon, CheckIcon, StarIcon, HomeIcon, PlusIcon, WifiIcon, XIcon, StatCard, DateRangeFilter, StatsGrid, VerifiedIcon, ExcelIcon } from '../components'
 import { ReportTable } from '../components/ReportTable'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { useAuth } from '../contexts/AuthContext'
 import type { ReportTableColumn } from '../components/ReportTable'
-import { apiService } from '../services/api.service'
+import { apiService, type ZoneDepartmentEntry, type ZoneMunicipalityItem } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { ROUTES } from '../constants'
 import '../styles/Dashboard.scss'
@@ -144,12 +144,57 @@ export default function ReportsSocializers() {
   const [startDate, setStartDate] = useState(getTodayString())
   const [endDate, setEndDate] = useState(getTodayString())
   const [selectedRole, setSelectedRole] = useState('socializer')
+  const [selectedDepartment, setSelectedDepartment] = useState('')
+  const [selectedMunicipality, setSelectedMunicipality] = useState('')
+  const [zoneDepartments, setZoneDepartments] = useState<ZoneDepartmentEntry[]>([])
+  const [municipalities, setMunicipalities] = useState<ZoneMunicipalityItem[]>([])
+  const [loadingDepts, setLoadingDepts] = useState(false)
   const [reportData, setReportData] = useState<SocializerRow[]>([])
   const [summaryData, setSummaryData] = useState<any>(null)
 
   const { showUnsuccessful } = useUnsuccessfulToggle()
 
   const userRole = user?.role?.role?.toLowerCase() || ''
+
+  const ACTIVE_ZONE = import.meta.env.VITE_ACTIVE_ZONE || 'zona1'
+  const ZONE_ALIASES: Record<string, number> = { zonaf: 6 }
+  const ZONE_NUMBER = ZONE_ALIASES[ACTIVE_ZONE] ?? (parseInt(ACTIVE_ZONE.replace('zona', ''), 10) || 1)
+
+  // Cargar departamentos y municipios de la zona activa
+  useEffect(() => {
+    const loadDepartments = async () => {
+      setLoadingDepts(true)
+      try {
+        const response = await apiService.getZoneDepartments(ZONE_NUMBER)
+        setZoneDepartments(response.departments)
+      } catch {
+        setZoneDepartments([])
+      } finally {
+        setLoadingDepts(false)
+      }
+    }
+    loadDepartments()
+  }, [])
+
+  // Actualizar municipios cuando cambia el departamento seleccionado
+  useEffect(() => {
+    if (!selectedDepartment) {
+      setMunicipalities([])
+      return
+    }
+
+    const selectedDept = zoneDepartments.find(d => d?.department?._id === selectedDepartment)
+    if (selectedDept?.municipalities) {
+      setMunicipalities(selectedDept.municipalities)
+    } else {
+      setMunicipalities([])
+    }
+  }, [selectedDepartment, zoneDepartments])
+
+  const handleDepartmentChange = (value: string) => {
+    setSelectedDepartment(value)
+    setSelectedMunicipality('')
+  }
 
   // Filtrar roles disponibles según la jerarquía del usuario
   const availableRoles = useMemo(() => {
@@ -185,12 +230,18 @@ export default function ReportsSocializers() {
     try {
       setIsGenerating(true)
 
-      const params: { fecha_inicio: string; fecha_fin: string; rol?: string } = {
+      const params: { fecha_inicio: string; fecha_fin: string; rol?: string; departamentoId?: string; municipioId?: string } = {
         fecha_inicio: startDate,
         fecha_fin: endDate,
       }
       if (selectedRole) {
         params.rol = selectedRole
+      }
+      if (selectedDepartment) {
+        params.departamentoId = selectedDepartment
+      }
+      if (selectedMunicipality) {
+        params.municipioId = selectedMunicipality
       }
 
       const response = await apiService.getDashboard003Report(params)
@@ -227,12 +278,18 @@ export default function ReportsSocializers() {
       return
     }
     try {
-      const params: { fecha_inicio: string; fecha_fin: string; rol?: string } = {
+      const params: { fecha_inicio: string; fecha_fin: string; rol?: string; departamentoId?: string; municipioId?: string } = {
         fecha_inicio: startDate,
         fecha_fin: endDate,
       }
       if (selectedRole) {
         params.rol = selectedRole
+      }
+      if (selectedDepartment) {
+        params.departamentoId = selectedDepartment
+      }
+      if (selectedMunicipality) {
+        params.municipioId = selectedMunicipality
       }
       await apiService.exportDashboard003(params)
       notificationService.success('Archivo Excel descargado exitosamente')
@@ -278,15 +335,51 @@ export default function ReportsSocializers() {
           applyLabel="Generar Reporte"
           disabled={isGenerating}
           extraFields={
-            <div className="filter-card__field">
-              <Select
-                label="Rol"
-                options={availableRoles}
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                disabled={isGenerating}
-              />
-            </div>
+            <>
+              <div className="filter-card__field">
+                <Select
+                  label="Rol"
+                  options={availableRoles}
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value)}
+                  disabled={isGenerating}
+                />
+              </div>
+              <div className="filter-card__field">
+                <SearchableSelect
+                  label="Departamento"
+                  value={selectedDepartment}
+                  onChange={handleDepartmentChange}
+                  disabled={isGenerating || loadingDepts || zoneDepartments.length === 0}
+                  placeholder="Selecione un departamento..."
+                  options={[
+                    ...zoneDepartments
+                      .filter((entry) => entry?.department?._id)
+                      .map((entry) => ({
+                        value: entry.department._id,
+                        label: entry.department.name,
+                      })),
+                  ]}
+                />
+              </div>
+              <div className="filter-card__field">
+                <SearchableSelect
+                  label="Municipio"
+                  value={selectedMunicipality}
+                  onChange={setSelectedMunicipality}
+                  disabled={isGenerating || !selectedDepartment || municipalities.length === 0}
+                  placeholder="Selecione un municipio..."
+                  options={[
+                    ...municipalities
+                      .filter((muni) => muni?._id)
+                      .map((muni) => ({
+                        value: muni._id,
+                        label: muni.name,
+                      })),
+                  ]}
+                />
+              </div>
+            </>
           }
           extraActions={
             <>

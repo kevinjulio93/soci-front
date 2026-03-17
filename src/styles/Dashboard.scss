@@ -3608,7 +3608,7 @@
   padding: $spacing-md;
   width: 100%;
   box-sizing: border-box;
-  overflow: hidden; // Prevent inner content from leaking
+  overflow: visible;
   display: flex;
   flex-direction: column;
 
@@ -3659,7 +3659,7 @@
     width: 100%;
     box-sizing: border-box;
     display: block;
-    overflow: hidden; // Prevent child overflow
+    overflow: visible;
   }
 
   &__actions {
