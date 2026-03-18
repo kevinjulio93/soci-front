@@ -60,6 +60,7 @@ export default function SurveyParticipant() {
   const [otpRespondentId, setOtpRespondentId] = useState('')
   const [isDefensorDePatria, setIsDefensorDePatria] = useState(false)
   const [whatsappQRLink, setWhatsappQRLink] = useState<string>(EXTERNAL_URLS.WHATSAPP_QR_CODE)
+  const [locationCoords, setLocationCoords] = useState<{ lat: number, lng: number } | null>(null)
   const stoppedForNoConsentRef = useRef(false)
   const handleSubmitAudioRef = useRef<{ audioConsent: boolean, recordedWithoutConsent: boolean, respondentId: string } | null>(null)
 
@@ -134,12 +135,19 @@ export default function SurveyParticipant() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, respondentId])
 
-  // Iniciar grabación automáticamente al abrir la encuesta (solo una vez, si no es edición)
+  // Iniciar grabación y tomar ubicación de inmediato
   useEffect(() => {
     if (!editMode) {
       clearRecording()
       stoppedForNoConsentRef.current = false
       startRecording()
+
+      // Solicitar ubicación al iniciar la encuesta
+      navigator.geolocation.getCurrentPosition(
+        (position) => setLocationCoords({ lat: position.coords.latitude, lng: position.coords.longitude }),
+        (error) => console.warn('No se pudo obtener la ubicación GPS inicial:', error),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      )
     }
   }, [editMode, clearRecording, startRecording])
 
@@ -218,22 +226,25 @@ export default function SurveyParticipant() {
 
 
 
-      // Obtener ubicación actual
-      let latitude = 0
-      let longitude = 0
-      try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
+      // Obtener ubicación actual, usando los datos precargados si las hay o intentando de nuevo
+      let latitude = locationCoords?.lat || 0
+      let longitude = locationCoords?.lng || 0
+
+      if (latitude === 0 && longitude === 0) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0
+            })
           })
-        })
-        latitude = position.coords.latitude
-        longitude = position.coords.longitude
-      } catch (error) {
-        console.warn('No se pudo obtener la ubicación GPS:', error)
-        notificationService.warning('No se pudo obtener la ubicación GPS. La encuesta se guardará sin coordenadas.')
+          latitude = position.coords.latitude
+          longitude = position.coords.longitude
+        } catch (error) {
+          console.warn('No se pudo obtener la ubicación GPS en el envío:', error)
+          notificationService.warning('No se pudo obtener la ubicación GPS. La encuesta se guardará sin coordenadas.')
+        }
       }
 
       // Convertir willingToRespond de string a boolean si es necesario
@@ -289,6 +300,7 @@ export default function SurveyParticipant() {
 
       // Validar datos básicos solo si está dispuesto a responder
       if (willingToRespond && !respondent.isValid()) {
+        setIsSubmitting(false)
         return
       }
 
@@ -316,6 +328,7 @@ export default function SurveyParticipant() {
         )
 
         clearRecording()
+        setIsSubmitting(false)
         navigate(ROUTES.DASHBOARD)
         return
       }
@@ -374,10 +387,9 @@ export default function SurveyParticipant() {
       }
     } catch (err) {
       notificationService.handleApiError(err, MESSAGES.RESPONDENT_SAVE_ERROR)
-    } finally {
       setIsSubmitting(false)
     }
-  }, [editMode, respondentId, isRecording, audioBlob, stopRecording, clearRecording, isOnline, navigate, finalizeAudioAndNavigate])
+  }, [editMode, respondentId, locationCoords, isRecording, audioBlob, stopRecording, clearRecording, isOnline, navigate, finalizeAudioAndNavigate])
 
   return (
     <div className="dashboard">
@@ -392,7 +404,7 @@ export default function SurveyParticipant() {
           title={editMode ? TITLES.EDIT_RESPONDENT : TITLES.NEW_SURVEY}
           description={editMode ? DESCRIPTIONS.EDIT_MODE : DESCRIPTIONS.CREATE_MODE}
         >
-          <button className="btn btn--secondary" onClick={handleBackToDashboard}>
+          <button className="btn btn--secondary" onClick={handleBackToDashboard} disabled={isSubmitting}>
             {TITLES.BACK_TO_DASHBOARD}
           </button>
         </PageHeader>

@@ -36,7 +36,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const startRecording = useCallback(async () => {
     try {
       setError(null)
-      
+
       // Solicitar permiso para acceder al micrófono
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
@@ -65,11 +65,11 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       mediaRecorder.onstop = async () => {
         // Crear el blob con el formato grabado
         const originalBlob = new Blob(chunksRef.current, { type: mimeType })
-        
+
         // Usar el blob original directamente (sin conversión MP3)
         setAudioBlob(originalBlob)
         setAudioUrl(URL.createObjectURL(originalBlob))
-        
+
         // Detener el stream
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop())
@@ -103,26 +103,26 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         // Guardar el handler original y el mimeType
         const originalOnStop = mediaRecorderRef.current.onstop
         const mimeType = mediaRecorderRef.current.mimeType
-        
+
         // Sobrescribir onstop para resolver la Promise con el blob
         mediaRecorderRef.current.onstop = async () => {
           // Crear el blob con el formato grabado
           const originalBlob = new Blob(chunksRef.current, { type: mimeType })
-          
+
           // Usar el blob original directamente (sin conversión MP3)
           setAudioBlob(originalBlob)
           setAudioUrl(URL.createObjectURL(originalBlob))
-          
+
           // Detener el stream
           if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop())
           }
-          
+
           // Llamar al handler original si existía
           if (originalOnStop && typeof originalOnStop === 'function' && mediaRecorderRef.current) {
             originalOnStop.call(mediaRecorderRef.current, new Event('stop'))
           }
-          
+
           resolve(originalBlob)
         }
 
@@ -168,6 +168,21 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     setAudioUrl(null)
     setRecordingTime(0)
     chunksRef.current = []
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try { mediaRecorderRef.current.stop() } catch (e) { }
+    }
+    mediaRecorderRef.current = null
+    setIsRecording(false)
+    setIsPaused(false)
   }, [audioUrl])
 
   return {

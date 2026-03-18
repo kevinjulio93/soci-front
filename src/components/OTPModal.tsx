@@ -37,6 +37,7 @@ const OTPModal: React.FC<OTPModalProps> = ({
   const [code, setCode] = useState('')
   const [message, setMessage] = useState('')
   const [timeLeft, setTimeLeft] = useState(OTP_EXPIRATION)
+  const [totalTimeLeft, setTotalTimeLeft] = useState(OTP_EXPIRATION)
   const [showCloseBtn, setShowCloseBtn] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
   const [attempts, setAttempts] = useState(0)
@@ -65,7 +66,22 @@ const OTPModal: React.FC<OTPModalProps> = ({
 
     if (result.success) {
       setStage('input')
-      setTimeLeft(OTP_EXPIRATION)
+      const newTimeLeft = result.expiresIn ?? OTP_EXPIRATION
+      setTimeLeft(newTimeLeft)
+      setTotalTimeLeft(newTimeLeft)
+
+      if (result.remainingSeconds) {
+        setResendCooldown(result.remainingSeconds)
+        resendTimerRef.current = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) {
+              if (resendTimerRef.current) clearInterval(resendTimerRef.current)
+              return 0
+            }
+            return prev - 1
+          })
+        }, 1000)
+      }
 
       // Start expiration countdown
       timerRef.current = setInterval(() => {
@@ -125,25 +141,37 @@ const OTPModal: React.FC<OTPModalProps> = ({
   // --- Resend OTP ---
   const handleResend = async () => {
     clearTimers()
-    setResendCooldown(RESEND_COOLDOWN)
 
-    // Start resend cooldown timer
-    resendTimerRef.current = setInterval(() => {
-      setResendCooldown((prev) => {
-        if (prev <= 1) {
-          if (resendTimerRef.current) clearInterval(resendTimerRef.current)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
+    // Set a very short cooldown while we wait for backend 
+    // or we could just use a loading state but stage is already enough here if we want
+    // But since the button is disabled while cooldown > 0, let's just wait for response.
+    // Instead of premature setting, let's fetch first.
+    // Temporarily set cooldown to 5 seconds to prevent spam while waiting
+    setResendCooldown(5)
 
     const result = await otpService.requestOTP(respondentId)
+
+    // Clear the temp cooldown timer if we had one, but we didn't start one yet.
     if (result.success) {
       setStage('input')
       setCode('')
       setMessage('¡Listo! Te enviamos un nuevo código.')
-      setTimeLeft(OTP_EXPIRATION)
+      const newTimeLeft = result.expiresIn ?? OTP_EXPIRATION
+      setTimeLeft(newTimeLeft)
+      setTotalTimeLeft(newTimeLeft)
+
+      const newCooldown = result.remainingSeconds ?? RESEND_COOLDOWN
+      setResendCooldown(newCooldown)
+
+      resendTimerRef.current = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            if (resendTimerRef.current) clearInterval(resendTimerRef.current)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
 
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
@@ -216,7 +244,7 @@ const OTPModal: React.FC<OTPModalProps> = ({
 
   if (!isOpen) return null
 
-  const progressPercent = (timeLeft / OTP_EXPIRATION) * 100
+  const progressPercent = (timeLeft / totalTimeLeft) * 100
   const isLowTime = timeLeft < 60
 
   return (
@@ -314,11 +342,13 @@ const OTPModal: React.FC<OTPModalProps> = ({
               <button
                 className="btn btn--secondary otp-modal__resend-btn"
                 onClick={handleResend}
-                disabled={resendCooldown > 0}
+                disabled={timeLeft > 0 || resendCooldown > 0}
               >
-                {resendCooldown > 0
-                  ? `Reenviar código (${formatTime(resendCooldown)})`
-                  : 'Reenviar código'}
+                {timeLeft > 0
+                  ? `Reenviar código (${formatTime(timeLeft)})`
+                  : resendCooldown > 0
+                    ? `Reenviar código (${formatTime(resendCooldown)})`
+                    : 'Reenviar código'}
               </button>
 
               {/* Close button - appears after 30 seconds */}
@@ -360,10 +390,10 @@ const OTPModal: React.FC<OTPModalProps> = ({
               <button
                 className="btn btn--secondary otp-modal__resend-btn"
                 onClick={handleResend}
-                disabled={resendCooldown > 0}
+                disabled={resendCooldown > 0 || timeLeft > 0}
               >
-                {resendCooldown > 0
-                  ? `Reenviar código (${formatTime(resendCooldown)})`
+                {resendCooldown > 0 || timeLeft > 0
+                  ? `Reenviar código (${formatTime(Math.max(timeLeft, resendCooldown))})`
                   : 'Solicitar nuevo código'}
               </button>
               <button
