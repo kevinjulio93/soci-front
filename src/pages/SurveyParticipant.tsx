@@ -181,6 +181,11 @@ export default function SurveyParticipant() {
   const finalizeAudioAndNavigate = useCallback(async (isDefensor: boolean) => {
     const audioData = handleSubmitAudioRef.current
 
+    if (isDefensor) {
+      setShowWhatsAppQR(true)
+      setShowSuccessModal(true)
+    }
+
     if (audioData && audioData.respondentId && !editMode) {
       let recordedBlob: Blob | null = null
       if (isRecording) {
@@ -202,10 +207,7 @@ export default function SurveyParticipant() {
 
     handleSubmitAudioRef.current = null
 
-    if (isDefensor) {
-      setShowWhatsAppQR(true)
-      setShowSuccessModal(true)
-    } else {
+    if (!isDefensor) {
       navigate(ROUTES.DASHBOARD)
     }
   }, [editMode, isRecording, audioBlob, stopRecording, clearRecording, navigate])
