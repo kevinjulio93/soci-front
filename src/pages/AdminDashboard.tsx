@@ -3,9 +3,9 @@
  * Página de bienvenida con navegación a diferentes secciones
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { DashboardLayout, StatCard, LoadingState, EmptyState, Select, ToggleUnsuccessful, ChartIcon, FileIcon, Card, DateRangeFilter, StatsGrid, ExcelIcon } from '../components'
+import { DashboardLayout, StatCard, LoadingState, EmptyState, ToggleUnsuccessful, ChartIcon, FileIcon, Card, DateRangeFilter, StatsGrid, ExcelIcon } from '../components'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { apiService } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
@@ -16,9 +16,6 @@ import '../styles/Dashboard.scss'
 interface FilterState {
   startDate: string
   endDate: string
-  zoneCoordinator: string
-  fieldCoordinator: string
-  supervisor: string
 }
 
 export default function AdminDashboard() {
@@ -37,29 +34,13 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [filters, setFilters] = useState<FilterState>({
     startDate: getTodayISO(),
-    endDate: getTodayISO(),
-    zoneCoordinator: '',
-    fieldCoordinator: '',
-    supervisor: ''
+    endDate: getTodayISO()
   })
-
-  // Listas para los dropdowns
-  const [zoneCoordinators, setZoneCoordinators] = useState<Array<{ value: string; label: string }>>([])
-  const [fieldCoordinators, setFieldCoordinators] = useState<Array<{ value: string; label: string }>>([])
-  const [supervisors, setSupervisors] = useState<Array<{ value: string; label: string }>>([])
 
   const { showUnsuccessful } = useUnsuccessfulToggle()
 
 
-  // Determinar rol del usuario (useMemo para evitar recalcular)
-  const userRole = user?.role?.role?.toLowerCase() || ''
 
-  // Determinar qué dropdowns mostrar según el rol (useMemo para evitar recrear objeto)
-  const showFilters = useMemo(() => ({
-    zoneCoordinator: userRole === 'admin' || userRole === 'readonly',
-    fieldCoordinator: userRole === 'admin' || userRole === 'readonly' || userRole === 'zonecoordinator',
-    supervisor: userRole === 'admin' || userRole === 'readonly' || userRole === 'zonecoordinator' || userRole === 'fieldcoordinator'
-  }), [userRole])
 
   const normalizeTopSocializers = (items: any[]) =>
     items.map((item: any) => ({
@@ -74,9 +55,6 @@ export default function AdminDashboard() {
     }))
 
   const resolveUsuariosDependientes = (): string => {
-    if (filters.supervisor) return filters.supervisor
-    if (filters.fieldCoordinator) return filters.fieldCoordinator
-    if (filters.zoneCoordinator) return filters.zoneCoordinator
     return 'ALL'
   }
 
@@ -121,80 +99,7 @@ export default function AdminDashboard() {
     loadDashboardData()
   }, [])
 
-  useEffect(() => {
-    const loadInitialData = async () => {
-      if (!user?.id) return
 
-      try {
-        if (userRole === 'admin' || userRole === 'readonly') {
-          // Admin y readonly ven todos los coordinadores de zona
-          const data = await apiService.getZoneCoordinators()
-          setZoneCoordinators(data.map((s: any) => ({ value: s._id, label: s.fullName })))
-        } else if (userRole === 'zonecoordinator') {
-          // Coordinador de zona carga sus coordinadores de campo automáticamente
-          const data = await apiService.getSubordinatesByRole(user.id, 'fieldcoordinator')
-          setFieldCoordinators(data.map((s: any) => ({ value: s._id, label: s.fullName })))
-        } else if (userRole === 'fieldcoordinator') {
-          // Coordinador de campo carga sus supervisores automáticamente
-          const data = await apiService.getSubordinatesByRole(user.id, 'supervisor')
-          setSupervisors(data.map((s: any) => ({ value: s._id, label: s.fullName })))
-          // Auto-seleccionar su propio ID para los filtros
-          setFilters(prev => ({
-            ...prev,
-            fieldCoordinator: user.id
-          }))
-        }
-      } catch (error) {
-        console.error('Error loading initial data:', error)
-      }
-    }
-
-    loadInitialData()
-  }, [userRole, user?.id])
-
-  // Cargar coordinadores de campo cuando se selecciona una zona
-  useEffect(() => {
-    const loadFieldCoordinatorsForZone = async () => {
-      if (filters.zoneCoordinator && filters.zoneCoordinator !== '') {
-        try {
-          const data = await apiService.getSubordinatesByRole(filters.zoneCoordinator, 'fieldcoordinator')
-          setFieldCoordinators(data.map((s: any) => ({ value: s._id, label: s.fullName })))
-          // Resetear los filtros dependientes
-          setFilters(prev => ({
-            ...prev,
-            fieldCoordinator: '',
-            supervisor: ''
-          }))
-          setSupervisors([])
-        } catch (error) {
-          console.error('Error loading field coordinators:', error)
-        }
-      }
-    }
-
-    loadFieldCoordinatorsForZone()
-  }, [filters.zoneCoordinator])
-
-  // Cargar supervisores cuando se selecciona un coordinador de campo
-  useEffect(() => {
-    const loadSupervisorsForField = async () => {
-      if (filters.fieldCoordinator && filters.fieldCoordinator !== '') {
-        try {
-          const data = await apiService.getSubordinatesByRole(filters.fieldCoordinator, 'supervisor')
-          setSupervisors(data.map((s: any) => ({ value: s._id, label: s.fullName })))
-          // Resetear los filtros dependientes
-          setFilters(prev => ({
-            ...prev,
-            supervisor: ''
-          }))
-        } catch (error) {
-          console.error('Error loading supervisors:', error)
-        }
-      }
-    }
-
-    loadSupervisorsForField()
-  }, [filters.fieldCoordinator])
 
   const handleFilterChange = useCallback((field: keyof FilterState, value: string) => {
     setFilters(prev => {
@@ -205,17 +110,6 @@ export default function AdminDashboard() {
         updated.endDate = value
       } else if (field === 'endDate' && value && prev.startDate && value < prev.startDate) {
         updated.startDate = value
-      }
-
-      // Limpiar filtros en cascada cuando se cambia un valor superior
-      if (field === 'zoneCoordinator') {
-        updated.fieldCoordinator = ''
-        updated.supervisor = ''
-        setFieldCoordinators([])
-        setSupervisors([])
-      } else if (field === 'fieldCoordinator') {
-        updated.supervisor = ''
-        setSupervisors([])
       }
 
       return updated
@@ -266,45 +160,7 @@ export default function AdminDashboard() {
           isLoading={isLoading}
           applyIcon={<ChartIcon size={20} />}
           applyLabel="Generar Reporte"
-          extraFields={
-            <>
-              {showFilters.zoneCoordinator && (
-                <div className="filter-card__field">
-                  <Select
-                    label="Coordinador de Zona"
-                    options={zoneCoordinators}
-                    value={filters.zoneCoordinator}
-                    onChange={(e) => handleFilterChange('zoneCoordinator', e.target.value)}
-                    placeholder="Todos los coordinadores de zona"
-                  />
-                </div>
-              )}
-              {showFilters.fieldCoordinator && (
-                <div className="filter-card__field">
-                  <Select
-                    label="Coordinador de Campo"
-                    options={fieldCoordinators}
-                    value={filters.fieldCoordinator}
-                    onChange={(e) => handleFilterChange('fieldCoordinator', e.target.value)}
-                    placeholder="Todos los coordinadores de campo"
-                    disabled={userRole === 'admin' && !filters.zoneCoordinator}
-                  />
-                </div>
-              )}
-              {showFilters.supervisor && (
-                <div className="filter-card__field">
-                  <Select
-                    label="Supervisor"
-                    options={supervisors}
-                    value={filters.supervisor}
-                    onChange={(e) => handleFilterChange('supervisor', e.target.value)}
-                    placeholder="Todos los supervisores"
-                    disabled={userRole === 'admin' && !filters.fieldCoordinator}
-                  />
-                </div>
-              )}
-            </>
-          }
+
           extraActions={
             <>
               <button

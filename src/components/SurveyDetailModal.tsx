@@ -283,16 +283,7 @@ export function SurveyDetailModal({
                           {getRejectionReason()}
                         </span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Fecha de Registro:</span>
-                        <span className="detail-item__value">{formatDate(survey.createdAt)}</span>
-                      </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Autor:</span>
-                        <span className="detail-item__value">
-                          {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
-                        </span>
-                      </div>
+
                       {survey.socializer && (
                         <>
                           <div className="detail-item">
@@ -305,6 +296,16 @@ export function SurveyDetailModal({
                           </div>
                         </>
                       )}
+                      <div className="detail-item">
+                        <span className="detail-item__label">Autor:</span>
+                        <span className="detail-item__value">
+                          {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
+                        </span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="detail-item__label">Fecha de Registro:</span>
+                        <span className="detail-item__value">{formatDate(survey.createdAt)}</span>
+                      </div>
                     </div>
                   </section>
 
@@ -479,12 +480,7 @@ export function SurveyDetailModal({
                   <section className="detail-section">
                     <h3 className="detail-section__title">Información Adicional</h3>
                     <div className="detail-grid">
-                      <div className="detail-item">
-                        <span className="detail-item__label">Autor:</span>
-                        <span className="detail-item__value">
-                          {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
-                        </span>
-                      </div>
+
                       {survey.socializer && (
                         <>
                           <div className="detail-item">
@@ -497,6 +493,12 @@ export function SurveyDetailModal({
                           </div>
                         </>
                       )}
+                      <div className="detail-item">
+                        <span className="detail-item__label">Autor:</span>
+                        <span className="detail-item__value">
+                          {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
+                        </span>
+                      </div>
                       <div className="detail-item">
                         <span className="detail-item__label">Fecha de Registro:</span>
                         <span className="detail-item__value">{formatDate(survey.createdAt)}</span>

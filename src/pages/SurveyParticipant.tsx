@@ -59,6 +59,7 @@ export default function SurveyParticipant() {
   const [otpPhoneNumber, setOtpPhoneNumber] = useState('')
   const [otpRespondentId, setOtpRespondentId] = useState('')
   const [isDefensorDePatria, setIsDefensorDePatria] = useState(false)
+  const [whatsappQRLink, setWhatsappQRLink] = useState<string>(EXTERNAL_URLS.WHATSAPP_QR_CODE)
   const stoppedForNoConsentRef = useRef(false)
   const handleSubmitAudioRef = useRef<{ audioConsent: boolean, recordedWithoutConsent: boolean, respondentId: string } | null>(null)
 
@@ -341,6 +342,26 @@ export default function SurveyParticipant() {
       const esDefensor = data.defendorDePatria && !editMode
       setIsDefensorDePatria(esDefensor)
 
+      // Determinar la zona y su link de WhatsApp
+      let groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS.default
+
+      // Intentar obtener la zona desde el usuario (ej. user.zone, user.zona, user.profile.zone, etc)
+      // Si el backend no expone la zona directamente como string 'zonaX', intentaremos sacarla del objeto user
+      // Nota: Si el backend devuelve un identificador o nombre específico en user.role o user.zone, 
+      // aquí lo comparamos. Por precaución buscamos en varias propiedades.
+      const userDataStr = JSON.stringify(user || {}).toLowerCase()
+      if (userDataStr.includes('zona1') || userDataStr.includes('zona 1')) {
+        groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona1']
+      } else if (userDataStr.includes('zona3') || userDataStr.includes('zona 3')) {
+        groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona3']
+      } else if (userDataStr.includes('zona4') || userDataStr.includes('zona 4')) {
+        groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona4']
+      } else if (userDataStr.includes('zona5') || userDataStr.includes('zona 5')) {
+        groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona5']
+      }
+
+      setWhatsappQRLink(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(groupLink)}`)
+
       // Si tiene teléfono y se creó el respondent, mostrar OTP para verificar
       if (data.phone && !editMode && createdRespondentId) {
         setOtpRespondentId(createdRespondentId)
@@ -429,7 +450,7 @@ export default function SurveyParticipant() {
           navigate(ROUTES.DASHBOARD)
         }, [navigate])}
         showQR={showWhatsAppQR}
-        qrImageUrl={EXTERNAL_URLS.WHATSAPP_QR_CODE}
+        qrImageUrl={whatsappQRLink}
       />
     </div>
   )

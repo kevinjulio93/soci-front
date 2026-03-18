@@ -64,6 +64,30 @@ export function SurveyForm({
   // Solo mostrar noResponseReason si explícitamente se seleccionó "false"
   const showNoResponseReason = willingToRespondValue !== undefined && String(willingToRespondValue) === 'false'
 
+  // Limpiar campos de encuesta exitosa cuando el usuario cambia a "No quiere responder"
+  useEffect(() => {
+    if (showNoResponseReason) {
+      // Campos exclusivos de encuestas exitosas que deben limpiarse
+      setValue('fullName', '')
+      setValue('idType', '' as any)
+      setValue('identification', '')
+      setValue('email', '')
+      setValue('phone', '')
+      setValue('facebookUsername', '')
+      setValue('address', '')
+      setValue('gender', '' as any)
+      setValue('stratum', '' as any)
+      setValue('ageRange', '' as any)
+      setValue('department', '')
+      setValue('departmentId', '')
+      setValue('city', '')
+      setValue('municipioCode', '')
+      setValue('neighborhood', '')
+      setValue('defendorDePatria', false)
+      setValue('isLinkedHouse', false)
+      setValue('audioRecordingConsent', undefined as any)
+    }
+  }, [showNoResponseReason, setValue])
 
 
   // Reset form when initialData changes

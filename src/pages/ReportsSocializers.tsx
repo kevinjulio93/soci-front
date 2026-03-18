@@ -151,6 +151,7 @@ export default function ReportsSocializers() {
   const [loadingDepts, setLoadingDepts] = useState(false)
   const [reportData, setReportData] = useState<SocializerRow[]>([])
   const [summaryData, setSummaryData] = useState<any>(null)
+  const [reportSummaryLabel, setReportSummaryLabel] = useState('')
 
   const { showUnsuccessful } = useUnsuccessfulToggle()
 
@@ -264,7 +265,10 @@ export default function ReportsSocializers() {
       setSummaryData(response.resumen || null)
 
       const rolLabel = availableRoles.find(r => r.value === selectedRole)?.label || 'usuarios'
-      notificationService.success(`Reporte generado: ${rows.length} ${rolLabel.toLowerCase()}, ${response.resumen?.totalEncuestas ?? rows.reduce((s, r) => s + r.interventions, 0)} intervenciones`)
+      const totalIntervenciones = response.resumen?.totalEncuestas ?? rows.reduce((s, r) => s + r.interventions, 0)
+      const summaryText = `Reporte generado: ${rows.length} ${rolLabel.toLowerCase()}, ${totalIntervenciones} intervenciones`
+      setReportSummaryLabel(summaryText)
+      notificationService.success(summaryText)
     } catch (err) {
       notificationService.handleApiError(err, 'Error al generar el reporte')
     } finally {
@@ -397,6 +401,26 @@ export default function ReportsSocializers() {
             </>
           }
         />
+
+        {/* Resumen del reporte */}
+        {reportSummaryLabel && hasData && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.75rem 1.25rem',
+            marginBottom: '1rem',
+            background: 'linear-gradient(135deg, #e8f5e9, #f1f8e9)',
+            border: '1px solid #a5d6a7',
+            borderRadius: '10px',
+            color: '#2e7d32',
+            fontWeight: 600,
+            fontSize: '0.95rem',
+          }}>
+            <ChartIcon size={18} />
+            {reportSummaryLabel}
+          </div>
+        )}
 
         {/* Totales */}
         {hasData && (
