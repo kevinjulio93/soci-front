@@ -60,6 +60,7 @@ export default function SurveyParticipant() {
   const [otpRespondentId, setOtpRespondentId] = useState('')
   const [isDefensorDePatria, setIsDefensorDePatria] = useState(false)
   const stoppedForNoConsentRef = useRef(false)
+  const handleSubmitAudioRef = useRef<{ audioConsent: boolean, recordedWithoutConsent: boolean, respondentId: string } | null>(null)
 
   const editMode = location.state?.editMode || false
   const respondentId = location.state?.respondentId
@@ -168,22 +169,53 @@ export default function SurveyParticipant() {
     navigate(ROUTES.DASHBOARD)
   }, [isRecording, stopRecording, navigate])
 
+  const finalizeAudioAndNavigate = useCallback(async (isDefensor: boolean) => {
+    const audioData = handleSubmitAudioRef.current
+
+    if (audioData && audioData.respondentId && !editMode) {
+      let recordedBlob: Blob | null = null
+      if (isRecording) {
+        recordedBlob = await stopRecording()
+      } else if (audioBlob) {
+        recordedBlob = audioBlob
+      }
+
+      if (recordedBlob && (audioData.audioConsent || audioData.recordedWithoutConsent)) {
+        try {
+          await apiService.uploadAudio(audioData.respondentId, recordedBlob)
+          if (audioData.recordedWithoutConsent) {
+            notificationService.info('Grabación guardada como evidencia de rechazo')
+          }
+        } catch { }
+      }
+      clearRecording()
+    }
+
+    handleSubmitAudioRef.current = null
+
+    if (isDefensor) {
+      setShowWhatsAppQR(true)
+      setShowSuccessModal(true)
+    } else {
+      navigate(ROUTES.DASHBOARD)
+    }
+  }, [editMode, isRecording, audioBlob, stopRecording, clearRecording, navigate])
+
   const handleSubmit = useCallback(async (data: SurveyParticipantData) => {
     try {
       setIsSubmitting(true)
 
-      // Detener grabación si está activa y obtener el blob
-      let recordedBlob: Blob | null = null
       const audioConsent = String(data.audioRecordingConsent) === 'true'
       const recordedWithoutConsent = !editMode && (!audioConsent || stoppedForNoConsentRef.current)
 
-      if (!editMode) {
-        if (isRecording) {
-          recordedBlob = await stopRecording()
-        } else if (audioBlob) {
-          recordedBlob = audioBlob
-        }
+      // Preparar datos para procesar el audio más tarde
+      handleSubmitAudioRef.current = {
+        audioConsent,
+        recordedWithoutConsent,
+        respondentId: '' // Se actualizará al tener el ID
       }
+
+
 
       // Obtener ubicación actual
       let latitude = 0
@@ -268,15 +300,21 @@ export default function SurveyParticipant() {
 
       // Si está offline, guardar localmente
       if (!isOnline) {
+        let recordedBlob: Blob | null = null
+        if (!editMode) {
+          if (isRecording) {
+            recordedBlob = await stopRecording()
+          } else if (audioBlob) {
+            recordedBlob = audioBlob
+          }
+        }
+
         await indexedDBService.savePendingRespondent(
           respondentDTO,
           recordedBlob ?? undefined
         )
 
-        // Limpiar audio de memoria
         clearRecording()
-
-        // Retornar al dashboard
         navigate(ROUTES.DASHBOARD)
         return
       }
@@ -293,32 +331,10 @@ export default function SurveyParticipant() {
         const response = await apiService.createRespondent(respondentDTO)
         createdRespondentId = response.data._id
         notificationService.success(MESSAGES.RESPONDENT_CREATE_SUCCESS)
-      }
-
-      // Subir audio como evidencia si fue grabado SIN consentimiento
-      if (recordedBlob && !editMode && createdRespondentId && recordedWithoutConsent) {
-        try {
-          await apiService.uploadAudio(createdRespondentId, recordedBlob)
-          notificationService.info('Grabación guardada como evidencia de rechazo')
-        } catch {
-          // Error silencioso en la subida de audio
-        } finally {
-          clearRecording()
+        // Actualizar ref con el ID guardado
+        if (handleSubmitAudioRef.current) {
+          handleSubmitAudioRef.current.respondentId = createdRespondentId
         }
-      }
-      // O subir audio si hay consentimiento
-      else if (recordedBlob && !editMode && createdRespondentId && audioConsent) {
-        try {
-          await apiService.uploadAudio(createdRespondentId, recordedBlob)
-        } catch {
-          // Error silencioso en la subida de audio
-        } finally {
-          clearRecording()
-        }
-      }
-      // Si no hay consentimiento y no hay grabación, solo limpiar
-      else if (!audioConsent) {
-        clearRecording()
       }
 
       // Guardar si es defensor para usarlo después del OTP
@@ -330,19 +346,17 @@ export default function SurveyParticipant() {
         setOtpRespondentId(createdRespondentId)
         setOtpPhoneNumber(data.phone)
         setShowOTPModal(true)
-      } else if (esDefensor) {
-        // Sin teléfono pero es defensor → mostrar QR directo
-        setShowWhatsAppQR(true)
-        setShowSuccessModal(true)
+        // La detención de la grabación ocurrirá en los callbacks del OTPModal
       } else {
-        navigate(ROUTES.DASHBOARD)
+        // Ejecutar finalización de audio y redirección síncrona
+        await finalizeAudioAndNavigate(esDefensor)
       }
     } catch (err) {
       notificationService.handleApiError(err, MESSAGES.RESPONDENT_SAVE_ERROR)
     } finally {
       setIsSubmitting(false)
     }
-  }, [editMode, respondentId, isRecording, audioBlob, stopRecording, clearRecording, isOnline, navigate])
+  }, [editMode, respondentId, isRecording, audioBlob, stopRecording, clearRecording, isOnline, navigate, finalizeAudioAndNavigate])
 
   return (
     <div className="dashboard">
@@ -398,22 +412,12 @@ export default function SurveyParticipant() {
         onVerified={useCallback(() => {
           setShowOTPModal(false)
           notificationService.success('Teléfono verificado correctamente.')
-          if (isDefensorDePatria) {
-            setShowWhatsAppQR(true)
-            setShowSuccessModal(true)
-          } else {
-            navigate(ROUTES.DASHBOARD)
-          }
-        }, [isDefensorDePatria, navigate])}
+          finalizeAudioAndNavigate(isDefensorDePatria)
+        }, [isDefensorDePatria, finalizeAudioAndNavigate])}
         onClose={useCallback(() => {
           setShowOTPModal(false)
-          if (isDefensorDePatria) {
-            setShowWhatsAppQR(true)
-            setShowSuccessModal(true)
-          } else {
-            navigate(ROUTES.DASHBOARD)
-          }
-        }, [isDefensorDePatria, navigate])}
+          finalizeAudioAndNavigate(isDefensorDePatria)
+        }, [isDefensorDePatria, finalizeAudioAndNavigate])}
       />
 
       {/* QR Modal - se muestra si es defensor de la patria */}
