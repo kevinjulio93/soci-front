@@ -12,6 +12,7 @@ import { notificationService } from '../services/notification.service'
 import { getSurveysTableColumns, MESSAGES } from '../constants'
 import { RespondentData } from '../models/ApiResponses'
 import { useAuth } from '../contexts/AuthContext'
+import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import '../styles/Dashboard.scss'
 
 export default function SurveysList() {
@@ -31,6 +32,7 @@ export default function SurveysList() {
 
   const userRole = user?.role?.role?.toLowerCase() || ''
   const isAdmin = userRole === 'admin'
+  const { showUnsuccessful } = useUnsuccessfulToggle()
 
   const [selectedZoneCoord, setSelectedZoneCoord] = useState('')
   const [selectedFieldCoord, setSelectedFieldCoord] = useState('')
@@ -157,6 +159,12 @@ export default function SurveysList() {
     [handleViewDetails, handleDeleteClick]
   )
 
+  // Filtrar encuestas no exitosas si el toggle está desactivado
+  const filteredSurveys = useMemo(() => {
+    if (showUnsuccessful) return surveys
+    return surveys.filter(s => s.surveyStatus !== 'unsuccessful')
+  }, [surveys, showUnsuccessful])
+
   return (
     <DashboardLayout title="Encuestas">
       <div className="dashboard-layout__body">
@@ -264,7 +272,7 @@ export default function SurveysList() {
 
             <DataTable
               columns={columns}
-              data={surveys}
+              data={filteredSurveys}
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={totalRecords}

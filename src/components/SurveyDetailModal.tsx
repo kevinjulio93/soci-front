@@ -350,6 +350,74 @@ export function SurveyDetailModal({
                       </div>
                     </section>
                   )}
+
+                  {/* Audio de la encuesta no exitosa */}
+                  {survey.audioUrl && (
+                    <section className="detail-section">
+                      <h3 className="detail-section__title">Audio de Encuesta</h3>
+                      <div className="detail-grid">
+                        <div className="detail-item detail-item--full">
+                          <div className="audio-player">
+                            <div className="audio-player__controls">
+                              <button
+                                className={`audio-player__btn audio-player__btn--play ${isPlaying ? 'audio-player__btn--playing' : ''}`}
+                                onClick={handlePlayAudio}
+                                disabled={audioError}
+                                title={isPlaying ? 'Pausar' : 'Reproducir'}
+                              >
+                                {isPlaying ? (
+                                  <PauseIcon size={18} fill="currentColor" stroke="none" />
+                                ) : (
+                                  <PlayIcon size={18} fill="currentColor" stroke="none" />
+                                )}
+                              </button>
+                              <button
+                                className="audio-player__btn audio-player__btn--stop"
+                                onClick={handleStopAudio}
+                                disabled={audioError || (!isPlaying && audioCurrentTime === 0)}
+                                title="Detener"
+                              >
+                                <StopIcon size={16} fill="currentColor" stroke="none" />
+                              </button>
+                            </div>
+
+                            <div className="audio-player__track">
+                              <div
+                                className="audio-player__progress-bar"
+                                onClick={handleSeek}
+                                title="Clic para buscar"
+                              >
+                                <div
+                                  className="audio-player__progress-fill"
+                                  style={{ width: audioDuration && isFinite(audioDuration) ? `${(audioCurrentTime / audioDuration) * 100}%` : '0%' }}
+                                />
+                                {audioDuration && isFinite(audioDuration) ? (
+                                  <div
+                                    className="audio-player__progress-thumb"
+                                    style={{ left: `${(audioCurrentTime / audioDuration) * 100}%` }}
+                                  />
+                                ) : null}
+                              </div>
+                              <div className="audio-player__time">
+                                <span>{formatDuration(audioCurrentTime)}</span>
+                                <span>{formatDuration(audioDuration)}</span>
+                              </div>
+                            </div>
+
+                            {isPlaying && (
+                              <div className="audio-player__visualizer">
+                                <span /><span /><span /><span /><span />
+                              </div>
+                            )}
+
+                            {audioError && (
+                              <span className="audio-player__error">Error al cargar audio</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+                  )}
                 </>
               ) : (
                 // Vista completa para encuestas exitosas
