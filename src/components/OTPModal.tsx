@@ -17,6 +17,8 @@ interface OTPModalProps {
   onClose: () => void
   /** Mostrar botón "Continuar sin verificación" siempre visible */
   allowSkip?: boolean
+  /** Indica si se está guardando la encuesta en background */
+  isFinalizing?: boolean
 }
 
 type OTPStage = 'sending' | 'input' | 'verifying' | 'verified' | 'error'
@@ -32,6 +34,7 @@ const OTPModal: React.FC<OTPModalProps> = ({
   onVerified,
   onClose,
   allowSkip = false,
+  isFinalizing = false,
 }) => {
   const [stage, setStage] = useState<OTPStage>('sending')
   const [code, setCode] = useState('')
@@ -253,157 +256,168 @@ const OTPModal: React.FC<OTPModalProps> = ({
         {/* Header */}
         <div className="otp-modal__header">
           <h2 className="otp-modal__title">
-            {stage === 'verified' ? '✓ Verificado' : '🔐 Verificación por SMS'}
+            {isFinalizing ? '⏳ Guardando...' : stage === 'verified' ? '✓ Verificado' : '🔐 Verificación por SMS'}
           </h2>
           <p className="otp-modal__subtitle">
-            {stage === 'sending'
-              ? 'Enviando código de verificación a tu teléfono...'
-              : stage === 'verified'
-                ? 'La información ha sido validada correctamente.'
-                : `Hemos enviado un código de 6 dígitos al número ${phoneNumber}. Ingrésalo a continuación.`}
+            {isFinalizing
+              ? 'Por favor espera mientras finalizamos el proceso.'
+              : stage === 'sending'
+                ? 'Enviando código de verificación a tu teléfono...'
+                : stage === 'verified'
+                  ? 'La información ha sido validada correctamente.'
+                  : `Hemos enviado un código de 6 dígitos al número ${phoneNumber}. Ingrésalo a continuación.`}
           </p>
         </div>
 
-        {/* Sending state */}
-        {stage === 'sending' && (
+        {isFinalizing ? (
           <div className="otp-modal__form" style={{ textAlign: 'center', padding: '2rem 0' }}>
             <div className="otp-modal__spinner" />
-            <p style={{ marginTop: '1rem', color: '#666' }}>Enviando mensaje de texto...</p>
+            <p style={{ marginTop: '1rem', color: '#666', fontWeight: 500 }}>Terminando de guardar la encuesta...</p>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Sending state */}
+            {stage === 'sending' && (
+              <div className="otp-modal__form" style={{ textAlign: 'center', padding: '2rem 0' }}>
+                <div className="otp-modal__spinner" />
+                <p style={{ marginTop: '1rem', color: '#666' }}>Enviando mensaje de texto...</p>
+              </div>
+            )}
 
-        {/* Input / Verifying state */}
-        {(stage === 'input' || stage === 'verifying') && (
-          <div className="otp-modal__form">
-            <div className="otp-modal__input-group">
-              <label className="otp-modal__label">Código de verificación</label>
-              <input
-                ref={inputRef}
-                type="text"
-                inputMode="numeric"
-                className="otp-modal__input"
-                value={code}
-                onChange={handleCodeChange}
-                onKeyDown={handleKeyDown}
-                placeholder="000000"
-                maxLength={6}
-                disabled={stage === 'verifying'}
-                autoComplete="one-time-code"
-              />
-              <p className="otp-modal__hint">Código de 6 dígitos</p>
-            </div>
-
-            {/* Timer */}
-            {timeLeft > 0 && (
-              <div className="otp-modal__timer">
-                <div className="otp-modal__progress">
-                  <div
-                    className="otp-modal__progress-bar"
-                    style={{
-                      width: `${progressPercent}%`,
-                      background: isLowTime ? '#e74c3c' : '#4a7c6f',
-                    }}
+            {/* Input / Verifying state */}
+            {(stage === 'input' || stage === 'verifying') && (
+              <div className="otp-modal__form">
+                <div className="otp-modal__input-group">
+                  <label className="otp-modal__label">Código de verificación</label>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    inputMode="numeric"
+                    className="otp-modal__input"
+                    value={code}
+                    onChange={handleCodeChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="000000"
+                    maxLength={6}
+                    disabled={stage === 'verifying'}
+                    autoComplete="one-time-code"
                   />
+                  <p className="otp-modal__hint">Código de 6 dígitos</p>
                 </div>
-                <div className="otp-modal__timer-text">
-                  <span>Tiempo restante</span>
-                  <span
-                    className={`otp-modal__timer-value${isLowTime ? ' otp-modal__timer-value--warning' : ''}`}
+
+                {/* Timer */}
+                {timeLeft > 0 && (
+                  <div className="otp-modal__timer">
+                    <div className="otp-modal__progress">
+                      <div
+                        className="otp-modal__progress-bar"
+                        style={{
+                          width: `${progressPercent}%`,
+                          background: isLowTime ? '#e74c3c' : '#4a7c6f',
+                        }}
+                      />
+                    </div>
+                    <div className="otp-modal__timer-text">
+                      <span>Tiempo restante</span>
+                      <span
+                        className={`otp-modal__timer-value${isLowTime ? ' otp-modal__timer-value--warning' : ''}`}
+                      >
+                        {formatTime(timeLeft)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Message */}
+                {message && (
+                  <div className="otp-modal__warning">{message}</div>
+                )}
+
+                {/* Attempt counter */}
+                {attempts >= 2 && (
+                  <div className="otp-modal__warning">
+                    {`Llevas ${attempts} intentos fallidos. Revisa el mensaje de texto que recibiste.`}
+                  </div>
+                )}
+
+                {/* Verify button */}
+                <button
+                  className="btn btn--primary otp-modal__verify-btn"
+                  onClick={handleVerify}
+                  disabled={code.length !== 6 || stage === 'verifying'}
+                >
+                  {stage === 'verifying' ? 'Verificando...' : 'Confirmar código'}
+                </button>
+
+                {/* Resend */}
+                <div className="otp-modal__actions">
+                  <button
+                    className="btn btn--secondary otp-modal__resend-btn"
+                    onClick={handleResend}
+                    disabled={timeLeft > 0 || resendCooldown > 0}
                   >
-                    {formatTime(timeLeft)}
-                  </span>
+                    {timeLeft > 0
+                      ? `Reenviar código (${formatTime(timeLeft)})`
+                      : resendCooldown > 0
+                        ? `Reenviar código (${formatTime(resendCooldown)})`
+                        : 'Reenviar código'}
+                  </button>
+
+                  {/* Close button - appears after 30 seconds */}
+                  {showCloseBtn && !allowSkip && (
+                    <button
+                      className="btn otp-modal__cancel-btn"
+                      onClick={onClose}
+                    >
+                      Continuar sin verificación
+                    </button>
+                  )}
+
+                  {/* Skip button - always visible when configured */}
+                  {allowSkip && (
+                    <button
+                      className="btn otp-modal__bypass-btn"
+                      onClick={onClose}
+                    >
+                      Continuar sin verificación
+                    </button>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Message */}
-            {message && (
-              <div className="otp-modal__warning">{message}</div>
-            )}
-
-            {/* Attempt counter */}
-            {attempts >= 2 && (
-              <div className="otp-modal__warning">
-                {`Llevas ${attempts} intentos fallidos. Revisa el mensaje de texto que recibiste.`}
+            {/* Verified state */}
+            {stage === 'verified' && (
+              <div className="otp-modal__form" style={{ textAlign: 'center', padding: '2rem 0' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+                <p style={{ color: '#4a7c6f', fontWeight: 600 }}>{message}</p>
               </div>
             )}
 
-            {/* Verify button */}
-            <button
-              className="btn btn--primary otp-modal__verify-btn"
-              onClick={handleVerify}
-              disabled={code.length !== 6 || stage === 'verifying'}
-            >
-              {stage === 'verifying' ? 'Verificando...' : 'Confirmar código'}
-            </button>
-
-            {/* Resend */}
-            <div className="otp-modal__actions">
-              <button
-                className="btn btn--secondary otp-modal__resend-btn"
-                onClick={handleResend}
-                disabled={timeLeft > 0 || resendCooldown > 0}
-              >
-                {timeLeft > 0
-                  ? `Reenviar código (${formatTime(timeLeft)})`
-                  : resendCooldown > 0
-                    ? `Reenviar código (${formatTime(resendCooldown)})`
-                    : 'Reenviar código'}
-              </button>
-
-              {/* Close button - appears after 30 seconds */}
-              {showCloseBtn && !allowSkip && (
-                <button
-                  className="btn otp-modal__cancel-btn"
-                  onClick={onClose}
-                >
-                  Continuar sin verificación
-                </button>
-              )}
-
-              {/* Skip button - always visible when configured */}
-              {allowSkip && (
-                <button
-                  className="btn otp-modal__bypass-btn"
-                  onClick={onClose}
-                >
-                  Continuar sin verificación
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Verified state */}
-        {stage === 'verified' && (
-          <div className="otp-modal__form" style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-            <p style={{ color: '#4a7c6f', fontWeight: 600 }}>{message}</p>
-          </div>
-        )}
-
-        {/* Error state */}
-        {stage === 'error' && (
-          <div className="otp-modal__form">
-            {message && <div className="otp-modal__warning">{message}</div>}
-            <div className="otp-modal__actions" style={{ marginTop: '1rem' }}>
-              <button
-                className="btn btn--secondary otp-modal__resend-btn"
-                onClick={handleResend}
-                disabled={resendCooldown > 0 || timeLeft > 0}
-              >
-                {resendCooldown > 0 || timeLeft > 0
-                  ? `Reenviar código (${formatTime(Math.max(timeLeft, resendCooldown))})`
-                  : 'Solicitar nuevo código'}
-              </button>
-              <button
-                className="btn otp-modal__cancel-btn"
-                onClick={onClose}
-              >
-                Continuar sin verificación
-              </button>
-            </div>
-          </div>
+            {/* Error state */}
+            {stage === 'error' && (
+              <div className="otp-modal__form">
+                {message && <div className="otp-modal__warning">{message}</div>}
+                <div className="otp-modal__actions" style={{ marginTop: '1rem' }}>
+                  <button
+                    className="btn btn--secondary otp-modal__resend-btn"
+                    onClick={handleResend}
+                    disabled={resendCooldown > 0 || timeLeft > 0}
+                  >
+                    {resendCooldown > 0 || timeLeft > 0
+                      ? `Reenviar código (${formatTime(Math.max(timeLeft, resendCooldown))})`
+                      : 'Solicitar nuevo código'}
+                  </button>
+                  <button
+                    className="btn otp-modal__cancel-btn"
+                    onClick={onClose}
+                  >
+                    Continuar sin verificación
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

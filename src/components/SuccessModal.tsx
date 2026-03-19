@@ -5,18 +5,21 @@ interface SuccessModalProps {
   onClose: () => void
   showQR: boolean
   qrImageUrl?: string
+  /** Indica si se está guardando la encuesta en background */
+  isFinalizing?: boolean
 }
 
-const SuccessModal: React.FC<SuccessModalProps> = ({ 
-  isOpen, 
-  onClose, 
+const SuccessModal: React.FC<SuccessModalProps> = ({
+  isOpen,
+  onClose,
   showQR,
-  qrImageUrl 
+  qrImageUrl,
+  isFinalizing = false
 }) => {
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={isFinalizing ? undefined : onClose}>
       <div className="modal-content modal-content--success" onClick={(e) => e.stopPropagation()}>
         <div className="modal-content__header">
           <h2 className="modal-content__title">✓ Encuesta guardada con éxito</h2>
@@ -28,9 +31,9 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
               <p className="whatsapp-qr__message">¡Mantente conectado con nosotros!</p>
               {qrImageUrl ? (
                 <div className="whatsapp-qr__image-container">
-                  <img 
-                    src={qrImageUrl} 
-                    alt="Código QR de WhatsApp" 
+                  <img
+                    src={qrImageUrl}
+                    alt="Código QR de WhatsApp"
                     className="whatsapp-qr__image"
                   />
                   <p className="whatsapp-qr__instruction">
@@ -47,11 +50,17 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
         </div>
 
         <div className="modal-content__footer">
-          <button 
-            className="btn btn--primary" 
+          {isFinalizing && (
+            <p style={{ marginTop: '0', marginBottom: '1rem', color: '#666', textAlign: 'center', width: '100%', fontSize: '0.9rem' }}>
+              Terminando de guardar la encuesta...
+            </p>
+          )}
+          <button
+            className="btn btn--primary"
             onClick={onClose}
+            disabled={isFinalizing}
           >
-            Continuar al Dashboard
+            {isFinalizing ? 'Terminando de guardar...' : 'Continuar al Dashboard'}
           </button>
         </div>
       </div>

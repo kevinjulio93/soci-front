@@ -61,6 +61,7 @@ export default function SurveyParticipant() {
   const [isDefensorDePatria, setIsDefensorDePatria] = useState(false)
   const [whatsappQRLink, setWhatsappQRLink] = useState<string>(EXTERNAL_URLS.WHATSAPP_QR_CODE)
   const [locationCoords, setLocationCoords] = useState<{ lat: number, lng: number } | null>(null)
+  const [isFinalizing, setIsFinalizing] = useState(false)
   const stoppedForNoConsentRef = useRef(false)
   const handleSubmitAudioRef = useRef<{ audioConsent: boolean, recordedWithoutConsent: boolean, respondentId: string } | null>(null)
 
@@ -179,9 +180,11 @@ export default function SurveyParticipant() {
   }, [isRecording, stopRecording, navigate])
 
   const finalizeAudioAndNavigate = useCallback(async (isDefensor: boolean) => {
+    setIsFinalizing(true)
     const audioData = handleSubmitAudioRef.current
 
     if (isDefensor) {
+      setShowOTPModal(false)
       setShowWhatsAppQR(true)
       setShowSuccessModal(true)
     }
@@ -206,8 +209,10 @@ export default function SurveyParticipant() {
     }
 
     handleSubmitAudioRef.current = null
+    setIsFinalizing(false)
 
     if (!isDefensor) {
+      setShowOTPModal(false)
       navigate(ROUTES.DASHBOARD)
     }
   }, [editMode, isRecording, audioBlob, stopRecording, clearRecording, navigate])
@@ -444,13 +449,12 @@ export default function SurveyParticipant() {
         respondentId={otpRespondentId}
         phoneNumber={otpPhoneNumber}
         allowSkip={OTP_CONFIG.ALLOW_SKIP}
+        isFinalizing={isFinalizing}
         onVerified={useCallback(() => {
-          setShowOTPModal(false)
           notificationService.success('Teléfono verificado correctamente.')
           finalizeAudioAndNavigate(isDefensorDePatria)
         }, [isDefensorDePatria, finalizeAudioAndNavigate])}
         onClose={useCallback(() => {
-          setShowOTPModal(false)
           finalizeAudioAndNavigate(isDefensorDePatria)
         }, [isDefensorDePatria, finalizeAudioAndNavigate])}
       />
@@ -459,12 +463,14 @@ export default function SurveyParticipant() {
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={useCallback(() => {
+          if (isFinalizing) return
           setShowSuccessModal(false)
           setShowWhatsAppQR(false)
           navigate(ROUTES.DASHBOARD)
-        }, [navigate])}
+        }, [navigate, isFinalizing])}
         showQR={showWhatsAppQR}
         qrImageUrl={whatsappQRLink}
+        isFinalizing={isFinalizing}
       />
     </div>
   )
