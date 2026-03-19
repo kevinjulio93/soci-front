@@ -363,21 +363,25 @@ export default function SurveyParticipant() {
       setIsDefensorDePatria(esDefensor)
 
       // Determinar la zona y su link de WhatsApp
-      let groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS.default
+      // Primero revisamos la variable de entorno que define la compilación de la zona actual
+      const activeZone = (import.meta.env.VITE_ACTIVE_ZONE || '').toLowerCase()
+      console.log('activeZone', activeZone)
+      let groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS[activeZone]
 
-      // Intentar obtener la zona desde el usuario (ej. user.zone, user.zona, user.profile.zone, etc)
-      // Si el backend no expone la zona directamente como string 'zonaX', intentaremos sacarla del objeto user
-      // Nota: Si el backend devuelve un identificador o nombre específico en user.role o user.zone, 
-      // aquí lo comparamos. Por precaución buscamos en varias propiedades.
-      const userDataStr = JSON.stringify(user || {}).toLowerCase()
-      if (userDataStr.includes('zona1') || userDataStr.includes('zona 1')) {
-        groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona1']
-      } else if (userDataStr.includes('zona3') || userDataStr.includes('zona 3')) {
-        groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona3']
-      } else if (userDataStr.includes('zona4') || userDataStr.includes('zona 4')) {
-        groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona4']
-      } else if (userDataStr.includes('zona5') || userDataStr.includes('zona 5')) {
-        groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona5']
+      // Si no hay zona definida en .env o no está en la lista de links, intentamos extraerla del usuario
+      if (!groupLink) {
+        const userDataStr = JSON.stringify(user || {}).toLowerCase()
+        if (userDataStr.includes('zona1') || userDataStr.includes('zona 1')) {
+          groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona1']
+        } else if (userDataStr.includes('zona3') || userDataStr.includes('zona 3')) {
+          groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona3']
+        } else if (userDataStr.includes('zona4') || userDataStr.includes('zona 4')) {
+          groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona4']
+        } else if (userDataStr.includes('zona5') || userDataStr.includes('zona 5')) {
+          groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS['zona5']
+        } else {
+          groupLink = EXTERNAL_URLS.WHATSAPP_GROUP_LINKS.default
+        }
       }
 
       setWhatsappQRLink(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(groupLink)}`)
