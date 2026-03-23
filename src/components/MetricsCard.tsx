@@ -42,6 +42,10 @@ interface MetricsCardProps {
   userId?: string
   /** Filtros extra a renderizar en la tarjeta de filtros */
   extraFilters?: React.ReactNode
+  /** Estado del toggle de incluir jerarquía */
+  includeHierarchy?: boolean
+  /** Callback para cambiar el toggle de incluir jerarquía */
+  onToggleHierarchy?: (value: boolean) => void
   /** Filtros de jerarquía opcionales para la petición al API */
   hierarchyFilters?: {
     zoneCoordinator?: string
@@ -216,6 +220,8 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
   userId,
   extraFilters,
   hierarchyFilters,
+  includeHierarchy,
+  onToggleHierarchy,
 }) => {
   const { user } = useAuth()
   const [startDate, setStartDate] = useState(getTodayISO())
@@ -410,6 +416,23 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({
           </button>
           {permissions.canViewUnsuccessful && (
             <ToggleUnsuccessful />
+          )}
+          {onToggleHierarchy && (
+            <div className="toggle-switch-container">
+              <label className="toggle-switch" htmlFor="toggle-hierarchy">
+                <input
+                  id="toggle-hierarchy"
+                  type="checkbox"
+                  className="toggle-switch__input"
+                  checked={!!includeHierarchy}
+                  onChange={() => onToggleHierarchy(!includeHierarchy)}
+                />
+                <span className="toggle-switch__slider" />
+              </label>
+              <span className="toggle-switch-container__label">
+                Incluir jerarquía
+              </span>
+            </div>
           )}
         </div>
       </div>

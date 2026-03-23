@@ -33,6 +33,7 @@ export default function SurveysList() {
   const userRole = user?.role?.role?.toLowerCase() || ''
   const isAdmin = userRole === 'admin'
   const { showUnsuccessful } = useUnsuccessfulToggle()
+  const [includeHierarchy, setIncludeHierarchy] = useState(false)
 
   const [selectedZoneCoord, setSelectedZoneCoord] = useState('')
   const [selectedFieldCoord, setSelectedFieldCoord] = useState('')
@@ -78,12 +79,20 @@ export default function SurveysList() {
     }
   }, [selectedSupervisor])
 
-  const hierarchyFiltersObj = useMemo(() => ({
-    zoneCoordinator: selectedZoneCoord || undefined,
-    fieldCoordinator: selectedFieldCoord || undefined,
-    supervisor: selectedSupervisor || undefined,
-    socializer: selectedSocializer || undefined,
-  }), [selectedZoneCoord, selectedFieldCoord, selectedSupervisor, selectedSocializer])
+  const hierarchyFiltersObj = useMemo(() => {
+    if (includeHierarchy) {
+      return {
+        zoneCoordinator: selectedZoneCoord || undefined,
+        fieldCoordinator: selectedFieldCoord || undefined,
+        supervisor: selectedSupervisor || undefined,
+        socializer: selectedSocializer || undefined,
+      }
+    }
+    // When hierarchy toggle is off, only send the socializer
+    return {
+      socializer: selectedSocializer || undefined,
+    }
+  }, [includeHierarchy, selectedZoneCoord, selectedFieldCoord, selectedSupervisor, selectedSocializer])
   const handleMetricsLoaded = useCallback((data: MetricsData) => {
     if (data.surveys) {
       setSurveys(data.surveys)
@@ -179,6 +188,8 @@ export default function SurveysList() {
           refreshKey={refreshKey}
           onLoading={setIsLoading}
           hierarchyFilters={hierarchyFiltersObj}
+          includeHierarchy={includeHierarchy}
+          onToggleHierarchy={setIncludeHierarchy}
           extraFilters={
             isAdmin && (
               <div className="filter-card__grid" style={{ marginTop: '0.5rem' }}>
