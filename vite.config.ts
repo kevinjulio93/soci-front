@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
 import fs from 'fs'
 import path from 'path'
@@ -52,8 +53,14 @@ function serviceWorkerPlugin(): Plugin {
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     serviceWorkerPlugin(),
   ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     middlewareMode: false,
   },
