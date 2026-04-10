@@ -11,6 +11,8 @@ import { useState, useEffect } from 'react'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { apiService, type ZoneDepartmentEntry, type ZoneMunicipalityItem } from '../services/api.service'
 import { FilterIcon, XIcon, CalendarIcon, SearchIcon, SlidersIcon, ChevronDownIcon, ChartIcon, ExcelIcon } from './Icons'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export interface ReportFilters {
   startDate: string
@@ -128,37 +130,41 @@ export function ReportFilterPanel({
       {/* Overlay para mobile */}
       {isOpen && (
         <div
-          className="rg-panel-overlay"
+          className="fixed inset-0 z-40 bg-black/40"
           onClick={onClose}
         />
       )}
 
-      <aside className={`rg-panel ${isOpen ? 'rg-panel--open' : ''}`}>
+      <aside className={cn(
+        'fixed right-0 top-0 h-full z-50 w-80 bg-card shadow-xl flex flex-col transition-transform duration-300',
+        isOpen ? 'translate-x-0' : 'translate-x-full'
+      )}>
         {/* Header */}
-        <div className="rg-panel__header">
-          <div className="rg-panel__header-left">
+        <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
+          <div className="flex items-center gap-2">
             <FilterIcon size={20} />
-            <h3 className="rg-panel__title">Filtros de Reporte</h3>
+            <h3 className="font-semibold text-sm">Filtros de Reporte</h3>
           </div>
-          <button
-            className="rg-panel__close-btn"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
             title="Cerrar filtros"
           >
             <XIcon size={20} />
-          </button>
+          </Button>
         </div>
 
         {/* Body con scroll */}
-        <div className="rg-panel__body">
+        <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
           {/* Rango de Fechas */}
-          <div className="rg-panel__section">
-            <div className="rg-panel__section-title">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
               <CalendarIcon size={16} color="#4a7c6f" />
               <span>Rango de Fechas</span>
-              <span className="rg-panel__required">*</span>
+              <span className="text-destructive">*</span>
             </div>
-            <div className="rg-panel__field">
+            <div className="">
               <DateInput
                 label="Desde"
                 value={filters.startDate}
@@ -168,7 +174,7 @@ export function ReportFilterPanel({
                 required
               />
             </div>
-            <div className="rg-panel__field">
+            <div className="">
               <DateInput
                 label="Hasta"
                 value={filters.endDate}
@@ -181,12 +187,12 @@ export function ReportFilterPanel({
           </div>
 
           {/* Búsqueda y Estado */}
-          <div className="rg-panel__section">
-            <div className="rg-panel__section-title">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
               <SearchIcon size={16} color="#4a7c6f" />
               <span>Búsqueda y Estado</span>
             </div>
-            <div className="rg-panel__field">
+            <div className="">
               <Input
                 label="Buscar por correo"
                 value={filters.q}
@@ -195,7 +201,7 @@ export function ReportFilterPanel({
                 disabled={isGenerating}
               />
             </div>
-            <div className="rg-panel__field">
+            <div className="">
               <Select
                 label="Estado de la Encuesta"
                 value={filters.surveyStatus}
@@ -208,7 +214,7 @@ export function ReportFilterPanel({
                 ]}
               />
             </div>
-            <div className="rg-panel__field">
+            <div className="">
               <Select
                 label="Dispuesto a Responder"
                 value={filters.willingToRespond}
@@ -221,7 +227,7 @@ export function ReportFilterPanel({
                 ]}
               />
             </div>
-            <div className="rg-panel__field">
+            <div className="">
               <Select
                 label="Defensor de la Patria"
                 value={filters.isPatriaDefender}
@@ -234,7 +240,7 @@ export function ReportFilterPanel({
                 ]}
               />
             </div>
-            <div className="rg-panel__field">
+            <div className="">
               <Select
                 label="Verificado"
                 value={filters.isVerified}
@@ -247,7 +253,7 @@ export function ReportFilterPanel({
                 ]}
               />
             </div>
-            <div className="rg-panel__field">
+            <div className="">
               <Select
                 label="Persona adicional en vivienda"
                 value={filters.isLinkedHouse}
@@ -263,31 +269,29 @@ export function ReportFilterPanel({
           </div>
 
           {/* Filtros Avanzados */}
-          <div className="rg-panel__section rg-panel__section--collapsible">
-            <button
-              className="rg-panel__collapse-btn"
+          <div className="flex flex-col gap-2 border-t pt-3">
+            <Button
+              variant="ghost"
+              className="w-full flex items-center justify-between px-0 text-sm font-medium hover:bg-transparent"
               onClick={() => setShowAdvanced(!showAdvanced)}
               type="button"
             >
-              <div className="rg-panel__collapse-left">
+              <div className="flex items-center gap-2">
                 <SlidersIcon size={16} color="#4a7c6f" />
                 <span>Filtros Avanzados</span>
               </div>
               <ChevronDownIcon
                 size={16}
-                style={{
-                  transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.3s ease',
-                }}
+                className={cn('transition-transform duration-300', showAdvanced && 'rotate-180')}
               />
-            </button>
+            </Button>
 
             {showAdvanced && (
-              <div className="rg-panel__advanced-body">
+              <div className="flex flex-col gap-4 mt-2">
                 {/* Demográficos */}
-                <div className="rg-panel__subsection">
-                  <h4 className="rg-panel__subsection-title">👥 Datos Demográficos</h4>
-                  <div className="rg-panel__field">
+                <div className="flex flex-col gap-3">
+                  <h4 className="text-xs font-medium text-muted-foreground">👥 Datos Demográficos</h4>
+                  <div className="">
                     <Select
                       label="Género"
                       value={filters.gender}
@@ -301,7 +305,7 @@ export function ReportFilterPanel({
                       ]}
                     />
                   </div>
-                  <div className="rg-panel__field">
+                  <div className="">
                     <Select
                       label="Rango de Edad"
                       value={filters.ageRange}
@@ -317,7 +321,7 @@ export function ReportFilterPanel({
                       ]}
                     />
                   </div>
-                  <div className="rg-panel__field">
+                  <div className="">
                     <Select
                       label="Estrato Socioeconómico"
                       value={filters.stratum}
@@ -334,7 +338,7 @@ export function ReportFilterPanel({
                       ]}
                     />
                   </div>
-                  <div className="rg-panel__field">
+                  <div className="">
                     <Select
                       label="Tipo de Identificación"
                       value={filters.idType}
@@ -352,9 +356,9 @@ export function ReportFilterPanel({
                 </div>
 
                 {/* Ubicación */}
-                <div className="rg-panel__subsection">
-                  <h4 className="rg-panel__subsection-title">📍 Ubicación</h4>
-                  <div className="rg-panel__field">
+                <div className="flex flex-col gap-3">
+                  <h4 className="text-xs font-medium text-muted-foreground">📍 Ubicación</h4>
+                  <div className="">
                     <Select
                       label="Departamento"
                       value={filters.department}
@@ -371,7 +375,7 @@ export function ReportFilterPanel({
                       ]}
                     />
                   </div>
-                  <div className="rg-panel__field">
+                  <div className="">
                     <Select
                       label="Municipio"
                       value={filters.city}
@@ -388,7 +392,7 @@ export function ReportFilterPanel({
                       ]}
                     />
                   </div>
-                  <div className="rg-panel__field">
+                  <div className="">
                     <Input
                       label="Barrio"
                       value={filters.neighborhood}
@@ -404,16 +408,15 @@ export function ReportFilterPanel({
         </div>
 
         {/* Footer con botones */}
-        <div className="rg-panel__footer">
-          <button
-            className="btn btn--primary btn--with-icon"
+        <div className="flex flex-col gap-2 p-4 border-t flex-shrink-0">
+          <Button
+            className="w-full gap-2"
             onClick={onGenerate}
             disabled={!canGenerate}
-            style={{ width: '100%' }}
           >
             {isGenerating ? (
               <>
-                <span className="rg-panel__spinner" />
+                <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 Generando...
               </>
             ) : (
@@ -422,25 +425,26 @@ export function ReportFilterPanel({
                 Generar Reporte
               </>
             )}
-          </button>
-          <div className="rg-panel__footer-row">
-            <button
-              className="btn btn--excel"
+          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 gap-2 bg-green-50 text-green-700 hover:bg-green-100 border-green-300 dark:bg-green-950 dark:text-green-400"
               onClick={onExportCSV}
               disabled={isGenerating || !hasData}
-              style={{ flex: 1, width: '100%' }}
             >
               <ExcelIcon size={20} />
               Exportar Excel
-            </button>
+            </Button>
           </div>
-          <button
-            className="btn btn--secondary rg-panel__close-mobile"
+          <Button
+            variant="ghost"
+            className="w-full"
             onClick={onClose}
             type="button"
           >
             Cerrar filtros
-          </button>
+          </Button>
         </div>
       </aside>
     </>

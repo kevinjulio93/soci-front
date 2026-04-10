@@ -14,14 +14,16 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
-    <div className="dashboard__header-section">
-      <div className="dashboard__header-text">
-        <h2 className="dashboard__section-title">{title}</h2>
+    <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-xl font-semibold">{title}</h2>
         {description && (
-          <p className="dashboard__section-desc">{description}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         )}
       </div>
-      {children && <div className="dashboard__header-actions">{children}</div>}
+      {children && (
+        <div className="flex shrink-0 items-center gap-2">{children}</div>
+      )}
     </div>
   )
 }

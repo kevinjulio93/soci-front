@@ -4,6 +4,8 @@
  */
 
 import React from 'react'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 interface FormGroupProps {
   label?: string
@@ -21,15 +23,17 @@ export const FormGroup: React.FC<FormGroupProps> = ({
   children,
 }) => {
   return (
-    <div className={`form-group ${className}`}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <div className="form-group__label">
+        <Label>
           {label}
-          {required && <span className="form-group__required">*</span>}
-        </div>
+          {required && <span className="text-destructive ml-0.5">*</span>}
+        </Label>
       )}
       {children}
-      {error && <span className="form-group__error">{error}</span>}
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
     </div>
   )
 }

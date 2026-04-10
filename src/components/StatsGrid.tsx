@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 
 interface StatsGridProps {
     children: ReactNode
@@ -8,19 +9,21 @@ interface StatsGridProps {
 }
 
 /**
- * StatsGrid - Contenedor flex/grid para StatCards.
- * Si se pasa un className personalizado (como "reports-stats"), se usa
- * ese como clase principal para respetar sus estilos CSS propios.
+ * StatsGrid - Contenedor grid para StatCards.
  */
 export function StatsGrid({ children, className = '', columns, style }: StatsGridProps) {
-    const baseClass = className || 'stats-grid'
-    const gridStyle = {
-        ...(columns ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` } : {}),
-        ...style,
-    }
-
     return (
-        <div className={baseClass} style={Object.keys(gridStyle).length ? gridStyle : undefined}>
+        <div
+            className={cn(
+                'grid gap-4',
+                !columns && 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4',
+                className,
+            )}
+            style={{
+                ...(columns ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` } : {}),
+                ...style,
+            }}
+        >
             {children}
         </div>
     )

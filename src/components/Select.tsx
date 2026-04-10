@@ -3,7 +3,8 @@
  */
 
 import React from 'react'
-import { ChevronDownIcon } from './Icons'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 interface SelectOption {
   readonly value: string | number
@@ -34,35 +35,36 @@ export const Select: React.FC<SelectProps> = ({
   const selectId = id || `select-${label?.replace(/\s+/g, '-').toLowerCase()}`
 
   return (
-    <div className={`form-group ${className}`}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <label htmlFor={selectId} className="form-group__label">
+        <Label htmlFor={selectId}>
           {label}
-          {required && <span className="form-group__required">*</span>}
-        </label>
+          {required && <span className="text-destructive ml-0.5">*</span>}
+        </Label>
       )}
-      <div className="searchable-select">
-        <div className="searchable-select__native-wrapper">
-          <select
-            id={selectId}
-            ref={ref}
-            className={`searchable-select__trigger ${error ? 'searchable-select__trigger--error' : ''}`}
-            {...props}
-          >
-            {placeholder && <option value="">{placeholder}</option>}
-            {options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDownIcon
-            size={16}
-            className="searchable-select__chevron searchable-select__chevron--native"
-          />
-        </div>
-      </div>
-      {error && <span className="form-group__error">{error}</span>}
+      <select
+        id={selectId}
+        ref={ref}
+        aria-invalid={!!error}
+        className={cn(
+          'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm',
+          'outline-none transition-colors appearance-none',
+          'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          'aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20',
+        )}
+        {...props}
+      >
+        {placeholder && <option value="">{placeholder}</option>}
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
     </div>
   )
 }

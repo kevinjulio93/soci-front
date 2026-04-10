@@ -3,6 +3,9 @@
  * Principio: Single Responsibility (solo maneja la paginación)
  */
 
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
 interface PaginationProps {
   currentPage: number
   totalPages: number
@@ -24,86 +27,41 @@ export function Pagination({
   onItemsPerPageChange,
   pageSizeOptions = [10, 25, 50, 100],
 }: PaginationProps) {
-  // Calcular el rango de registros mostrados
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1
   const endItem = Math.min(currentPage * itemsPerPage, totalItems)
 
   const getPageNumbers = (): (number | string)[] => {
     const pages: (number | string)[] = []
-    
     if (totalPages <= maxVisiblePages) {
-      // Si hay pocas páginas, mostrarlas todas
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
-      }
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
     } else {
-      // Lógica para mostrar páginas con separadores
-      const leftSiblingIndex = Math.max(currentPage - 1, 1)
-      const rightSiblingIndex = Math.min(currentPage + 1, totalPages)
-      
-      const shouldShowLeftDots = leftSiblingIndex > 2
-      const shouldShowRightDots = rightSiblingIndex < totalPages - 1
-      
-      // Primera página siempre visible
+      const left = Math.max(currentPage - 1, 1)
+      const right = Math.min(currentPage + 1, totalPages)
       pages.push(1)
-      
-      if (shouldShowLeftDots) {
-        pages.push('...')
+      if (left > 2) pages.push('...')
+      for (let i = left; i <= right; i++) {
+        if (i !== 1 && i !== totalPages) pages.push(i)
       }
-      
-      // Páginas alrededor de la actual
-      for (let i = leftSiblingIndex; i <= rightSiblingIndex; i++) {
-        if (i !== 1 && i !== totalPages) {
-          pages.push(i)
-        }
-      }
-      
-      if (shouldShowRightDots) {
-        pages.push('...')
-      }
-      
-      // Última página siempre visible
-      if (totalPages > 1) {
-        pages.push(totalPages)
-      }
+      if (right < totalPages - 1) pages.push('...')
+      if (totalPages > 1) pages.push(totalPages)
     }
-    
     return pages
   }
 
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      onPageChange(currentPage - 1)
-    }
-  }
-
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      onPageChange(currentPage + 1)
-    }
-  }
-
-  const handlePageClick = (page: number | string) => {
-    if (typeof page === 'number') {
-      onPageChange(page)
-    }
-  }
-
   return (
-    <div className="pagination">
-      <div className="pagination__info">
-        Mostrando {startItem} - {endItem} de {totalItems} registros
-      </div>
-      
-      <div className="pagination__wrapper">
+    <div className="flex flex-col items-center gap-3 py-3 sm:flex-row sm:justify-between">
+      <p className="text-sm text-muted-foreground">
+        Mostrando {startItem}–{endItem} de {totalItems} registros
+      </p>
+
+      <div className="flex items-center gap-2">
         {onItemsPerPageChange && (
-          <div className="pagination__per-page">
-            <label htmlFor="perPage" className="pagination__per-page-label">Mostrar</label>
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="text-muted-foreground">Mostrar</span>
             <select
-              id="perPage"
               value={itemsPerPage}
               onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-              className="pagination__per-page-select"
+              className="h-7 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {pageSizeOptions.map(size => (
                 <option key={size} value={size}>{size}</option>
@@ -111,42 +69,42 @@ export function Pagination({
             </select>
           </div>
         )}
-        
-        <div className="pagination__controls">
-        <button
-          className="pagination__btn"
-          onClick={handlePrevious}
-          disabled={currentPage === 1}
-        >
-          ←
-        </button>
-        
-        {getPageNumbers().map((page, index) => (
-          page === '...' ? (
-            <span key={`separator-${index}`} className="pagination__separator">
-              ...
-            </span>
-          ) : (
-            <button
-              key={page}
-              className={`pagination__btn ${
-                page === currentPage ? 'pagination__btn--active' : ''
-              }`}
-              onClick={() => handlePageClick(page)}
-            >
-              {page}
-            </button>
-          )
-        ))}
-        
-        <button
-          className="pagination__btn"
-          onClick={handleNext}
-          disabled={currentPage === totalPages}
-        >
-          →
-        </button>
-      </div>
+
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="icon-xs"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            ←
+          </Button>
+
+          {getPageNumbers().map((page, index) =>
+            page === '...' ? (
+              <span key={`sep-${index}`} className="px-1 text-muted-foreground text-sm">…</span>
+            ) : (
+              <Button
+                key={page}
+                variant={page === currentPage ? 'default' : 'outline'}
+                size="icon-xs"
+                onClick={() => typeof page === 'number' && onPageChange(page)}
+                className={cn(page === currentPage && 'pointer-events-none')}
+              >
+                {page}
+              </Button>
+            )
+          )}
+
+          <Button
+            variant="outline"
+            size="icon-xs"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            →
+          </Button>
+        </div>
       </div>
     </div>
   )

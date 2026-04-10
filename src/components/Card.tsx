@@ -1,4 +1,13 @@
 import { type ReactNode } from 'react'
+import {
+    Card as ShadCard,
+    CardHeader,
+    CardTitle,
+    CardAction,
+    CardContent,
+    CardFooter,
+} from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 interface CardProps {
     children: ReactNode
@@ -21,20 +30,20 @@ export function Card({
     footer,
 }: CardProps) {
     return (
-        <div className={`card ${className}`.trim()}>
+        <ShadCard className={cn(className)}>
             {(title || icon || actions) && (
-                <div className="card__header">
-                    <div className="card__title-wrapper">
-                        {icon && <span className="card__icon">{icon}</span>}
-                        {title && <h3 className="card__title">{title}</h3>}
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        {icon && <span className="text-muted-foreground">{icon}</span>}
+                        {title && <CardTitle>{title}</CardTitle>}
                     </div>
-                    {actions && <div className="card__actions">{actions}</div>}
-                </div>
+                    {actions && <CardAction>{actions}</CardAction>}
+                </CardHeader>
             )}
-            <div className="card__body">
+            <CardContent>
                 {children}
-            </div>
-            {footer && <div className="card__footer">{footer}</div>}
-        </div>
+            </CardContent>
+            {footer && <CardFooter>{footer}</CardFooter>}
+        </ShadCard>
     )
 }

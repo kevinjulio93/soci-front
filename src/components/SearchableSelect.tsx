@@ -4,6 +4,8 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { ChevronDownIcon, SearchIcon, CheckIcon } from './Icons'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 interface SelectOption {
   readonly value: string | number
@@ -94,41 +96,46 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   }
 
   return (
-    <div className={`form-group ${className}`} ref={containerRef} onKeyDown={handleKeyDown}>
+    <div className={cn('flex flex-col gap-1.5', className)} ref={containerRef} onKeyDown={handleKeyDown}>
       {label && (
-        <label htmlFor={selectId} className="form-group__label">
+        <Label htmlFor={selectId}>
           {label}
-          {required && <span className="form-group__required">*</span>}
-        </label>
+          {required && <span className="text-destructive ml-0.5">*</span>}
+        </Label>
       )}
 
       {/* Hidden input para react-hook-form */}
       <input type="hidden" name={name} value={value ?? ''} />
 
-      <div className="searchable-select" data-open={isOpen} data-disabled={disabled}>
+      <div className="relative" data-open={isOpen} data-disabled={disabled}>
         {/* Trigger */}
         <button
           type="button"
           id={selectId}
-          className={`searchable-select__trigger ${error ? 'searchable-select__trigger--error' : ''}`}
+          className={cn(
+            'flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors',
+            'hover:bg-accent focus:outline-none focus:ring-1 focus:ring-ring',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            error && 'border-destructive focus:ring-destructive',
+          )}
           onClick={handleToggle}
           disabled={disabled}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
         >
-          <span className={`searchable-select__value ${!selectedOption ? 'searchable-select__value--placeholder' : ''}`}>
+          <span className={cn('truncate', !selectedOption && 'text-muted-foreground')}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           <ChevronDownIcon
-            className="searchable-select__chevron"
+            className={cn('shrink-0 opacity-50 transition-transform duration-200', isOpen && 'rotate-180')}
             size={16}
           />
         </button>
 
-        {/* Backdrop for mobile */}
+        {/* Backdrop */}
         {isOpen && (
           <div
-            className="searchable-select__backdrop"
+            className="fixed inset-0 z-10"
             onClick={handleToggle}
             aria-hidden="true"
           />
@@ -136,17 +143,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
         {/* Dropdown */}
         {isOpen && (
-          <div className="searchable-select__dropdown">
-            <div className="searchable-select__search-wrapper">
-              <SearchIcon
-                size={14}
-                color="#999"
-                className="searchable-select__search-icon"
-              />
+          <div className="absolute z-20 mt-1 w-full min-w-48 rounded-md border bg-popover shadow-md">
+            <div className="relative flex items-center border-b px-2">
+              <SearchIcon size={14} className="shrink-0 text-muted-foreground" />
               <input
                 ref={searchInputRef}
                 type="text"
-                className="searchable-select__search"
+                className="flex h-9 w-full bg-transparent px-2 text-sm outline-none placeholder:text-muted-foreground"
                 placeholder={searchPlaceholder}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
@@ -155,7 +158,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
               {search && (
                 <button
                   type="button"
-                  className="searchable-select__clear"
+                  className="shrink-0 text-muted-foreground hover:text-foreground"
                   onClick={(e) => { e.stopPropagation(); setSearch('') }}
                 >
                   ×
@@ -163,35 +166,39 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
               )}
             </div>
 
-            <div className="searchable-select__list" ref={listRef} role="listbox">
-              {/* Opción vacía (placeholder) */}
+            <div className="max-h-48 overflow-y-auto py-1" ref={listRef} role="listbox">
+              {/* Opción vacía */}
               <div
-                className={`searchable-select__option ${!value ? 'searchable-select__option--selected' : ''}`}
+                className={cn(
+                  'flex cursor-pointer items-center px-3 py-2 text-sm text-muted-foreground hover:bg-accent',
+                  !value && 'bg-accent/50',
+                )}
                 onClick={() => handleSelect('')}
                 role="option"
                 aria-selected={!value}
               >
-                <span className="searchable-select__option-text searchable-select__option-text--placeholder">
-                  {placeholder}
-                </span>
+                {placeholder}
               </div>
 
               {filtered.length === 0 ? (
-                <div className="searchable-select__empty">
+                <div className="px-3 py-4 text-center text-sm text-muted-foreground">
                   No se encontraron resultados
                 </div>
               ) : (
                 filtered.map(option => (
                   <div
                     key={option.value}
-                    className={`searchable-select__option ${String(option.value) === String(value) ? 'searchable-select__option--selected' : ''}`}
+                    className={cn(
+                      'flex cursor-pointer items-center justify-between px-3 py-2 text-sm hover:bg-accent',
+                      String(option.value) === String(value) && 'bg-accent/50 font-medium',
+                    )}
                     onClick={() => handleSelect(option.value)}
                     role="option"
                     aria-selected={String(option.value) === String(value)}
                   >
-                    <span className="searchable-select__option-text">{option.label}</span>
+                    <span>{option.label}</span>
                     {String(option.value) === String(value) && (
-                      <CheckIcon size={14} strokeWidth={3} />
+                      <CheckIcon size={14} strokeWidth={3} className="text-primary shrink-0" />
                     )}
                   </div>
                 ))
@@ -199,7 +206,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             </div>
 
             {options.length > 0 && (
-              <div className="searchable-select__footer">
+              <div className="border-t px-3 py-1.5 text-xs text-muted-foreground">
                 {filtered.length} de {options.length}
               </div>
             )}
@@ -207,7 +214,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         )}
       </div>
 
-      {error && <span className="form-group__error">{error}</span>}
+      {error && <span className="text-sm text-destructive">{error}</span>}
     </div>
   )
 }

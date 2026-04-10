@@ -1,6 +1,8 @@
 import { type ReactNode } from 'react'
 import { DateInput } from './DateInput'
 import { FilterIcon } from './Icons'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface DateRangeFilterProps {
     startDate: string
@@ -20,7 +22,6 @@ interface DateRangeFilterProps {
 
 /**
  * DateRangeFilter - Componente reutilizable para filtrar por rango de fechas.
- * Genera la estructura CSS .filter-card directamente.
  */
 export function DateRangeFilter({
     startDate,
@@ -39,27 +40,24 @@ export function DateRangeFilter({
 }: DateRangeFilterProps) {
     const handleStartDateChange = (val: string) => {
         onStartDateChange(val)
-        if (val && endDate && val > endDate) {
-            onEndDateChange(val)
-        }
+        if (val && endDate && val > endDate) onEndDateChange(val)
     }
 
     const handleEndDateChange = (val: string) => {
         onEndDateChange(val)
-        if (val && startDate && val < startDate) {
-            onStartDateChange(val)
-        }
+        if (val && startDate && val < startDate) onStartDateChange(val)
     }
 
     return (
-        <div className="filter-card">
-            <h3 className="filter-card__title">
-                <FilterIcon size={18} style={{ marginRight: '0.5rem', display: 'inline-block', verticalAlign: 'middle' }} />
-                {title}
-            </h3>
-
-            <div className="filter-card__grid">
-                <div className="filter-card__field">
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                    <FilterIcon size={16} />
+                    {title}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <DateInput
                         label="Fecha Inicio"
                         value={startDate}
@@ -68,8 +66,6 @@ export function DateRangeFilter({
                         disabled={isLoading || disabled}
                         required
                     />
-                </div>
-                <div className="filter-card__field">
                     <DateInput
                         label="Fecha Fin"
                         value={endDate}
@@ -78,25 +74,25 @@ export function DateRangeFilter({
                         disabled={isLoading || disabled}
                         required
                     />
+                    {extraFields}
                 </div>
-                {extraFields}
-            </div>
 
-            <div className="filter-card__actions">
-                {onApply && (
-                    <button
-                        className="btn btn--primary btn--with-icon"
-                        onClick={onApply}
-                        disabled={!startDate || !endDate || isLoading || disabled}
-                    >
-                        {applyIcon}
-                        {isLoading ? 'Cargando...' : applyLabel}
-                    </button>
-                )}
-                {extraActions}
-            </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    {onApply && (
+                        <Button
+                            onClick={onApply}
+                            disabled={!startDate || !endDate || isLoading || disabled}
+                            className="gap-1.5"
+                        >
+                            {applyIcon}
+                            {isLoading ? 'Cargando...' : applyLabel}
+                        </Button>
+                    )}
+                    {extraActions}
+                </div>
 
-            {children}
-        </div>
+                {children}
+            </CardContent>
+        </Card>
     )
 }

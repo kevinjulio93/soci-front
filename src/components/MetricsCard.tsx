@@ -17,7 +17,6 @@ import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { RespondentData } from '../models/ApiResponses'
 import { StatCard, StatsGrid } from './'
 import { calculateSurveyStats } from '../utils'
-import '../styles/MetricsCard.scss'
 
 interface MetricsCardProps {
   /** Tipo de vista: admin, coordinador_zona, coordinador_campo, supervisor, socializer */

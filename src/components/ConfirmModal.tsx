@@ -4,8 +4,16 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { AlertCircleIcon, AlertTriangleIcon, InfoIcon, XIcon } from './Icons'
-import '../styles/Modal.scss'
+import { AlertCircleIcon, AlertTriangleIcon, InfoIcon } from './Icons'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
 
 interface ConfirmModalProps {
   isOpen: boolean
@@ -30,59 +38,52 @@ export function ConfirmModal({
   isLoading = false,
   variant = 'danger',
 }: ConfirmModalProps) {
-  if (!isOpen) return null
-
   const handleConfirm = useCallback(() => {
     onConfirm()
   }, [onConfirm])
 
   const iconByVariant = useMemo(() => {
+    const iconClass = cn(
+      'flex items-center justify-center rounded-full p-3 w-16 h-16 mx-auto mb-2',
+      {
+        'bg-destructive/10 text-destructive': variant === 'danger',
+        'bg-amber-100 text-amber-600': variant === 'warning',
+        'bg-blue-100 text-blue-600': variant === 'info',
+      }
+    )
     switch (variant) {
       case 'danger':
-        return <AlertCircleIcon size={48} />
+        return <div className={iconClass}><AlertCircleIcon size={36} /></div>
       case 'warning':
-        return <AlertTriangleIcon size={48} />
+        return <div className={iconClass}><AlertTriangleIcon size={36} /></div>
       case 'info':
-        return <InfoIcon size={48} />
+        return <div className={iconClass}><InfoIcon size={36} /></div>
     }
   }, [variant])
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-content--confirm" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header modal-header--confirm">
-          <div className="modal-header__title-group">
-            <div className={`confirm-icon confirm-icon--${variant}`}>
-              {iconByVariant}
-            </div>
-            <h2 className="modal-header__title">{title}</h2>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isLoading && onClose()}>
+      <DialogContent showCloseButton={false} className="sm:max-w-md">
+        <DialogHeader>
+          <div className="text-center">
+            {iconByVariant}
+            <DialogTitle className="text-lg mt-2">{title}</DialogTitle>
           </div>
-          <button className="modal-close" onClick={onClose} disabled={isLoading}>
-            <XIcon size={24} />
-          </button>
-        </div>
-
-        <div className="modal-body">
-          <p className="confirm-message">{message}</p>
-        </div>
-
-        <div className="modal-footer">
-          <button
-            className="btn btn--secondary"
-            onClick={onClose}
-            disabled={isLoading}
-          >
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground text-center">{message}</p>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             {cancelText}
-          </button>
-          <button
-            className={`btn ${variant === 'danger' ? 'btn--danger' : 'btn--primary'}`}
+          </Button>
+          <Button
+            variant={variant === 'danger' ? 'destructive' : 'default'}
             onClick={handleConfirm}
             disabled={isLoading}
           >
             {isLoading ? 'Procesando...' : confirmText}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

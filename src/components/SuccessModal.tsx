@@ -1,4 +1,12 @@
 import React from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 interface SuccessModalProps {
   isOpen: boolean
@@ -16,55 +24,45 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
   qrImageUrl,
   isFinalizing = false
 }) => {
-  if (!isOpen) return null
-
   return (
-    <div className="modal-overlay" onClick={isFinalizing ? undefined : onClose}>
-      <div className="modal-content modal-content--success" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-content__header">
-          <h2 className="modal-content__title">✓ Encuesta guardada con éxito</h2>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isFinalizing && onClose()}>
+      <DialogContent showCloseButton={false} className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-center text-green-600">✓ Encuesta guardada con éxito</DialogTitle>
+        </DialogHeader>
 
-        <div className="modal-content__body">
-          {showQR && (
-            <div className="whatsapp-qr">
-              <p className="whatsapp-qr__message">¡Mantente conectado con nosotros!</p>
-              {qrImageUrl ? (
-                <div className="whatsapp-qr__image-container">
-                  <img
-                    src={qrImageUrl}
-                    alt="Código QR de WhatsApp"
-                    className="whatsapp-qr__image"
-                  />
-                  <p className="whatsapp-qr__instruction">
-                    ¡Escríbenos a nuestro WhatsApp y únete al grupo de tu región y mantente al día!
-                  </p>
-                </div>
-              ) : (
-                <div className="whatsapp-qr__placeholder">
-                  <p>Código QR no disponible</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {showQR && (
+          <div className="flex flex-col items-center gap-3 py-2">
+            <p className="text-sm text-center text-muted-foreground">¡Mantente conectado con nosotros!</p>
+            {qrImageUrl ? (
+              <div className="flex flex-col items-center gap-2">
+                <img
+                  src={qrImageUrl}
+                  alt="Código QR de WhatsApp"
+                  className="w-40 h-40 rounded-lg object-contain"
+                />
+                <p className="text-xs text-center text-muted-foreground">
+                  ¡Escríbenos a nuestro WhatsApp y únete al grupo de tu región y mantente al día!
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Código QR no disponible</p>
+            )}
+          </div>
+        )}
 
-        <div className="modal-content__footer">
+        <DialogFooter className="flex-col">
           {isFinalizing && (
-            <p style={{ marginTop: '0', marginBottom: '1rem', color: '#666', textAlign: 'center', width: '100%', fontSize: '0.9rem' }}>
+            <p className="text-xs text-center text-muted-foreground w-full">
               Terminando de guardar la encuesta...
             </p>
           )}
-          <button
-            className="btn btn--primary"
-            onClick={onClose}
-            disabled={isFinalizing}
-          >
+          <Button className="w-full" onClick={onClose} disabled={isFinalizing}>
             {isFinalizing ? 'Terminando de guardar...' : 'Continuar al Dashboard'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

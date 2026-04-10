@@ -21,7 +21,7 @@ import { apiService, type ZoneDepartmentEntry, type ZoneMunicipalityItem } from 
 import { Input } from './Input'
 import { Select } from './Select'
 import { useSafeRegister } from '../hooks/useSafeRegister'
-import '../styles/SurveyForm.scss'
+import { Button } from '@/components/ui/button'
 
 export function SurveyForm({
   videoUrl,
@@ -214,13 +214,13 @@ export function SurveyForm({
   }
 
   return (
-    <div className="survey-form">
-      <div className="survey-form__container">
+    <div className="w-full">
+      <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-6">
         {/* Video Section - Solo mostrar si está dispuesto a responder */}
         {videoUrl && willingToRespond && (
-          <div className="survey-form__video-section">
+          <div className="rounded-lg overflow-hidden">
             <video
-              className="survey-form__video"
+              className="w-full"
               src={videoUrl}
               controls
             />
@@ -228,29 +228,29 @@ export function SurveyForm({
         )}
 
         {/* Form Title */}
-        <div className="survey-form__header">
-          <h1 className="survey-form__title">Datos del Participante</h1>
-          <p className="survey-form__subtitle">Complete la información para registrar la sesión</p>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-bold">Datos del Participante</h1>
+          <p className="text-sm text-muted-foreground">Complete la información para registrar la sesión</p>
         </div>
 
         {/* Error Message */}
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
 
         {/* Form */}
         <form onSubmit={handleSubmit((data) => {
           onSubmit(data)
-        })} className="survey-form__form">
+        })} className="flex flex-col gap-5">
           {/* Información Previa de la Encuesta */}
-          <div className="form-section">
-            <h3 className="form-section__title">Información de la Visita</h3>
+          <div className="flex flex-col gap-4">
+            <h3 className="text-base font-semibold border-b pb-2">Información de la Visita</h3>
 
             {/* Willing to Respond */}
-            <div className="form-group">
-              <label className="form-group__label">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium">
                 ¿La persona está dispuesta a responder la encuesta?
               </label>
-              <div className="radio-group">
-                <label className="radio-option">
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
                   <input
                     type="radio"
                     value="true"
@@ -263,7 +263,7 @@ export function SurveyForm({
                   />
                   <span>Sí</span>
                 </label>
-                <label className="radio-option">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
                   <input
                     type="radio"
                     value="false"
@@ -281,12 +281,12 @@ export function SurveyForm({
 
             {/* Audio Recording Consent - Mostrar solo si SÍ está dispuesto */}
             {showAudioRecordingConsent && (
-              <div className="form-group">
-                <label className="form-group__label">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">
                   ¿Autoriza que grabemos el audio de esta entrevista para fines de control de calidad? *
                 </label>
-                <div className="radio-group">
-                  <label className="radio-option">
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm">
                     <input
                       type="radio"
                       value="true"
@@ -301,7 +301,7 @@ export function SurveyForm({
                     />
                     <span>Sí, autorizo</span>
                   </label>
-                  <label className="radio-option">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm">
                     <input
                       type="radio"
                       value="false"
@@ -318,7 +318,7 @@ export function SurveyForm({
                   </label>
                 </div>
                 {errors.audioRecordingConsent && (
-                  <p className="form-group__error">{errors.audioRecordingConsent.message}</p>
+                  <p className="text-sm text-destructive">{errors.audioRecordingConsent.message}</p>
                 )}
               </div>
             )}
@@ -346,8 +346,8 @@ export function SurveyForm({
 
           {/* Datos del Respondente - Solo mostrar si está dispuesto */}
           {willingToRespond && (
-            <div className="form-section">
-              <h3 className="form-section__title">Datos del Encuestado</h3>
+            <div className="flex flex-col gap-4">
+              <h3 className="text-base font-semibold border-b pb-2">Datos del Encuestado</h3>
 
               {/* Full Name */}
               <Input
@@ -369,8 +369,8 @@ export function SurveyForm({
               />
 
               {/* ID Type and Identification - Row */}
-              <div className="survey-form__row">
-                <div className="survey-form__col">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
                   <Select
                     id="idType"
                     label="Tipo de identificación"
@@ -385,7 +385,7 @@ export function SurveyForm({
                   />
                 </div>
 
-                <div className="survey-form__col">
+                <div className="flex flex-col gap-1.5">
                   <Input
                     id="identification"
                     type="text"
@@ -415,8 +415,8 @@ export function SurveyForm({
               </div>
 
               {/* Email and Phone - Row */}
-              <div className="survey-form__row">
-                <div className="survey-form__col">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
                   <Input
                     id="email"
                     type="email"
@@ -433,7 +433,7 @@ export function SurveyForm({
                   />
                 </div>
 
-                <div className="survey-form__col">
+                <div className="flex flex-col gap-1.5">
                   <Input
                     id="phone"
                     type="tel"
@@ -463,7 +463,7 @@ export function SurveyForm({
                   />
                 </div>
 
-                <div className="survey-form__col">
+                <div className="flex flex-col gap-1.5">
                   <Input
                     id="facebookUsername"
                     type="text"
@@ -491,8 +491,8 @@ export function SurveyForm({
               />
 
               {/* Gender and Stratum - Row */}
-              <div className="survey-form__row">
-                <div className="survey-form__col">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
                   <Select
                     id="gender"
                     label="Género"
@@ -507,7 +507,7 @@ export function SurveyForm({
                   />
                 </div>
 
-                <div className="survey-form__col">
+                <div className="flex flex-col gap-1.5">
                   <Select
                     id="stratum"
                     label="Estrato"
@@ -538,8 +538,8 @@ export function SurveyForm({
               <input type="hidden" {...register('departmentId')} />
               <input type="hidden" {...register('municipioCode')} />
 
-              <div className="survey-form__row">
-                <div className="survey-form__col">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
                   <Select
                     id="department"
                     label="Departamento"
@@ -560,7 +560,7 @@ export function SurveyForm({
                   />
                 </div>
 
-                <div className="survey-form__col">
+                <div className="flex flex-col gap-1.5">
                   <Select
                     id="city"
                     label="Municipio"
@@ -600,32 +600,32 @@ export function SurveyForm({
 
           {/* Defensor de la Patria y Persona adicional en vivienda - Checkboxes lado a lado - Solo mostrar si está dispuesto */}
           {willingToRespond && (
-            <div className="survey-form__row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              <div className="form-group">
-                <div className="form-group__checkbox-wrapper">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
                   <input
                     id="defendorDePatria"
                     type="checkbox"
-                    className="form-group__checkbox"
+                    className="w-4 h-4 rounded"
                     disabled={isLoading}
                     {...register('defendorDePatria')}
                   />
-                  <label htmlFor="defendorDePatria" className="form-group__checkbox-label">
+                  <label htmlFor="defendorDePatria" className="text-sm cursor-pointer">
                     Defensor de la Patria
                   </label>
                 </div>
               </div>
 
-              <div className="form-group">
-                <div className="form-group__checkbox-wrapper">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
                   <input
                     id="isLinkedHouse"
                     type="checkbox"
-                    className="form-group__checkbox"
+                    className="w-4 h-4 rounded"
                     disabled={isLoading}
                     {...register('isLinkedHouse')}
                   />
-                  <label htmlFor="isLinkedHouse" className="form-group__checkbox-label">
+                  <label htmlFor="isLinkedHouse" className="text-sm cursor-pointer">
                     Persona adicional en vivienda
                   </label>
                 </div>
@@ -634,13 +634,13 @@ export function SurveyForm({
           )}
 
           {/* Submit Button */}
-          <button
+          <Button
             type="submit"
-            className="survey-form__button"
+            className="w-full"
             disabled={isLoading || !isValid}
           >
             {isLoading ? 'Guardando visita...' : 'Guardar visita'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

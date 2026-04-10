@@ -5,6 +5,16 @@
 
 import type { ReactNode } from 'react'
 import { FileIcon } from './Icons'
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export interface ReportTableColumn<T> {
   key: string
@@ -39,76 +49,66 @@ export function ReportTable<T>({
   emptyDescription = 'Configure los filtros y genere un reporte para ver los resultados.',
   emptyAction,
 }: ReportTableProps<T>) {
-  if (isLoading) {
-    return (
-      <div className="rg-table-loading">
-        <div className="rg-table-loading__spinner" />
-        <p className="rg-table-loading__text">Generando reporte...</p>
-      </div>
-    )
-  }
-
-  if (data.length === 0) {
-    return (
-      <div className="rg-table-empty" style={{ padding: '4rem 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-        {emptyIcon ? (
-          <div className="rg-table-empty__icon" style={{ opacity: 0.5, marginBottom: '1rem' }}>{emptyIcon}</div>
-        ) : (
-          <div className="rg-table-empty__icon" style={{ opacity: 0.5, marginBottom: '1rem' }}>
-            <FileIcon size={64} strokeWidth={1} />
-          </div>
-        )}
-        <h4 className="rg-table-empty__title" style={{ fontSize: '1.2rem', color: '#334155', marginBottom: '0.5rem' }}>{emptyTitle}</h4>
-        <p className="rg-table-empty__description" style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>{emptyDescription}</p>
-        {emptyAction && (
-          <button
-            className="btn btn--primary"
-            onClick={emptyAction.onClick}
-            style={{ marginTop: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}
-          >
-            {emptyAction.icon}
-            {emptyAction.label}
-          </button>
-        )}
-      </div>
-    )
-  }
+  const colSpan = columns.length
 
   return (
-    <div className="rg-table-wrapper">
-      <table className="rg-table">
-        <thead>
-          <tr>
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <Table>
+        <TableHeader>
+          <TableRow>
             {columns.map((col) => (
-              <th
+              <TableHead
                 key={col.key}
-                className="rg-table__th"
-                style={{
-                  textAlign: col.align || 'left',
-                  minWidth: col.minWidth,
-                }}
+                style={{ textAlign: col.align ?? 'left', minWidth: col.minWidth }}
               >
                 {col.label}
-              </th>
+              </TableHead>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item, idx) => (
-            <tr key={getRowKey(item)} className="rg-table__row">
-              {columns.map((col) => (
-                <td
-                  key={col.key}
-                  className="rg-table__td"
-                  style={{ textAlign: col.align || 'left' }}
-                >
-                  {col.render(item, idx)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell colSpan={colSpan}>
+                  <Skeleton className="h-5 w-full" />
+                </TableCell>
+              </TableRow>
+            ))
+          ) : data.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={colSpan}>
+                <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                  <div className="text-muted-foreground opacity-40 [&_svg]:size-14">
+                    {emptyIcon ?? <FileIcon size={56} strokeWidth={1} />}
+                  </div>
+                  <p className="text-base font-semibold text-foreground">{emptyTitle}</p>
+                  <p className="max-w-sm text-sm text-muted-foreground">{emptyDescription}</p>
+                  {emptyAction && (
+                    <Button onClick={emptyAction.onClick} className="mt-1 gap-1.5">
+                      {emptyAction.icon}
+                      {emptyAction.label}
+                    </Button>
+                  )}
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : (
+            data.map((item, idx) => (
+              <TableRow key={getRowKey(item)}>
+                {columns.map((col) => (
+                  <TableCell
+                    key={col.key}
+                    style={{ textAlign: col.align ?? 'left' }}
+                  >
+                    {col.render(item, idx)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }

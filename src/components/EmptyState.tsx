@@ -4,6 +4,8 @@
  */
 
 import type { ReactNode } from 'react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export interface EmptyStateProps {
   icon?: ReactNode
@@ -24,18 +26,16 @@ export function EmptyState({
   className = '',
 }: EmptyStateProps) {
   return (
-    <div className={`empty-state ${className}`.trim()}>
-      {icon && <div className="empty-state__icon">{icon}</div>}
-      <h2 className="empty-state__title">{title}</h2>
-      {description && <p className="empty-state__description">{description}</p>}
+    <div className={cn('flex flex-col items-center justify-center gap-3 py-16 text-center', className)}>
+      {icon && <div className="mb-1 text-muted-foreground opacity-40 [&_svg]:size-16">{icon}</div>}
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
+      {description && (
+        <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
+      )}
       {action && (
-        <button
-          className="btn btn--primary"
-          onClick={action.onClick}
-          style={{ marginTop: '1.5rem' }}
-        >
+        <Button onClick={action.onClick} className="mt-2">
           {action.label}
-        </button>
+        </Button>
       )}
     </div>
   )

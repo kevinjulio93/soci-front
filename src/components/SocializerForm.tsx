@@ -16,7 +16,7 @@ import { SearchableSelect } from './SearchableSelect'
 import { translateRole } from '../utils'
 import { useSafeRegister } from '../hooks/useSafeRegister'
 import { getHierarchyConfig, getVisibleFieldsForRole, getAutoSelectField, getEditHierarchyField, type HierarchyLevel } from '../constants/hierarchyConfig'
-import '../styles/SurveyForm.scss'
+import { Button } from '@/components/ui/button'
 
 interface CoordinatorData {
   _id: string
@@ -390,12 +390,12 @@ export function SocializerForm({
   // En modo edición, mostrar cargando hasta que todo esté listo
   if (isEditMode && !editFormReady) {
     return (
-      <div className="survey-form">
-        <div className="survey-form__container">
-          <div className="survey-form__header">
-            <h2 className="survey-form__title">Editar Usuario</h2>
+      <div className="w-full">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-6">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-xl font-bold">Editar Usuario</h2>
           </div>
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
+          <div className="py-8 text-center text-sm text-muted-foreground">
             <p>Cargando datos del formulario...</p>
           </div>
         </div>
@@ -404,15 +404,15 @@ export function SocializerForm({
   }
 
   return (
-    <div className="survey-form">
-      <div className="survey-form__container">
-        <div className="survey-form__header">
-          <h2 className="survey-form__title">
+    <div className="w-full">
+      <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-bold">
             {isEditMode ? 'Editar Usuario' : 'Nuevo Usuario'}
           </h2>
         </div>
 
-        <form className="survey-form__form" onSubmit={handleSubmit(handleFormSubmit)}>
+        <form className="flex flex-col gap-5" onSubmit={handleSubmit(handleFormSubmit)}>
           {/* Nombre completo */}
           <Input
             id="fullName"
@@ -555,7 +555,7 @@ export function SocializerForm({
                 })}
               />
               {userRole === 'supervisor' && !isEditMode && (
-                <span className="form-group__hint">
+                <span className="text-xs text-muted-foreground">
                   El rol se asigna automáticamente como Socializador.
                 </span>
               )}
@@ -630,12 +630,12 @@ export function SocializerForm({
                     error={errors[hierarchyField.fieldKey as keyof typeof errors]?.message}
                   />
                   {dataSource.length === 0 && !loadingCoordinators && (
-                    <span className="form-group__hint">
+                    <span className="text-xs text-muted-foreground">
                       No hay {hierarchyField.label.toLowerCase()}s disponibles. Por favor, cree uno primero.
                     </span>
                   )}
                   {isAutoSelected && (
-                    <span className="form-group__hint">
+                    <span className="text-xs text-muted-foreground">
                       Este campo se rellena automáticamente con tu {hierarchyField.label.toLowerCase()} actual.
                     </span>
                   )}
@@ -659,30 +659,29 @@ export function SocializerForm({
 
           {/* Error del servidor */}
           {error && (
-            <div className="survey-form__submit-error">
+            <div className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               <AlertCircleIcon size={16} />
               <span>{error}</span>
             </div>
           )}
 
           {/* Botones */}
-          <div className="form-group form-group--actions" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-start' }}>
-            <button
+          <div className="flex gap-3">
+            <Button
               type="submit"
-              className="btn btn--primary"
               disabled={isLoading || loadingRoles}
             >
               {isLoading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear Usuario'}
-            </button>
+            </Button>
             {onCancel && (
-              <button
+              <Button
                 type="button"
-                className="btn btn--secondary"
+                variant="outline"
                 onClick={onCancel}
                 disabled={isLoading}
               >
                 Cancelar
-              </button>
+              </Button>
             )}
           </div>
         </form>

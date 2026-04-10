@@ -3,6 +3,9 @@
  */
 
 import React from 'react'
+import { Textarea as ShadTextarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string
@@ -22,19 +25,21 @@ export const Textarea: React.FC<TextareaProps> = ({
   const textareaId = id || `textarea-${label?.replace(/\s+/g, '-').toLowerCase()}`
 
   return (
-    <div className={`form-group ${className}`}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <label htmlFor={textareaId} className="form-group__label">
+        <Label htmlFor={textareaId}>
           {label}
-          {required && <span className="form-group__required">*</span>}
-        </label>
+          {required && <span className="text-destructive ml-0.5">*</span>}
+        </Label>
       )}
-      <textarea
+      <ShadTextarea
         id={textareaId}
-        className={`form-group__input ${error ? 'form-group__input--error' : ''}`}
+        aria-invalid={!!error}
         {...props}
       />
-      {error && <span className="form-group__error">{error}</span>}
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
     </div>
   )
 }

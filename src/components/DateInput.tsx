@@ -4,6 +4,9 @@
  */
 
 import React from 'react'
+import { Input as ShadInput } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 interface DateInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label?: string
@@ -23,20 +26,20 @@ export const DateInput: React.FC<DateInputProps> = ({
   const inputId = id || `date-${label?.replace(/\s+/g, '-').toLowerCase()}`
 
   return (
-    <div className={`form-group ${className}`}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <label htmlFor={inputId} className="form-group__label">
+        <Label htmlFor={inputId}>
           {label}
-          {required && <span className="form-group__required">*</span>}
-        </label>
+          {required && <span className="text-destructive ml-0.5">*</span>}
+        </Label>
       )}
-      <input
+      <ShadInput
         id={inputId}
         type="date"
-        className={`form-group__input date-input ${error ? 'form-group__input--error' : ''}`}
+        aria-invalid={!!error}
         {...props}
       />
-      {error && <span className="form-group__error">{error}</span>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState, useCallback, type ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { MenuIcon, BackIcon } from './Icons'
+import { cn } from '@/lib/utils'
 
 interface DashboardLayoutProps {
     children: ReactNode
@@ -24,27 +25,33 @@ export function DashboardLayout({ children, title, onBack }: DashboardLayoutProp
     }, [])
 
     return (
-        <div className="dashboard-layout">
+        <div className="flex h-screen overflow-hidden bg-background">
             <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
 
-            <div className="dashboard-layout__content">
-                <div className="dashboard-layout__header">
+            <div className="flex flex-1 flex-col overflow-hidden">
+                {/* Top bar */}
+                <div className="flex items-center gap-3 border-b bg-card px-4 py-3">
                     <button
-                        className="dashboard-layout__menu-btn"
+                        className="rounded-md p-1.5 transition-colors hover:bg-accent"
                         onClick={toggleSidebar}
                         aria-label="Abrir menú"
                     >
-                        <MenuIcon size={24} />
+                        <MenuIcon size={22} />
                     </button>
-                    {onBack ? (
-                        <button className="btn-back" onClick={onBack} aria-label="Volver">
-                            <BackIcon size={20} />
+                    {onBack && (
+                        <button
+                            className="rounded-md p-1.5 transition-colors hover:bg-accent"
+                            onClick={onBack}
+                            aria-label="Volver"
+                        >
+                            <BackIcon size={18} />
                         </button>
-                    ) : null}
-                    <h1 className="dashboard-layout__title">{title}</h1>
+                    )}
+                    <h1 className={cn('text-base font-semibold flex-1')}>{title}</h1>
                 </div>
 
-                <div className="dashboard-layout__body">
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-6">
                     {children}
                 </div>
             </div>

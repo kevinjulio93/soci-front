@@ -8,10 +8,15 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Icon } from 'leaflet'
 import { apiService } from '../services/api.service'
 import { EXTERNAL_URLS, MAP_CONFIG, MESSAGES, LOCALE_CONFIG } from '../constants'
-import { RefreshIcon, XIcon, ExternalLinkIcon } from './Icons'
+import { RefreshIcon, ExternalLinkIcon } from './Icons'
 import 'leaflet/dist/leaflet.css'
-import '../styles/Modal.scss'
-
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 interface LocationData {
   lat: number
   long: number
@@ -76,66 +81,60 @@ export function LocationModal({ isOpen, onClose, userId, socializerName }: Locat
     return new Date(dateString).toLocaleString(LOCALE_CONFIG.DEFAULT_LOCALE, LOCALE_CONFIG.DATE_FORMAT)
   }
 
-  if (!isOpen) return null
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-content--large" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-title">Ubicación de {socializerName}</h2>
-          <div className="modal-header__actions">
-            <button
-              className="action-btn action-btn--location"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              title="Actualizar ubicación"
-            >
-              <RefreshIcon size={20} />
-            </button>
-            <button className="modal-close" onClick={onClose}>
-              <XIcon size={24} />
-            </button>
-          </div>
-        </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col gap-0">
+        <DialogHeader className="flex-row items-center justify-between border-b pb-3 pr-8">
+          <DialogTitle>Ubicación de {socializerName}</DialogTitle>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            title="Actualizar ubicación"
+          >
+            <RefreshIcon size={18} />
+          </Button>
+        </DialogHeader>
 
-        <div className="modal-body">
+        <div className="flex-1 overflow-y-auto py-4">
           {isLoading && (
-            <div className="location-loading">
-              <div className="spinner"></div>
-              <p>Cargando ubicación...</p>
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+              <p className="text-sm">Cargando ubicación...</p>
             </div>
           )}
 
           {error && (
-            <div className="alert alert--error">
-              <p>{error}</p>
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
             </div>
           )}
 
           {!isLoading && !error && location && (
-            <>
-              <div className="location-info">
-                <div className="location-info__item">
-                  <span className="location-info__label">{MESSAGES.LABEL_LATITUDE}:</span>
-                  <span className="location-info__value">{location.lat.toFixed(6)}</span>
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-2 rounded-md bg-muted/40 p-3 text-sm">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-muted-foreground">{MESSAGES.LABEL_LATITUDE}</span>
+                  <span className="font-medium">{location.lat.toFixed(6)}</span>
                 </div>
-                <div className="location-info__item">
-                  <span className="location-info__label">{MESSAGES.LABEL_LONGITUDE}:</span>
-                  <span className="location-info__value">{location.long.toFixed(6)}</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-muted-foreground">{MESSAGES.LABEL_LONGITUDE}</span>
+                  <span className="font-medium">{location.long.toFixed(6)}</span>
                 </div>
                 {location.accuracy && (
-                  <div className="location-info__item">
-                    <span className="location-info__label">{MESSAGES.LABEL_ACCURACY}:</span>
-                    <span className="location-info__value">{location.accuracy}m</span>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-muted-foreground">{MESSAGES.LABEL_ACCURACY}</span>
+                    <span className="font-medium">{location.accuracy}m</span>
                   </div>
                 )}
-                <div className="location-info__item">
-                  <span className="location-info__label">{MESSAGES.LABEL_LAST_UPDATE}:</span>
-                  <span className="location-info__value">{formatDate(location.timestamp)}</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-muted-foreground">{MESSAGES.LABEL_LAST_UPDATE}</span>
+                  <span className="font-medium">{formatDate(location.timestamp)}</span>
                 </div>
               </div>
 
-              <div className="location-map">
+              <div className="rounded-lg overflow-hidden">
                 <MapContainer
                   center={[location.lat, location.long]}
                   zoom={MAP_CONFIG.DEFAULT_ZOOM}
@@ -155,21 +154,21 @@ export function LocationModal({ isOpen, onClose, userId, socializerName }: Locat
                 </MapContainer>
               </div>
 
-              <div className="location-actions">
+              <div className="flex justify-end">
                 <a
                   href={EXTERNAL_URLS.GOOGLE_MAPS_QUERY(location.lat, location.long)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn btn--secondary"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                 >
-                  <ExternalLinkIcon size={16} />
+                  <ExternalLinkIcon size={14} />
                   {MESSAGES.TOOLTIP_OPEN_MAPS}
                 </a>
               </div>
-            </>
+            </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

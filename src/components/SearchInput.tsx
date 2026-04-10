@@ -1,5 +1,7 @@
 import { useCallback, type ChangeEvent } from 'react'
 import { SearchIcon } from './Icons'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 interface SearchInputProps {
     value: string
@@ -21,30 +23,28 @@ export function SearchInput({ value, onChange, placeholder = "Buscar...", classN
     }, [onChange])
 
     return (
-        <div className={`dashboard-layout__search ${className}`}>
+        <div className={cn('relative flex items-center', className)}>
             <SearchIcon
-                size={18}
-                color="#999"
-                className="dashboard-layout__search-icon"
-                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                size={16}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
             />
-            <input
+            <Input
                 type="text"
                 placeholder={placeholder}
                 value={value}
                 onChange={handleChange}
-                className="dashboard-layout__search-input"
+                className="pl-8 pr-8"
             />
-            {value ? (
+            {value && (
                 <button
                     type="button"
                     onClick={handleClear}
-                    className="dashboard-layout__search-clear"
                     title="Limpiar búsqueda"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors text-base leading-none"
                 >
                     ×
                 </button>
-            ) : null}
+            )}
         </div>
     )
 }

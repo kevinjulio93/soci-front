@@ -5,8 +5,8 @@
  */
 
 import { LogoutIcon } from './Icons'
+import { Button } from '@/components/ui/button'
 import type { User } from '../types'
-import '../styles/Dashboard.scss'
 
 interface DashboardHeaderProps {
   title: string
@@ -16,17 +16,17 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ title, user, onLogout }: DashboardHeaderProps) {
   return (
-    <header className="dashboard__header">
-      <div className="dashboard__header-content">
-        <div className="dashboard__header-left">
-          <h1 className="dashboard__title">{title}</h1>
-        </div>
-        <div className="dashboard__user-info">
-          <span>Bienvenido, {user?.profile?.name || user?.fullName || user?.profile?.fullName || user?.email}</span>
-          <button onClick={onLogout} className="dashboard__logout-btn btn--with-icon">
-            <LogoutIcon size={18} />
+    <header className="border-b bg-card px-6 py-3">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold">{title}</h1>
+        <div className="flex items-center gap-4 text-sm">
+          <span className="text-muted-foreground">
+            Bienvenido, {user?.profile?.name || user?.fullName || user?.profile?.fullName || user?.email}
+          </span>
+          <Button variant="ghost" size="sm" onClick={onLogout} className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10">
+            <LogoutIcon size={16} />
             Cerrar Sesión
-          </button>
+          </Button>
         </div>
       </div>
     </header>

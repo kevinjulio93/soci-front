@@ -4,6 +4,9 @@
  */
 
 import React from 'react'
+import { Input as ShadInput } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -27,27 +30,30 @@ export const Input: React.FC<InputProps> = ({
   const inputId = id || `input-${label?.replace(/\s+/g, '-').toLowerCase()}`
 
   return (
-    <div className={`form-group ${className}`}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <label htmlFor={inputId} className="form-group__label">
+        <Label htmlFor={inputId}>
           {label}
-          {required && <span className="form-group__required">*</span>}
-        </label>
+          {required && <span className="text-destructive ml-0.5">*</span>}
+        </Label>
       )}
-      <div className="form-group__input-wrapper">
-        <input
+      <div className="relative flex items-center">
+        <ShadInput
           id={inputId}
           ref={ref}
-          className={`form-group__input ${error ? 'form-group__input--error' : ''} ${action ? 'form-group__input--with-action' : ''}`}
+          aria-invalid={!!error}
+          className={cn(action && 'pr-10')}
           {...props}
         />
         {action && (
-          <div className="form-group__input-action">
+          <div className="absolute right-2 flex items-center">
             {action}
           </div>
         )}
       </div>
-      {error && <span className="form-group__error">{error}</span>}
+      {error && (
+        <p className="text-sm text-destructive">{error}</p>
+      )}
     </div>
   )
 }

@@ -1,24 +1,21 @@
 import React from 'react'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 
 export const ToggleUnsuccessful: React.FC = () => {
     const { showUnsuccessful, toggleUnsuccessful } = useUnsuccessfulToggle()
 
     return (
-        <div className="toggle-switch-container">
-            <label className="toggle-switch" htmlFor="toggle-unsuccessful">
-                <input
-                    id="toggle-unsuccessful"
-                    type="checkbox"
-                    className="toggle-switch__input"
-                    checked={showUnsuccessful}
-                    onChange={toggleUnsuccessful}
-                />
-                <span className="toggle-switch__slider" />
-            </label>
-            <span className="toggle-switch-container__label">
+        <div className="flex items-center gap-2">
+            <Switch
+                id="toggle-unsuccessful"
+                checked={showUnsuccessful}
+                onCheckedChange={toggleUnsuccessful}
+            />
+            <Label htmlFor="toggle-unsuccessful" className="cursor-pointer text-sm">
                 Mostrar encuestas no exitosas
-            </span>
+            </Label>
         </div>
     )
 }

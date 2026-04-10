@@ -8,7 +8,13 @@ import { useState, useRef, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import { Icon } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import '../styles/Modal.scss'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { RespondentData } from '../models/ApiResponses'
 import { EXTERNAL_URLS, MAP_CONFIG } from '../constants'
 import { apiService } from '../services/api.service'
@@ -144,8 +150,6 @@ export function SurveyDetailModal({
     }
   }, [survey, isOpen])
 
-  if (!isOpen) return null
-
   // Determinar si la encuesta fue exitosa
   const isSuccessful = survey?.surveyStatus === 'successful'
 
@@ -229,43 +233,40 @@ export function SurveyDetailModal({
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content modal-content--detail" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div className="modal-header__content">
-            <h2 className="modal-title">Detalle de Encuesta</h2>
-            {!loading && survey && (
-              <>
-                <span className={`modal-badge ${isSuccessful ? 'modal-badge--success' : 'modal-badge--danger'}`}>
-                  {isSuccessful ? 'Exitosa' : 'No Exitosa'}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0">
+        <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b pr-12 flex-shrink-0">
+          <DialogTitle>Detalle de Encuesta</DialogTitle>
+          {!loading && survey && (
+            <>
+              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${
+                isSuccessful ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-red-100 text-red-700 border-red-200'
+              }`}>
+                {isSuccessful ? 'Exitosa' : 'No Exitosa'}
+              </span>
+              {survey.isVerified ? (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
+                  <CheckIcon size={12} strokeWidth={3} />
+                  Verificada
                 </span>
-                {survey.isVerified ? (
-                  <span className="modal-badge modal-badge--verified">
-                    <CheckIcon size={16} style={{ marginRight: '4px' }} strokeWidth={3} />
-                    Verificada
-                  </span>
-                ) : (
-                  <span className="modal-badge modal-badge--not-verified">
-                    <XIcon size={16} style={{ marginRight: '4px' }} strokeWidth={3} />
-                    No Verificada
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-          <button className="modal-close" onClick={onClose}>
-            <XIcon size={24} />
-          </button>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                  <XIcon size={12} strokeWidth={3} />
+                  No Verificada
+                </span>
+              )}
+            </>
+          )}
         </div>
 
-        <div className="modal-body modal-body--detail">
+        <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
-            <div className="modal-loading">
-              <div className="modal-loading__spinner"></div>
-              <p>Cargando detalles de la encuesta...</p>
+            <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+              <p className="text-sm">Cargando detalles de la encuesta...</p>
             </div>
           ) : !survey ? (
-            <div className="modal-error">
+            <div className="py-12 text-center text-sm text-muted-foreground">
               <p>No se pudo cargar la información de la encuesta.</p>
             </div>
           ) : (
@@ -274,57 +275,57 @@ export function SurveyDetailModal({
                 // Vista simplificada para encuestas no exitosas
                 <>
                   {/* Razón de No Respuesta */}
-                  <section className="detail-section">
-                    <h3 className="detail-section__title">Razón de No Respuesta</h3>
-                    <div className="detail-grid">
-                      <div className="detail-item detail-item--full">
-                        <span className="detail-item__label">Motivo:</span>
-                        <span className="detail-item__value detail-item__value--highlight">
+                  <section className="mb-6">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-1 border-b mb-3">Razón de No Respuesta</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-0.5 sm:col-span-2">
+                        <span className="text-xs text-muted-foreground">Motivo:</span>
+                        <span className="text-sm font-bold text-destructive">
                           {getRejectionReason()}
                         </span>
                       </div>
 
                       {survey.socializer && (
                         <>
-                          <div className="detail-item">
-                            <span className="detail-item__label">Socializador:</span>
-                            <span className="detail-item__value">{survey.socializer.fullName}</span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-muted-foreground">Socializador:</span>
+                            <span className="text-sm font-medium">{survey.socializer.fullName}</span>
                           </div>
-                          <div className="detail-item">
-                            <span className="detail-item__label">Teléfono Socializador:</span>
-                            <span className="detail-item__value">{survey.socializer.phone}</span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-muted-foreground">Teléfono Socializador:</span>
+                            <span className="text-sm font-medium">{survey.socializer.phone}</span>
                           </div>
                         </>
                       )}
-                      <div className="detail-item">
-                        <span className="detail-item__label">Autor:</span>
-                        <span className="detail-item__value">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Autor:</span>
+                        <span className="text-sm font-medium">
                           {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
                         </span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Fecha de Registro:</span>
-                        <span className="detail-item__value">{formatDate(survey.createdAt)}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Fecha de Registro:</span>
+                        <span className="text-sm font-medium">{formatDate(survey.createdAt)}</span>
                       </div>
                     </div>
                   </section>
 
                   {/* Ubicación Geográfica */}
                   {survey.location && survey.location.coordinates && survey.location.coordinates[0] !== 0 && survey.location.coordinates[1] !== 0 && (
-                    <section className="detail-section">
-                      <h3 className="detail-section__title">Ubicación del Intento</h3>
-                      <div className="detail-grid">
-                        <div className="detail-item">
-                          <span className="detail-item__label">Longitud:</span>
-                          <span className="detail-item__value">{survey.location.coordinates[0].toFixed(6)}</span>
+                    <section className="mb-6">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-1 border-b mb-3">Ubicación del Intento</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs text-muted-foreground">Longitud:</span>
+                          <span className="text-sm font-medium">{survey.location.coordinates[0].toFixed(6)}</span>
                         </div>
-                        <div className="detail-item">
-                          <span className="detail-item__label">Latitud:</span>
-                          <span className="detail-item__value">{survey.location.coordinates[1].toFixed(6)}</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs text-muted-foreground">Latitud:</span>
+                          <span className="text-sm font-medium">{survey.location.coordinates[1].toFixed(6)}</span>
                         </div>
-                        <div className="detail-item detail-item--full detail-item--map">
-                          <span className="detail-item__label">Mapa de Ubicación:</span>
-                          <div className="map-container">
+                        <div className="flex flex-col gap-0.5 sm:col-span-2">
+                          <span className="text-xs text-muted-foreground">Mapa de Ubicación:</span>
+                          <div className="rounded-lg overflow-hidden">
                             <MapContainer
                               center={[survey.location.coordinates[1], survey.location.coordinates[0]]}
                               zoom={15}
@@ -353,14 +354,14 @@ export function SurveyDetailModal({
 
                   {/* Audio de la encuesta no exitosa */}
                   {survey.audioUrl && (
-                    <section className="detail-section">
-                      <h3 className="detail-section__title">Audio de Encuesta</h3>
-                      <div className="detail-grid">
-                        <div className="detail-item detail-item--full">
-                          <div className="audio-player">
-                            <div className="audio-player__controls">
+                    <section className="mb-6">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-1 border-b mb-3">Audio de Encuesta</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-0.5 sm:col-span-2">
+                          <div className="rounded-lg bg-muted/40 p-3 flex flex-col gap-2">
+                            <div className="flex gap-2">
                               <button
-                                className={`audio-player__btn audio-player__btn--play ${isPlaying ? 'audio-player__btn--playing' : ''}`}
+                                className={`flex items-center justify-center w-8 h-8 rounded-full transition disabled:opacity-50 ${isPlaying ? "bg-primary/90 text-primary-foreground" : "bg-primary text-primary-foreground"}`}
                                 onClick={handlePlayAudio}
                                 disabled={audioError}
                                 title={isPlaying ? 'Pausar' : 'Reproducir'}
@@ -372,7 +373,7 @@ export function SurveyDetailModal({
                                 )}
                               </button>
                               <button
-                                className="audio-player__btn audio-player__btn--stop"
+                                className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-secondary-foreground transition disabled:opacity-50"
                                 onClick={handleStopAudio}
                                 disabled={audioError || (!isPlaying && audioCurrentTime === 0)}
                                 title="Detener"
@@ -381,37 +382,37 @@ export function SurveyDetailModal({
                               </button>
                             </div>
 
-                            <div className="audio-player__track">
+                            <div className="flex-1 flex flex-col gap-1">
                               <div
-                                className="audio-player__progress-bar"
+                                className="relative h-2 rounded-full bg-muted cursor-pointer overflow-hidden"
                                 onClick={handleSeek}
                                 title="Clic para buscar"
                               >
                                 <div
-                                  className="audio-player__progress-fill"
+                                  className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all"
                                   style={{ width: audioDuration && isFinite(audioDuration) ? `${(audioCurrentTime / audioDuration) * 100}%` : '0%' }}
                                 />
                                 {audioDuration && isFinite(audioDuration) ? (
                                   <div
-                                    className="audio-player__progress-thumb"
+                                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary -translate-x-1/2"
                                     style={{ left: `${(audioCurrentTime / audioDuration) * 100}%` }}
                                   />
                                 ) : null}
                               </div>
-                              <div className="audio-player__time">
+                              <div className="flex justify-between text-xs text-muted-foreground">
                                 <span>{formatDuration(audioCurrentTime)}</span>
                                 <span>{formatDuration(audioDuration)}</span>
                               </div>
                             </div>
 
                             {isPlaying && (
-                              <div className="audio-player__visualizer">
+                              <div className="flex items-center gap-0.5">
                                 <span /><span /><span /><span /><span />
                               </div>
                             )}
 
                             {audioError && (
-                              <span className="audio-player__error">Error al cargar audio</span>
+                              <span className="text-xs text-destructive">Error al cargar audio</span>
                             )}
                           </div>
                         </div>
@@ -423,32 +424,32 @@ export function SurveyDetailModal({
                 // Vista completa para encuestas exitosas
                 <>
                   {/* Información Personal */}
-                  <section className="detail-section">
-                    <h3 className="detail-section__title">Información Personal</h3>
-                    <div className="detail-grid">
-                      <div className="detail-item">
-                        <span className="detail-item__label">Nombre Completo:</span>
-                        <span className="detail-item__value">{survey.fullName}</span>
+                  <section className="mb-6">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-1 border-b mb-3">Información Personal</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Nombre Completo:</span>
+                        <span className="text-sm font-medium">{survey.fullName}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Tipo de Identificación:</span>
-                        <span className="detail-item__value">{survey.idType || 'N/A'}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Tipo de Identificación:</span>
+                        <span className="text-sm font-medium">{survey.idType || 'N/A'}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Número de Identificación:</span>
-                        <span className="detail-item__value">{survey.identification}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Número de Identificación:</span>
+                        <span className="text-sm font-medium">{survey.identification}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Género:</span>
-                        <span className="detail-item__value">{survey.gender}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Género:</span>
+                        <span className="text-sm font-medium">{survey.gender}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Rango de Edad:</span>
-                        <span className="detail-item__value">{survey.ageRange}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Rango de Edad:</span>
+                        <span className="text-sm font-medium">{survey.ageRange}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Defensor de la Patria:</span>
-                        <span className="detail-item__value">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Defensor de la Patria:</span>
+                        <span className="text-sm font-medium">
                           {(survey as any).isPatriaDefender ? (
                             <span style={{ color: '#28a745', fontWeight: 600 }}>✓ Sí</span>
                           ) : (
@@ -460,63 +461,63 @@ export function SurveyDetailModal({
                   </section>
 
                   {/* Información de Contacto */}
-                  <section className="detail-section">
-                    <h3 className="detail-section__title">Información de Contacto</h3>
-                    <div className="detail-grid">
-                      <div className="detail-item">
-                        <span className="detail-item__label">Teléfono:</span>
-                        <span className="detail-item__value">{survey.phone || 'N/A'}</span>
+                  <section className="mb-6">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-1 border-b mb-3">Información de Contacto</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Teléfono:</span>
+                        <span className="text-sm font-medium">{survey.phone || 'N/A'}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Correo Electrónico:</span>
-                        <span className="detail-item__value">{survey.email || 'N/A'}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Correo Electrónico:</span>
+                        <span className="text-sm font-medium">{survey.email || 'N/A'}</span>
                       </div>
-                      <div className="detail-item detail-item--full">
-                        <span className="detail-item__label">Dirección:</span>
-                        <span className="detail-item__value">{survey.address || 'N/A'}</span>
+                      <div className="flex flex-col gap-0.5 sm:col-span-2">
+                        <span className="text-xs text-muted-foreground">Dirección:</span>
+                        <span className="text-sm font-medium">{survey.address || 'N/A'}</span>
                       </div>
                     </div>
                   </section>
 
                   {/* Información de Ubicación */}
-                  <section className="detail-section">
-                    <h3 className="detail-section__title">Información de Ubicación</h3>
-                    <div className="detail-grid">
-                      <div className="detail-item">
-                        <span className="detail-item__label">Departamento:</span>
-                        <span className="detail-item__value">{getStringValue(survey.department) || 'N/A'}</span>
+                  <section className="mb-6">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-1 border-b mb-3">Información de Ubicación</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Departamento:</span>
+                        <span className="text-sm font-medium">{getStringValue(survey.department) || 'N/A'}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Municipio:</span>
-                        <span className="detail-item__value">{getStringValue(survey.city) || 'N/A'}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Municipio:</span>
+                        <span className="text-sm font-medium">{getStringValue(survey.city) || 'N/A'}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Barrio:</span>
-                        <span className="detail-item__value">{survey.neighborhood || 'N/A'}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Barrio:</span>
+                        <span className="text-sm font-medium">{survey.neighborhood || 'N/A'}</span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Estrato:</span>
-                        <span className="detail-item__value">{survey.stratum || 'N/A'}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Estrato:</span>
+                        <span className="text-sm font-medium">{survey.stratum || 'N/A'}</span>
                       </div>
                     </div>
                   </section>
 
                   {/* Ubicación Geográfica */}
                   {survey.location && survey.location.coordinates && survey.location.coordinates[0] !== 0 && survey.location.coordinates[1] !== 0 && (
-                    <section className="detail-section">
-                      <h3 className="detail-section__title">Ubicación Geográfica</h3>
-                      <div className="detail-grid">
-                        <div className="detail-item">
-                          <span className="detail-item__label">Longitud:</span>
-                          <span className="detail-item__value">{survey.location.coordinates[0].toFixed(6)}</span>
+                    <section className="mb-6">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-1 border-b mb-3">Ubicación Geográfica</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs text-muted-foreground">Longitud:</span>
+                          <span className="text-sm font-medium">{survey.location.coordinates[0].toFixed(6)}</span>
                         </div>
-                        <div className="detail-item">
-                          <span className="detail-item__label">Latitud:</span>
-                          <span className="detail-item__value">{survey.location.coordinates[1].toFixed(6)}</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs text-muted-foreground">Latitud:</span>
+                          <span className="text-sm font-medium">{survey.location.coordinates[1].toFixed(6)}</span>
                         </div>
-                        <div className="detail-item detail-item--full detail-item--map">
-                          <span className="detail-item__label">Mapa de Ubicación:</span>
-                          <div className="map-container">
+                        <div className="flex flex-col gap-0.5 sm:col-span-2">
+                          <span className="text-xs text-muted-foreground">Mapa de Ubicación:</span>
+                          <div className="rounded-lg overflow-hidden">
                             <MapContainer
                               center={[survey.location.coordinates[1], survey.location.coordinates[0]]}
                               zoom={15}
@@ -545,39 +546,39 @@ export function SurveyDetailModal({
                   )}
 
                   {/* Audio e Información Adicional */}
-                  <section className="detail-section">
-                    <h3 className="detail-section__title">Información Adicional</h3>
-                    <div className="detail-grid">
+                  <section className="mb-6">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pb-1 border-b mb-3">Información Adicional</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
                       {survey.socializer && (
                         <>
-                          <div className="detail-item">
-                            <span className="detail-item__label">Socializador:</span>
-                            <span className="detail-item__value">{survey.socializer.fullName}</span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-muted-foreground">Socializador:</span>
+                            <span className="text-sm font-medium">{survey.socializer.fullName}</span>
                           </div>
-                          <div className="detail-item">
-                            <span className="detail-item__label">Teléfono Socializador:</span>
-                            <span className="detail-item__value">{survey.socializer.phone}</span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs text-muted-foreground">Teléfono Socializador:</span>
+                            <span className="text-sm font-medium">{survey.socializer.phone}</span>
                           </div>
                         </>
                       )}
-                      <div className="detail-item">
-                        <span className="detail-item__label">Autor:</span>
-                        <span className="detail-item__value">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Autor:</span>
+                        <span className="text-sm font-medium">
                           {typeof survey.autor === 'string' ? survey.autor : survey.autor?.email || 'N/A'}
                         </span>
                       </div>
-                      <div className="detail-item">
-                        <span className="detail-item__label">Fecha de Registro:</span>
-                        <span className="detail-item__value">{formatDate(survey.createdAt)}</span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">Fecha de Registro:</span>
+                        <span className="text-sm font-medium">{formatDate(survey.createdAt)}</span>
                       </div>
                       {survey.audioUrl && (
-                        <div className="detail-item detail-item--full">
-                          <span className="detail-item__label">Audio de Encuesta:</span>
-                          <div className="audio-player">
-                            <div className="audio-player__controls">
+                        <div className="flex flex-col gap-0.5 sm:col-span-2">
+                          <span className="text-xs text-muted-foreground">Audio de Encuesta:</span>
+                          <div className="rounded-lg bg-muted/40 p-3 flex flex-col gap-2">
+                            <div className="flex gap-2">
                               <button
-                                className={`audio-player__btn audio-player__btn--play ${isPlaying ? 'audio-player__btn--playing' : ''}`}
+                                className={`flex items-center justify-center w-8 h-8 rounded-full transition disabled:opacity-50 ${isPlaying ? "bg-primary/90 text-primary-foreground" : "bg-primary text-primary-foreground"}`}
                                 onClick={handlePlayAudio}
                                 disabled={audioError}
                                 title={isPlaying ? 'Pausar' : 'Reproducir'}
@@ -589,7 +590,7 @@ export function SurveyDetailModal({
                                 )}
                               </button>
                               <button
-                                className="audio-player__btn audio-player__btn--stop"
+                                className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary text-secondary-foreground transition disabled:opacity-50"
                                 onClick={handleStopAudio}
                                 disabled={audioError || (!isPlaying && audioCurrentTime === 0)}
                                 title="Detener"
@@ -598,37 +599,37 @@ export function SurveyDetailModal({
                               </button>
                             </div>
 
-                            <div className="audio-player__track">
+                            <div className="flex-1 flex flex-col gap-1">
                               <div
-                                className="audio-player__progress-bar"
+                                className="relative h-2 rounded-full bg-muted cursor-pointer overflow-hidden"
                                 onClick={handleSeek}
                                 title="Clic para buscar"
                               >
                                 <div
-                                  className="audio-player__progress-fill"
+                                  className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all"
                                   style={{ width: audioDuration && isFinite(audioDuration) ? `${(audioCurrentTime / audioDuration) * 100}%` : '0%' }}
                                 />
                                 {audioDuration && isFinite(audioDuration) ? (
                                   <div
-                                    className="audio-player__progress-thumb"
+                                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary -translate-x-1/2"
                                     style={{ left: `${(audioCurrentTime / audioDuration) * 100}%` }}
                                   />
                                 ) : null}
                               </div>
-                              <div className="audio-player__time">
+                              <div className="flex justify-between text-xs text-muted-foreground">
                                 <span>{formatDuration(audioCurrentTime)}</span>
                                 <span>{formatDuration(audioDuration)}</span>
                               </div>
                             </div>
 
                             {isPlaying && (
-                              <div className="audio-player__visualizer">
+                              <div className="flex items-center gap-0.5">
                                 <span /><span /><span /><span /><span />
                               </div>
                             )}
 
                             {audioError && (
-                              <span className="audio-player__error">Error al cargar audio</span>
+                              <span className="text-xs text-destructive">Error al cargar audio</span>
                             )}
                           </div>
                         </div>
@@ -641,12 +642,10 @@ export function SurveyDetailModal({
           )}
         </div>
 
-        <div className="modal-footer">
-          <button className="btn btn--secondary" onClick={onClose}>
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </div>
+        <DialogFooter className="flex-shrink-0">
+          <Button variant="outline" onClick={onClose}>Cerrar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

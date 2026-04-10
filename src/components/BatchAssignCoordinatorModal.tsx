@@ -6,8 +6,14 @@ import { useState, useEffect } from 'react'
 import { apiService } from '../services/api.service'
 import { Select } from './Select'
 import { Textarea } from './Textarea'
-import { XIcon } from './Icons'
-import '../styles/Modal.scss'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 interface BatchAssignCoordinatorModalProps {
   isOpen: boolean
@@ -111,161 +117,141 @@ export function BatchAssignCoordinatorModal({
     onClose()
   }
 
-  if (!isOpen) return null
-
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2 className="modal-header__title">
-            Asignación de Coordinador en Lote
-          </h2>
-          <button
-            className="modal-header__close"
-            onClick={handleClose}
-            type="button"
-          >
-            <XIcon size={24} />
-          </button>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !isLoading && handleClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Asignación de Coordinador en Lote</DialogTitle>
+        </DialogHeader>
+
+        {error && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <div className="rounded-md bg-muted/50 px-3 py-2 text-sm">
+          <p><strong>{selectedSocializers.length}</strong> socializador(es) seleccionado(s):</p>
+          <ul className="mt-1 list-disc pl-4 text-muted-foreground">
+            {selectedSocializers.slice(0, 5).map((socializer) => (
+              <li key={socializer._id}>{socializer.fullName}</li>
+            ))}
+            {selectedSocializers.length > 5 && (
+              <li>... y {selectedSocializers.length - 5} más</li>
+            )}
+          </ul>
         </div>
 
-        <div className="modal-body">
-          {error && (
-            <div className="alert alert--error" style={{ marginBottom: '1rem' }}>
-              <p>{error}</p>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Acción */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Acción *</span>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="radio"
+                  value="assign"
+                  checked={action === 'assign'}
+                  onChange={(e) => setAction(e.target.value as 'assign')}
+                  disabled={isLoading}
+                />
+                Asignar Coordinador
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="radio"
+                  value="unassign"
+                  checked={action === 'unassign'}
+                  onChange={(e) => setAction(e.target.value as 'unassign')}
+                  disabled={isLoading}
+                />
+                Desasignar Coordinador
+              </label>
+            </div>
+          </div>
+
+          <Select
+            id="coordinator"
+            label="Coordinador"
+            placeholder={action === 'assign' ? 'Seleccione un coordinador' : 'Seleccione coordinador a desasignar'}
+            options={coordinators.map((coordinator) => ({
+              value: coordinator._id,
+              label: `${coordinator.fullName} - ${coordinator.email}`,
+            }))}
+            value={selectedCoordinatorId}
+            onChange={(e) => setSelectedCoordinatorId(e.target.value)}
+            disabled={isLoading}
+            required
+          />
+
+          {action === 'assign' && (
+            <>
+              <Textarea
+                id="notes"
+                label="Notas (opcional)"
+                placeholder="Ej: Reorganización 2025"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                disabled={isLoading}
+                rows={3}
+              />
+
+              <div className="flex flex-col gap-1.5">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={replaceExisting}
+                    onChange={(e) => setReplaceExisting(e.target.checked)}
+                    disabled={isLoading}
+                  />
+                  Reemplazar asignaciones existentes
+                </label>
+                <p className="text-xs text-muted-foreground pl-5">
+                  Si está marcado, desactivará las asignaciones actuales antes de crear las nuevas
+                </p>
+              </div>
+            </>
+          )}
+
+          {action === 'unassign' && (
+            <div className="flex flex-col gap-1.5">
+              <label className="flex items-center gap-2 cursor-pointer text-sm">
+                <input
+                  type="checkbox"
+                  checked={deleteRecords}
+                  onChange={(e) => setDeleteRecords(e.target.checked)}
+                  disabled={isLoading}
+                />
+                Eliminar registros de historial
+              </label>
+              <p className="text-xs text-muted-foreground pl-5">
+                Si no está marcado, se mantendrá el historial de asignaciones
+              </p>
             </div>
           )}
 
-          <div className="batch-assign-info">
-            <p className="batch-assign-info__text">
-              <strong>{selectedSocializers.length}</strong> socializador(es) seleccionado(s):
-            </p>
-            <ul className="batch-assign-info__list">
-              {selectedSocializers.slice(0, 5).map((socializer) => (
-                <li key={socializer._id}>{socializer.fullName}</li>
-              ))}
-              {selectedSocializers.length > 5 && (
-                <li>... y {selectedSocializers.length - 5} más</li>
-              )}
-            </ul>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            {/* Acción */}
-            <div className="form-group">
-              <label className="form-group__label">Acción *</label>
-              <div className="radio-group">
-                <label className="radio-option">
-                  <input
-                    type="radio"
-                    value="assign"
-                    checked={action === 'assign'}
-                    onChange={(e) => setAction(e.target.value as 'assign')}
-                    disabled={isLoading}
-                  />
-                  <span>Asignar Coordinador</span>
-                </label>
-                <label className="radio-option">
-                  <input
-                    type="radio"
-                    value="unassign"
-                    checked={action === 'unassign'}
-                    onChange={(e) => setAction(e.target.value as 'unassign')}
-                    disabled={isLoading}
-                  />
-                  <span>Desasignar Coordinador</span>
-                </label>
-              </div>
-            </div>
-
-            {/* Coordinador */}
-            <Select
-              id="coordinator"
-              label="Coordinador"
-              placeholder={action === 'assign' ? 'Seleccione un coordinador' : 'Seleccione coordinador a desasignar'}
-              options={coordinators.map((coordinator) => ({
-                value: coordinator._id,
-                label: `${coordinator.fullName} - ${coordinator.email}`,
-              }))}
-              value={selectedCoordinatorId}
-              onChange={(e) => setSelectedCoordinatorId(e.target.value)}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
               disabled={isLoading}
-              required
-            />
-
-            {/* Opciones para Asignar */}
-            {action === 'assign' && (
-              <>
-                <Textarea
-                  id="notes"
-                  label="Notas (opcional)"
-                  placeholder="Ej: Reorganización 2025"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  disabled={isLoading}
-                  rows={3}
-                />
-
-                <div className="form-group">
-                  <label className="checkbox-option">
-                    <input
-                      type="checkbox"
-                      checked={replaceExisting}
-                      onChange={(e) => setReplaceExisting(e.target.checked)}
-                      disabled={isLoading}
-                    />
-                    <span>Reemplazar asignaciones existentes</span>
-                  </label>
-                  <p className="form-group__hint">
-                    Si está marcado, desactivará las asignaciones actuales antes de crear las nuevas
-                  </p>
-                </div>
-              </>
-            )}
-
-            {/* Opciones para Desasignar */}
-            {action === 'unassign' && (
-              <div className="form-group">
-                <label className="checkbox-option">
-                  <input
-                    type="checkbox"
-                    checked={deleteRecords}
-                    onChange={(e) => setDeleteRecords(e.target.checked)}
-                    disabled={isLoading}
-                  />
-                  <span>Eliminar registros de historial</span>
-                </label>
-                <p className="form-group__hint">
-                  Si no está marcado, se mantendrá el historial de asignaciones
-                </p>
-              </div>
-            )}
-
-            {/* Botones */}
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="btn btn--secondary"
-                onClick={handleClose}
-                disabled={isLoading}
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="btn btn--primary"
-                disabled={isLoading || !selectedCoordinatorId}
-              >
-                {isLoading
-                  ? 'Procesando...'
-                  : action === 'assign'
-                    ? 'Asignar'
-                    : 'Desasignar'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isLoading || !selectedCoordinatorId}
+            >
+              {isLoading
+                ? 'Procesando...'
+                : action === 'assign'
+                  ? 'Asignar'
+                  : 'Desasignar'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
