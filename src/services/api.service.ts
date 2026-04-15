@@ -245,6 +245,19 @@ export type ZoneDepartmentEntry = {
   municipalities: ZoneMunicipalityItem[]
 }
 
+export type ZoneItem = {
+  _id: string
+  name: string
+  zoneNumber: number
+  apiUrl: string | null
+}
+
+export type GetZonesResponse = {
+  message: string
+  total: number
+  zones: ZoneItem[]
+}
+
 export type ZoneDepartmentsResponse = {
   zone: {
     name: string
@@ -253,11 +266,19 @@ export type ZoneDepartmentsResponse = {
   departments: ZoneDepartmentEntry[]
 }
 
-class ApiService {
+export class ApiService {
   private baseUrl: string
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl
+  }
+
+  /**
+   * Factory: crea una instancia de ApiService apuntando a otra URL base.
+   * Útil para consultar APIs de zonas específicas.
+   */
+  static createWithBaseUrl(baseUrl: string): ApiService {
+    return new ApiService(baseUrl)
   }
 
   private async buildError(response: Response): Promise<ApiError> {
@@ -890,6 +911,13 @@ class ApiService {
     const endpoint = `${API_ENDPOINTS.DASHBOARD_002_EXPORT}?${queryParams.toString()}`
     const filename = `dashboard002_${params.startDate || ''}_${params.endDate || ''}.xlsx`
     return this.downloadFile(endpoint, filename)
+  }
+
+  /**
+   * Obtener todas las zonas disponibles
+   */
+  async getZones(): Promise<GetZonesResponse> {
+    return this.get<GetZonesResponse>(API_ENDPOINTS.ZONES)
   }
 
   /**

@@ -26,6 +26,32 @@ export interface RoleHierarchyConfig {
  *   zonecoordinator -> (ninguno, es tope)
  */
 export const ROLE_HIERARCHY_CONFIG: Record<string, RoleHierarchyConfig> = {
+  superadmin: {
+    visibleFields: [
+      {
+        role: 'fieldcoordinator',
+        fieldKey: 'assignedZoneCoordinator',
+        label: 'Coordinador de Zona',
+        dataSourceField: 'zoneCoordinators',
+        loadHierarchyRole: 'zonecoordinator',
+      },
+      {
+        role: 'supervisor',
+        fieldKey: 'assignedFieldCoordinator',
+        label: 'Coordinador de Campo',
+        dataSourceField: 'fieldCoordinators',
+        loadHierarchyRole: 'fieldcoordinator',
+      },
+      {
+        role: 'socializer',
+        fieldKey: 'assignedSupervisor',
+        label: 'Supervisor',
+        dataSourceField: 'supervisors',
+        loadHierarchyRole: 'supervisor',
+      },
+    ],
+    creatableRoles: ['superadmin', 'admin', 'readonly', 'zonecoordinator', 'fieldcoordinator', 'supervisor', 'socializer'],
+  },
   admin: {
     visibleFields: [
       // Coordinador de campo requiere coordinador de zona

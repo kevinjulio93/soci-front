@@ -9,11 +9,15 @@ import { DashboardLayout, Select, SearchableSelect, ToggleUnsuccessful, ChartIco
 import { ReportTable } from '../components/ReportTable'
 import { useUnsuccessfulToggle } from '../hooks/useUnsuccessfulToggle'
 import { useAuth } from '../contexts/AuthContext'
+import { useZoneApi } from '../contexts/ZoneApiContext'
 import type { ReportTableColumn } from '../components/ReportTable'
 import { apiService, type ZoneDepartmentEntry, type ZoneMunicipalityItem } from '../services/api.service'
 import { notificationService } from '../services/notification.service'
 import { ROUTES } from '../constants'
 import '../styles/Dashboard.scss'
+
+// Valor especial para "Todas las zonas"
+const ALL_ZONES = '__all_zones__'
 
 // Tipo para fila agregada por usuario
 interface SocializerRow {
@@ -27,6 +31,8 @@ interface SocializerRow {
   linkedHomes: number
   verificados: number
   isOffline: number
+  /** Nombre de la zona (solo cuando se consultan múltiples zonas) */
+  zoneName?: string
 }
 
 // Jerarquía de roles disponibles
@@ -140,6 +146,7 @@ const TABLE_COLUMNS: ReportTableColumn<SocializerRow>[] = [
 export default function ReportsSocializers() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { zones, selectedZoneIds, setSelectedZoneIds, isLoadingZones, isSuperAdmin, querySelectedZones } = useZoneApi()
   const [isGenerating, setIsGenerating] = useState(false)
   const [startDate, setStartDate] = useState(getTodayString())
   const [endDate, setEndDate] = useState(getTodayString())
@@ -152,6 +159,12 @@ export default function ReportsSocializers() {
   const [reportData, setReportData] = useState<SocializerRow[]>([])
   const [summaryData, setSummaryData] = useState<any>(null)
   const [reportSummaryLabel, setReportSummaryLabel] = useState('')
+  // Selector de zona local (UI): '' = zona actual, ALL_ZONES = todas, o un _id específico
+  const [selectedZone, setSelectedZone] = useState('')
+  /** true cuando el reporte se generó consultando múltiples zonas */
+  const [isMultiZone, setIsMultiZone] = useState(false)
+  /** Errores parciales en consultas multi-zona */
+  const [zoneErrors, setZoneErrors] = useState<string[]>([])
 
   const { showUnsuccessful } = useUnsuccessfulToggle()
 
@@ -161,12 +174,34 @@ export default function ReportsSocializers() {
   const ZONE_ALIASES: Record<string, number> = { zonaf: 6 }
   const ZONE_NUMBER = ZONE_ALIASES[ACTIVE_ZONE] ?? (parseInt(ACTIVE_ZONE.replace('zona', ''), 10) || 1)
 
+  const isAdminOrSuperadmin = isSuperAdmin || userRole === 'superadmin'
+
+  // Sincronizar selección local con el contexto de zonas
+  useEffect(() => {
+    if (selectedZone === ALL_ZONES) {
+      setSelectedZoneIds(zones.map(z => z._id))
+    } else if (selectedZone) {
+      setSelectedZoneIds([selectedZone])
+    } else {
+      setSelectedZoneIds([])
+    }
+  }, [selectedZone, zones, setSelectedZoneIds])
+
+  // Determinar el número de zona a usar para cargar departamentos
+  const activeZoneNumber = useMemo(() => {
+    if (isAdminOrSuperadmin && selectedZone && selectedZone !== ALL_ZONES) {
+      const zone = zones.find(z => z._id === selectedZone)
+      return zone?.zoneNumber ?? ZONE_NUMBER
+    }
+    return ZONE_NUMBER
+  }, [isAdminOrSuperadmin, selectedZone, zones, ZONE_NUMBER])
+
   // Cargar departamentos y municipios de la zona activa
   useEffect(() => {
     const loadDepartments = async () => {
       setLoadingDepts(true)
       try {
-        const response = await apiService.getZoneDepartments(ZONE_NUMBER)
+        const response = await apiService.getZoneDepartments(activeZoneNumber)
         setZoneDepartments(response.departments)
       } catch {
         setZoneDepartments([])
@@ -175,7 +210,7 @@ export default function ReportsSocializers() {
       }
     }
     loadDepartments()
-  }, [])
+  }, [activeZoneNumber])
 
   // Actualizar municipios cuando cambia el departamento seleccionado
   useEffect(() => {
@@ -197,12 +232,29 @@ export default function ReportsSocializers() {
     setSelectedMunicipality('')
   }
 
+  const handleZoneChange = (value: string) => {
+    setSelectedZone(value)
+    setSelectedDepartment('')
+    setSelectedMunicipality('')
+    setZoneDepartments([])
+    setMunicipalities([])
+    setReportData([])
+    setSummaryData(null)
+    setReportSummaryLabel('')
+    setZoneErrors([])
+  }
+
+  // ¿Se están consultando múltiples zonas?
+  const willQueryMultipleZones = isAdminOrSuperadmin && selectedZone === ALL_ZONES
+  // ¿Filtros de ubicación deshabilitados? (no aplican cuando se consultan todas las zonas)
+  const locationFiltersDisabled = willQueryMultipleZones
+
   // Filtrar roles disponibles según la jerarquía del usuario
   const availableRoles = useMemo(() => {
     const roleOrder = ['zonecoordinator', 'fieldcoordinator', 'supervisor', 'socializer']
     const userRoleIndex = roleOrder.indexOf(userRole)
 
-    if (userRole === 'admin' || userRole === 'readonly') {
+    if (userRole === 'admin' || userRole === 'superadmin' || userRole === 'readonly') {
       return ROLE_HIERARCHY
     }
 
@@ -214,14 +266,75 @@ export default function ReportsSocializers() {
   // Optimización: Memoizar las columnas de la tabla para evitar re-renders innecesarios en DataTable
   // Basado en la regla: rerender-memo
   const memoizedColumns = useMemo(() => {
-    return showUnsuccessful
+    const base = showUnsuccessful
       ? TABLE_COLUMNS
       : TABLE_COLUMNS.filter(c => c.key !== 'unsuccessful')
-  }, [showUnsuccessful])
+
+    // Agregar columna de zona cuando se consultan múltiples zonas
+    if (isMultiZone) {
+      const zoneColumn: ReportTableColumn<SocializerRow> = {
+        key: 'zoneName',
+        label: 'Zona',
+        minWidth: '120px',
+        render: (item) => (
+          <span style={{ fontWeight: 600, color: '#0066cc' }}>{item.zoneName || '—'}</span>
+        ),
+      }
+      return [zoneColumn, ...base]
+    }
+    return base
+  }, [showUnsuccessful, isMultiZone])
 
   const handleBackToReports = () => navigate(ROUTES.ADMIN_REPORTS)
 
+  /** Construye los parámetros de consulta para el dashboard003 */
+  const buildReportParams = () => {
+    const params: { fecha_inicio: string; fecha_fin: string; rol?: string; departamentoId?: string; municipioId?: string } = {
+      fecha_inicio: startDate,
+      fecha_fin: endDate,
+    }
+    if (selectedRole) params.rol = selectedRole
+    if (selectedDepartment) params.departamentoId = selectedDepartment
+    if (selectedMunicipality) params.municipioId = selectedMunicipality
+    return params
+  }
 
+  /** Mapea un socializador del API a una fila de la tabla */
+  const mapSocializerRow = (s: any, zoneName?: string): SocializerRow => ({
+    socializerId: s.socializadorId,
+    socializerName: s.socializador,
+    interventions: s.intervenciones,
+    successful: s.exitosas,
+    unsuccessful: s.noExitosas,
+    defensores: s.defensoresDeLaPatria,
+    isLinkedHouse: s.isLinkedHouse || 0,
+    linkedHomes: s.linkedHomes || 0,
+    verificados: s.verificados || 0,
+    isOffline: s.isOffline || 0,
+    zoneName,
+  })
+
+  /** Agrega resúmenes de múltiples zonas */
+  const aggregateSummaries = (summaries: any[]): any => {
+    return summaries.reduce((acc, s) => {
+      if (!s) return acc
+      return {
+        totalEncuestas: (acc.totalEncuestas || 0) + (s.totalEncuestas || 0),
+        totalIntervenciones: (acc.totalIntervenciones || 0) + (s.totalIntervenciones || 0),
+        totalExitosas: (acc.totalExitosas || 0) + (s.totalExitosas || 0),
+        totalNoExitosas: (acc.totalNoExitosas || 0) + (s.totalNoExitosas || 0),
+        totalIsPatriaDefender: (acc.totalIsPatriaDefender || 0) + (s.totalIsPatriaDefender || 0),
+        totalDefensores: (acc.totalDefensores || 0) + (s.totalDefensores || 0),
+        totalIsLinkedHouse: (acc.totalIsLinkedHouse || 0) + (s.totalIsLinkedHouse || 0),
+        totalLinkedHomes: (acc.totalLinkedHomes || 0) + (s.totalLinkedHomes || 0),
+        totalIsVerified: (acc.totalIsVerified || 0) + (s.totalIsVerified || 0),
+        totalVerificados: (acc.totalVerificados || 0) + (s.totalVerificados || 0),
+        totalIsOffline: (acc.totalIsOffline || 0) + (s.totalIsOffline || 0),
+        totalSocializers: (acc.totalSocializers || 0) + (s.totalSocializers || 0),
+        linkedHomes: (acc.linkedHomes || 0) + (s.linkedHomes || 0),
+      }
+    }, {} as any)
+  }
 
   const generateReport = async () => {
     if (!startDate || !endDate) {
@@ -230,45 +343,69 @@ export default function ReportsSocializers() {
     }
     try {
       setIsGenerating(true)
+      setZoneErrors([])
 
-      const params: { fecha_inicio: string; fecha_fin: string; rol?: string; departamentoId?: string; municipioId?: string } = {
-        fecha_inicio: startDate,
-        fecha_fin: endDate,
+      const params = buildReportParams()
+
+      // ── Consulta multi-zona (superadmin con zonas seleccionadas) ──
+      if (isAdminOrSuperadmin && selectedZoneIds.length > 0) {
+        const results = await querySelectedZones(async (api) => {
+          return api.getDashboard003Report(params)
+        })
+
+        const allRows: SocializerRow[] = []
+        const allSummaries: any[] = []
+        const errors: string[] = []
+
+        for (const result of results) {
+          if (result.error || !result.data) {
+            errors.push(`${result.zoneName}: ${result.error || 'Sin datos'}`)
+            continue
+          }
+          const socializadores = result.data.socializadores || []
+          const rows = socializadores.map((s) =>
+            mapSocializerRow(s, result.zoneName)
+          )
+          allRows.push(...rows)
+          if (result.data.resumen) allSummaries.push(result.data.resumen)
+        }
+
+        allRows.sort((a, b) => b.interventions - a.interventions)
+
+        setReportData(allRows)
+        setIsMultiZone(selectedZoneIds.length > 1)
+        setSummaryData(allSummaries.length > 0 ? aggregateSummaries(allSummaries) : null)
+        setZoneErrors(errors)
+
+        const rolLabel = availableRoles.find(r => r.value === selectedRole)?.label || 'usuarios'
+        const totalIntervenciones = allRows.reduce((s, r) => s + r.interventions, 0)
+        const zonesQueried = results.filter(r => !r.error).length
+        const summaryText = `Reporte generado: ${allRows.length} ${rolLabel.toLowerCase()}, ${totalIntervenciones} intervenciones (${zonesQueried} zona${zonesQueried !== 1 ? 's' : ''} consultada${zonesQueried !== 1 ? 's' : ''})`
+        setReportSummaryLabel(summaryText)
+        notificationService.success(summaryText)
+
+        if (errors.length > 0) {
+          notificationService.warning(`Errores en ${errors.length} zona(s): ${errors.join('; ')}`)
+        }
+      } else {
+        // ── Consulta normal (zona actual) ──
+        const response = await apiService.getDashboard003Report(params)
+        const socializadores = response.socializadores || []
+
+        const rows: SocializerRow[] = socializadores
+          .map((s) => mapSocializerRow(s))
+          .sort((a, b) => b.interventions - a.interventions)
+
+        setReportData(rows)
+        setIsMultiZone(false)
+        setSummaryData(response.resumen || null)
+
+        const rolLabel = availableRoles.find(r => r.value === selectedRole)?.label || 'usuarios'
+        const totalIntervenciones = response.resumen?.totalEncuestas ?? rows.reduce((s, r) => s + r.interventions, 0)
+        const summaryText = `Reporte generado: ${rows.length} ${rolLabel.toLowerCase()}, ${totalIntervenciones} intervenciones`
+        setReportSummaryLabel(summaryText)
+        notificationService.success(summaryText)
       }
-      if (selectedRole) {
-        params.rol = selectedRole
-      }
-      if (selectedDepartment) {
-        params.departamentoId = selectedDepartment
-      }
-      if (selectedMunicipality) {
-        params.municipioId = selectedMunicipality
-      }
-
-      const response = await apiService.getDashboard003Report(params)
-      const socializadores = response.socializadores || []
-
-      const rows: SocializerRow[] = socializadores.map((s) => ({
-        socializerId: s.socializadorId,
-        socializerName: s.socializador,
-        interventions: s.intervenciones,
-        successful: s.exitosas,
-        unsuccessful: s.noExitosas,
-        defensores: s.defensoresDeLaPatria,
-        isLinkedHouse: s.isLinkedHouse || 0,
-        linkedHomes: s.linkedHomes || 0,
-        verificados: s.verificados || 0,
-        isOffline: s.isOffline || 0,
-      })).sort((a, b) => b.interventions - a.interventions)
-
-      setReportData(rows)
-      setSummaryData(response.resumen || null)
-
-      const rolLabel = availableRoles.find(r => r.value === selectedRole)?.label || 'usuarios'
-      const totalIntervenciones = response.resumen?.totalEncuestas ?? rows.reduce((s, r) => s + r.interventions, 0)
-      const summaryText = `Reporte generado: ${rows.length} ${rolLabel.toLowerCase()}, ${totalIntervenciones} intervenciones`
-      setReportSummaryLabel(summaryText)
-      notificationService.success(summaryText)
     } catch (err) {
       notificationService.handleApiError(err, 'Error al generar el reporte')
     } finally {
@@ -282,21 +419,25 @@ export default function ReportsSocializers() {
       return
     }
     try {
-      const params: { fecha_inicio: string; fecha_fin: string; rol?: string; departamentoId?: string; municipioId?: string } = {
-        fecha_inicio: startDate,
-        fecha_fin: endDate,
+      const params = buildReportParams()
+
+      // ── Export multi-zona ──
+      if (isAdminOrSuperadmin && selectedZoneIds.length > 0) {
+        const results = await querySelectedZones(async (api) => {
+          return api.exportDashboard003(params)
+        })
+        const errors = results.filter(r => r.error).map(r => `${r.zoneName}: ${r.error}`)
+        const exported = results.filter(r => !r.error).length
+        if (exported > 0) {
+          notificationService.success(`Excel descargado de ${exported} zona(s)`)
+        }
+        if (errors.length > 0) {
+          notificationService.warning(`Errores al exportar: ${errors.join('; ')}`)
+        }
+      } else {
+        await apiService.exportDashboard003(params)
+        notificationService.success('Archivo Excel descargado exitosamente')
       }
-      if (selectedRole) {
-        params.rol = selectedRole
-      }
-      if (selectedDepartment) {
-        params.departamentoId = selectedDepartment
-      }
-      if (selectedMunicipality) {
-        params.municipioId = selectedMunicipality
-      }
-      await apiService.exportDashboard003(params)
-      notificationService.success('Archivo Excel descargado exitosamente')
     } catch (err) {
       notificationService.handleApiError(err, 'Error al exportar el reporte')
     }
@@ -349,13 +490,30 @@ export default function ReportsSocializers() {
                   disabled={isGenerating}
                 />
               </div>
+              {isAdminOrSuperadmin && (
+                <div className="filter-card__field">
+                  <SearchableSelect
+                    label="Zona"
+                    value={selectedZone}
+                    onChange={handleZoneChange}
+                    disabled={isGenerating || isLoadingZones || zones.length === 0}
+                    placeholder="Zona actual..."
+                    options={[
+                      ...zones.map((zone) => ({
+                        value: zone._id,
+                        label: zone.name,
+                      })),
+                    ]}
+                  />
+                </div>
+              )}
               <div className="filter-card__field">
                 <SearchableSelect
                   label="Departamento"
                   value={selectedDepartment}
                   onChange={handleDepartmentChange}
-                  disabled={isGenerating || loadingDepts || zoneDepartments.length === 0}
-                  placeholder="Selecione un departamento..."
+                  disabled={isGenerating || loadingDepts || zoneDepartments.length === 0 || locationFiltersDisabled}
+                  placeholder={locationFiltersDisabled ? 'No aplica con todas las zonas' : 'Selecione un departamento...'}
                   options={[
                     ...zoneDepartments
                       .filter((entry) => entry?.department?._id)
@@ -371,8 +529,8 @@ export default function ReportsSocializers() {
                   label="Municipio"
                   value={selectedMunicipality}
                   onChange={setSelectedMunicipality}
-                  disabled={isGenerating || !selectedDepartment || municipalities.length === 0}
-                  placeholder="Selecione un municipio..."
+                  disabled={isGenerating || !selectedDepartment || municipalities.length === 0 || locationFiltersDisabled}
+                  placeholder={locationFiltersDisabled ? 'No aplica con todas las zonas' : 'Selecione un municipio...'}
                   options={[
                     ...municipalities
                       .filter((muni) => muni?._id)
@@ -419,6 +577,31 @@ export default function ReportsSocializers() {
           }}>
             <ChartIcon size={18} />
             {reportSummaryLabel}
+          </div>
+        )}
+
+        {/* Errores parciales en consultas multi-zona */}
+        {zoneErrors.length > 0 && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.5rem',
+            padding: '0.75rem 1.25rem',
+            marginBottom: '1rem',
+            background: 'linear-gradient(135deg, #fff3e0, #fbe9e7)',
+            border: '1px solid #ffab91',
+            borderRadius: '10px',
+            color: '#bf360c',
+            fontWeight: 500,
+            fontSize: '0.9rem',
+          }}>
+            <XIcon size={18} />
+            <div>
+              <strong>Errores en algunas zonas:</strong>
+              <ul style={{ margin: '0.25rem 0 0', paddingLeft: '1.25rem' }}>
+                {zoneErrors.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            </div>
           </div>
         )}
 

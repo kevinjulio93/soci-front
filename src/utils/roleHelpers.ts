@@ -5,6 +5,7 @@
 
 // Mapeo de roles a español
 const ROLE_TRANSLATIONS: Record<string, string> = {
+  'superadmin': 'Super Administrador',
   'admin': 'Administrador',
   'coordinator': 'Coordinador',
   'supervisor': 'Supervisor',
@@ -26,7 +27,7 @@ export const translateRole = (role: string): string => {
  */
 export const isAdminRole = (role: string): boolean => {
   const normalized = role.toLowerCase()
-  return normalized === 'admin' || normalized === 'root'
+  return normalized === 'admin' || normalized === 'root' || normalized === 'superadmin'
 }
 
 /**

@@ -94,6 +94,7 @@ export const API_ENDPOINTS = {
   LOCATION_LATEST: (userId: string) => `/locations/${userId}/latest`,
 
   // Zones
+  ZONES: '/zones',
   ZONES_DEPARTMENTS: (zoneNumber: number) => `/zones/${zoneNumber}/departments`,
 
   // Departments and Municipalities

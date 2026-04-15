@@ -15,7 +15,7 @@ export type RejectionReasonValue = RejectionReason | string | null | undefined
 export type SurveyStatus = 'successful' | 'unsuccessful'
 
 // Tipo para roles del sistema
-export type UserRole = 'admin' | 'coordinator' | 'socializer' | 'readonly' | 'root'
+export type UserRole = 'superadmin' | 'admin' | 'coordinator' | 'socializer' | 'readonly' | 'root'
 
 // Tipo para estados de permisos
 export type PermissionState = 'granted' | 'denied' | 'prompt'

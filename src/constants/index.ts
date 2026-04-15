@@ -23,7 +23,7 @@ export { TITLES, DESCRIPTIONS } from './ui'
 export { getSurveysTableColumns, getSocializerSurveysTableColumns, getSocializersTableColumns, getRespondentsTableColumns } from './tableColumns'
 
 // Rutas
-export { ROUTES } from './routes'
+export { ROUTES, SUPERADMIN_ALLOWED_ADMIN_ROUTES } from './routes'
 
 // URLs externas y API endpoints
 export { EXTERNAL_URLS, API_ENDPOINTS } from './urls'

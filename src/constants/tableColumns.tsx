@@ -303,7 +303,7 @@ export const getSocializersTableColumns = (
         const roleValue = socializer.role || socializer.user?.role
         const role = typeof roleValue === 'string' ? roleValue : roleValue?.role || ''
         if (!role) return <span className="badge badge-empty">—</span>
-        const roleClass = role.toLowerCase() === 'admin' ? 'badge-purple' :
+        const roleClass = role.toLowerCase() === 'admin' || role.toLowerCase() === 'superadmin' ? 'badge-purple' :
           role.toLowerCase() === 'socializer' || role.toLowerCase() === 'socializador' ? 'badge-blue' : 'badge-gray'
         return (
           <span className={`badge ${roleClass}`}>
@@ -336,7 +336,7 @@ export const getSocializersTableColumns = (
       render: (socializer) => {
         const roleValue = socializer.user?.role
         const roleStr = typeof roleValue === 'string' ? roleValue : roleValue?.role || ''
-        const isTargetAdmin = roleStr === 'admin'
+        const isTargetAdmin = roleStr === 'admin' || roleStr === 'superadmin'
         const isTargetCoordinator = roleStr === 'coordinador' || roleStr === 'coordinator'
 
         // Determinar permisos del usuario actual

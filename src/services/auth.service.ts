@@ -8,6 +8,7 @@
 import type { LoginCredentials, LoginResponse, User } from '../types'
 import { apiService } from './api.service'
 import { storageService } from './storage.service'
+import { ROUTES } from '../constants'
 
 class AuthService {
   async login(credentials: LoginCredentials): Promise<User> {
@@ -111,8 +112,17 @@ class AuthService {
       const response = await apiService.getUserProfile()
       // La respuesta tiene estructura: { data: { user, profile, fullName, profileType } }
       const profileData = (response as any).data || response
+      
+      // Preservar el role original si el perfil devuelve role como string (no populado)
+      const existingUser = storageService.getUser()
+      const profileUser = profileData.user || {}
+      const resolvedRole = (profileUser.role && typeof profileUser.role === 'object')
+        ? profileUser.role
+        : existingUser?.role
+
       const user = {
-        ...profileData.user,
+        ...profileUser,
+        role: resolvedRole,
         fullName: profileData.fullName,
         profile: profileData.profile,
         profileType: profileData.profileType
@@ -153,6 +163,7 @@ class AuthService {
 
   /**
    * Determina el dashboard a mostrar basado en el rol del usuario
+   * 'superadmin' → /admin/reports/socializers
    * 'root', 'admin', coordinadores, 'supervisor' o 'readonly' → /admin/dashboard
    * 'socializer' → /sociologist/dashboard
    * Otros roles → /sociologist/dashboard (por defecto)
@@ -161,8 +172,12 @@ class AuthService {
     if (!user) return '/login'
     
     const roleType = user.role?.role?.toLowerCase()
+
+    if (roleType === 'superadmin') {
+      return ROUTES.ADMIN_REPORTS_SOCIALIZERS
+    }
     
-    // Si es root, admin, cualquier tipo de coordinador, supervisor o readonly, mostrar admin dashboard
+    // Si es root, admin, superadmin, cualquier tipo de coordinador, supervisor o readonly, mostrar admin dashboard
     const adminRoles = ['root', 'admin', 'coordinador', 'coordinator', 'zonecoordinator', 'fieldcoordinator', 'supervisor', 'readonly']
     if (adminRoles.includes(roleType || '')) {
       return '/admin/dashboard'
@@ -173,12 +188,12 @@ class AuthService {
   }
 
   /**
-   * Verifica si el usuario es admin, root, coordinador, supervisor o readonly
+   * Verifica si el usuario es admin, root, superadmin, coordinador, supervisor o readonly
    */
   isAdminOrRoot(user: User | null): boolean {
     if (!user) return false
     const roleType = user.role?.role?.toLowerCase()
-    const adminRoles = ['root', 'admin', 'coordinador', 'coordinator', 'zonecoordinator', 'fieldcoordinator', 'supervisor', 'readonly']
+    const adminRoles = ['root', 'admin', 'superadmin', 'coordinador', 'coordinator', 'zonecoordinator', 'fieldcoordinator', 'supervisor', 'readonly']
     return adminRoles.includes(roleType || '')
   }
 

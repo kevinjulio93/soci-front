@@ -28,3 +28,7 @@ export const ROUTES = {
   // Encuestas
   SURVEY_PARTICIPANT: (surveyId: string) => `/survey/${surveyId}/participant`,
 } as const
+
+export const SUPERADMIN_ALLOWED_ADMIN_ROUTES = [
+  ROUTES.ADMIN_REPORTS_SOCIALIZERS,
+] as const

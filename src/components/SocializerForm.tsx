@@ -44,6 +44,7 @@ type FormPayload = ReturnType<SocializerFormData['toFormData']> & {
 }
 
 const ROLE_ORDER = [
+  'Super Administrador',
   'Administrador',
   'Coordinador de Zona',
   'Coordinador de Campo',

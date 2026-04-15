@@ -31,7 +31,7 @@ export default function SurveysList() {
   const [refreshKey, setRefreshKey] = useState(0)
 
   const userRole = user?.role?.role?.toLowerCase() || ''
-  const isAdmin = userRole === 'admin'
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin'
   const { showUnsuccessful } = useUnsuccessfulToggle()
   const [includeHierarchy, setIncludeHierarchy] = useState(false)
 

@@ -8,6 +8,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { AudioRecorderProvider } from './contexts/AudioRecorderContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { UnsuccessfulToggleProvider } from './contexts/UnsuccessfulToggleContext'
+import { ZoneApiProvider } from './contexts/ZoneApiContext'
 import { router } from './routes'
 import { useServiceWorker } from './hooks'
 import { useToast } from './contexts/ToastContext'
@@ -32,11 +33,13 @@ export function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <UnsuccessfulToggleProvider>
-          <AudioRecorderProvider>
-            <AppContent />
-          </AudioRecorderProvider>
-        </UnsuccessfulToggleProvider>
+        <ZoneApiProvider>
+          <UnsuccessfulToggleProvider>
+            <AudioRecorderProvider>
+              <AppContent />
+            </AudioRecorderProvider>
+          </UnsuccessfulToggleProvider>
+        </ZoneApiProvider>
       </AuthProvider>
     </ToastProvider>
   )
