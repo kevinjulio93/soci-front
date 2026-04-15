@@ -240,6 +240,8 @@ export class SocializerData {
   public updatedAt: string
 
   constructor(data: any) {
+    const payload = data || {}
+
     /**
      * Estructura de respuestas del API:
      * 
@@ -286,67 +288,73 @@ export class SocializerData {
      */
 
     // Detectar si es estructura de lista o get individual
-    const isGetIndividual = data.email && data.profile && data.profile.fullName
+    const isGetIndividual = Boolean(payload.email && payload.profile?.fullName)
 
     if (isGetIndividual) {
+      const profileData = payload.profile || {}
+      const userStatus = payload.status || profileData.status || 'disabled'
+
       // Estructura de GET /users/:id
-      this._id = data.profile._id // profile ID
-      this.fullName = data.profile.fullName
-      this.idNumber = data.profile.idNumber
-      this.phone = data.profile.phone
-      this.status = data.profile.status || data.status
-      this.location = data.profile.location
-      this.createdAt = data.createdAt
-      this.updatedAt = data.updatedAt
+      this._id = profileData._id || payload._id || '' // profile ID
+      this.fullName = profileData.fullName || ''
+      this.idNumber = profileData.idNumber || ''
+      this.phone = profileData.phone || ''
+      this.status = userStatus
+      this.location = profileData.location
+      this.createdAt = payload.createdAt || ''
+      this.updatedAt = payload.updatedAt || ''
 
       // Construir objeto user
       this.user = {
-        _id: data._id, // userId
-        email: data.email,
-        role: data.role,
-        status: data.status,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt
+        _id: payload._id || '', // userId
+        email: payload.email || '',
+        role: payload.role || '',
+        status: payload.status || userStatus,
+        createdAt: payload.createdAt || '',
+        updatedAt: payload.updatedAt || ''
       }
 
       // Propiedades opcionales
-      this.email = data.email
-      this.role = data.role
-      this.profile = data.profile.profile // Coordinador padre
+      this.email = payload.email
+      this.role = payload.role
+      this.profile = profileData.profile // Coordinador padre
 
       // Coordinator del coordinador padre si existe
-      if (data.profile.profile) {
-        this.coordinator = data.profile.profile.fieldCoordinator || data.profile.profile.zoneCoordinator || data.profile.profile._id
+      if (profileData.profile) {
+        this.coordinator = profileData.profile.fieldCoordinator || profileData.profile.zoneCoordinator || profileData.profile._id
       }
     } else {
+      const userData = payload.user || {}
+      const profileStatus = payload.status || userData.status || 'disabled'
+
       // Estructura de GET /users/hierarchy (lista)
-      this._id = data._id // profile ID
-      this.fullName = data.fullName
-      this.idNumber = data.idNumber
-      this.phone = data.phone
-      this.status = data.status
-      this.location = data.location
-      this.createdAt = data.createdAt
-      this.updatedAt = data.updatedAt
+      this._id = payload._id || userData._id || '' // profile ID
+      this.fullName = payload.fullName || ''
+      this.idNumber = payload.idNumber || ''
+      this.phone = payload.phone || ''
+      this.status = profileStatus
+      this.location = payload.location
+      this.createdAt = payload.createdAt || ''
+      this.updatedAt = payload.updatedAt || ''
 
       // El objeto user
       this.user = {
-        _id: data.user._id,
-        email: data.user.email,
-        role: data.user.role,
-        status: data.user.status,
-        createdAt: data.user.createdAt,
-        updatedAt: data.user.updatedAt
+        _id: userData._id || '',
+        email: userData.email || '',
+        role: userData.role || '',
+        status: userData.status || profileStatus,
+        createdAt: userData.createdAt || payload.createdAt || '',
+        updatedAt: userData.updatedAt || payload.updatedAt || ''
       }
 
       // Propiedades opcionales
-      this.email = data.user?.email
-      this.role = data.user?.role
-      this.profile = data.profile // Coordinador padre
+      this.email = userData.email
+      this.role = userData.role
+      this.profile = payload.profile // Coordinador padre
 
       // Coordinator si existe
-      if (data.profile) {
-        this.coordinator = data.profile.fieldCoordinator || data.profile.zoneCoordinator || data.profile._id
+      if (payload.profile) {
+        this.coordinator = payload.profile.fieldCoordinator || payload.profile.zoneCoordinator || payload.profile._id
       }
     }
   }

@@ -531,7 +531,10 @@ export class ApiService {
     const response = await this.get<any>(url)
 
     // La respuesta tiene estructura: { data: [], pagination: { page, perPage, total, totalPages } }
-    const socializers = response.data.map((item: any) => new SocializerData(item))
+    const rawData = Array.isArray(response.data) ? response.data : []
+    const socializers = rawData
+      .filter((item: any) => item && (item.user || item.email))
+      .map((item: any) => new SocializerData(item))
 
     return new GetSocializersResponse(
       response.pagination.page,
